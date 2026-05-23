@@ -1,5 +1,5 @@
 import "./App.css";
-import React, { useState } from "react";
+import { useState } from "react";
 // 폴더 구조 설계 단계에서 계획한 페이지 컴포넌트들을 미리 임포트합니다.
 // (아직 파일들을 만들지 않았다면 에러가 날 수 있으니 임시로 아래에 더미 컴포넌트를 만들어 두었습니다.)
 import LoginPage from "./components/pages/auth/LoginPage";
