@@ -20,13 +20,11 @@ export default function ScheduleList({
   userId,
   onNavigate,
 }: ScheduleListProps) {
-  // userId별로 독립된 스토리지 상태를 추적하기 위한 단일 상태 구조
   const [prevUserId, setPrevUserId] = useState<string>(userId);
   const [schedules, setSchedules] = useState<TravelSchedule[]>(() =>
     getInitialSchedules(userId),
   );
 
-  // 부모로부터 새로운 userId를 받았을 때(로그인 전환 등), 이펙트 없이 즉시 상태 동기화
   if (userId !== prevUserId) {
     setPrevUserId(userId);
     setSchedules(getInitialSchedules(userId));
@@ -44,14 +42,14 @@ export default function ScheduleList({
         </div>
         <button
           onClick={() => onNavigate("schedule")}
-          className="btn btn-custom h-10 px-5 bg-primary hover:bg-teal-700 text-white transition-all box-custom flex-shrink-0 shadow-none"
+          className="btn btn-custom h-10 px-5 bg-primary hover:bg-teal-700 text-white transition-all flex-shrink-0"
         >
           <h3 className="text-white font-bold">+ 새 일정 추가</h3>
         </button>
       </div>
 
       {/* 카드 리스트 컨테이너 */}
-      <div className="flex-1 h-0 flex flex-col gap-4 overflow-y-auto pt-2 pb-4 px-2 figma-scrollbar items-stretch">
+      <div className="flex-1 h-0 overflow-y-auto pt-2 pb-4 px-2 figma-scrollbar">
         {schedules.length === 0 ? (
           <div className="bg-pure-white box-custom p-20 text-center border border-slate-200/50 w-full">
             <p className="text-sm text-gray font-medium">
@@ -59,21 +57,32 @@ export default function ScheduleList({
             </p>
           </div>
         ) : (
-          schedules.map((schedule) => (
-            <div
-              key={schedule.id}
-              className="w-full min-h-24 h-64 flex-shrink-0"
-            >
-              <ScheduleCard schedule={schedule} onNavigate={onNavigate} />
-            </div>
-          ))
+          <div className="flex flex-wrap gap-5">
+            {schedules.map((schedule, index) => {
+              const isFirst = index === 0;
+
+              return (
+                <div
+                  key={schedule.id}
+                  className={`shrink-0 transition-all duration-300 ${
+                    isFirst
+                      ? "w-full h-80"
+                      : "w-full 2xl:w-[calc(50%-10px)] h-64" /* 🛠️ xl에서 2xl로 수정 */
+                  }`}
+                >
+                  <div className="w-full h-full">
+                    <ScheduleCard schedule={schedule} onNavigate={onNavigate} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-// 초기 데이터 세팅 및 로컬 스토리지 연동 헬퍼 함수
 function getInitialSchedules(userId: string): TravelSchedule[] {
   const key = `tralog_schedules_${userId}`;
   const stored = localStorage.getItem(key);
@@ -87,7 +96,6 @@ function getInitialSchedules(userId: string): TravelSchedule[] {
     }
   }
 
-  // 4개의 관광지 데이터 조건 체크 (길이가 다르거나 필수 필드가 없을 때 초기화)
   const isOldData =
     parsed.length > 0 &&
     (parsed.length !== 4 || !parsed[0].dDay || !parsed[0].bgImage);

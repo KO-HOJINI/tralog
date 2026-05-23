@@ -1,3 +1,4 @@
+// MapOverview.tsx
 interface MapOverviewProps {
   userId: string;
   onNavigate: (page: string) => void;
@@ -34,12 +35,13 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
   return (
     <div className="flex flex-col gap-5 w-full h-full">
       {/* 🗺️ [카드 1] 대한민국 지도 박스 */}
+      {/* 🛠️ flex-7 대신 flex-1 h-0을 주어 위쪽 남는 세로 공간을 자연스럽게 꽉 채우도록 변경 */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="flex-7 h-0 w-full bg-linear-to-b from-[#bce3de] to-[#a3d5cf] rounded-[40px] p-5 shadow-custom border border-white/40 cursor-pointer flex flex-col items-center justify-center hover:scale-[1.002] transition-all duration-300 relative group"
+        className="flex-1 h-0 w-full bg-linear-to-b from-[#bce3de] to-[#a3d5cf] rounded-[40px] p-5 shadow-custom border border-white/40 cursor-pointer flex flex-col items-center justify-center hover:scale-[1.002] transition-all duration-300 relative group"
       >
-        <div className="w-full max-w-80 h-[90%] bg-white/20 backdrop-blur-xs rounded-4xl border border-white/30 p-4 flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="w-44 h-[75%] border border-dashed border-slate-700/20 rounded-full flex flex-col items-center justify-center bg-white/10 shadow-inner">
+        <div className="w-full max-w-80 h-[95%] bg-white/20 backdrop-blur-xs rounded-4xl border border-white/30 p-4 flex flex-col items-center justify-center relative overflow-hidden">
+          <div className="w-44 h-[80%] border border-dashed border-slate-700/20 rounded-full flex flex-col items-center justify-center bg-white/10 shadow-inner">
             <span className="text-xs text-slate-800 font-extrabold tracking-widest opacity-40 text-center px-2 select-none">
               KOREA MAP FRAME
             </span>
@@ -56,14 +58,15 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
       </div>
 
       {/* 💛 [카드 2] 달성률 대형 카드 */}
-      <div className="flex-3 h-0 w-full bg-linear-to-br from-[#EAB308] via-[#EAB308] to-[#D97706] rounded-4xl p-6 shadow-custom flex flex-col gap-4 text-dark relative justify-center">
-        <div className="flex flex-col gap-4 flex-1 justify-center">
+      {/* 🛠️ flex-3 제거 및 h-fit 구조 변경: 위아래가 과도하게 길어지지 않고 내용물에 맞춤 */}
+      <div className="h-fit w-full bg-linear-to-br from-[#EAB308] via-[#EAB308] to-[#D97706] rounded-4xl p-5 shadow-custom flex flex-col gap-4 text-dark relative justify-center">
+        <div className="flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start shrink-0">
             <div className="flex flex-col gap-0.5">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-800/80">
                 <span>🗺️ 여행 목표</span>
               </div>
-              <h1 className="text-lg font-bold my-0 leading-tight">
+              <h1 className="text-base font-bold my-0 leading-tight">
                 나만의 지도
               </h1>
               <span className="text-xs text-slate-800/90 font-medium">
@@ -72,35 +75,35 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
             </div>
 
             <div className="text-right flex flex-col items-end leading-none">
-              <span className="text-number-accent text-2xl font-bold">
+              <span className="text-number-accent text-xl font-bold">
                 {visitedCount}
               </span>
-              <span className="text-number-accent text-xs font-bold text-slate-950/50 mt-0.5">
+              <span className="text-number-accent text-[11px] font-bold text-slate-950/50 mt-0.5">
                 / 17 지역
               </span>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1.5 w-full">
-            <div className="w-full bg-white rounded-full h-3 p-0.5 shadow-inner">
+          <div className="flex flex-col gap-1.5 w-full mt-1">
+            <div className="w-full bg-white rounded-full h-2.5 p-0.5 shadow-inner">
               <div
                 className="h-full rounded-full transition-all duration-700 bg-gray"
                 style={{ width: `${achievementRate}%` }}
               />
             </div>
             <div className="flex justify-between items-center px-0.5">
-              <span className="text-[11px] font-bold text-dark opacity-85">
+              <span className="text-[10px] font-bold text-dark opacity-85">
                 달성률
               </span>
-              <span className="text-xs font-bold text-dark">
+              <span className="text-[11px] font-bold text-dark">
                 {achievementRate}%
               </span>
             </div>
           </div>
         </div>
 
-        {/* 하단 안내 배너 (기존 box-custom 그림자와 통합성 유지) */}
-        <div className="box-custom w-full bg-gray py-2 px-4 flex items-center justify-center gap-1 shrink-0 hide-on-short-screen">
+        {/* 하단 안내 배너 */}
+        <div className="box-custom w-full bg-gray py-2 px-4 flex items-center justify-center gap-1 shrink-0 hide-on-short-screen mt-1">
           <div className="flex gap-1.5 items-center justify-center text-center w-full select-none text-xs">
             {remainingCount > 0 ? (
               <>

@@ -100,7 +100,6 @@ export default function MyMapPage({ onNavigate }: MyMapPageProps) {
   return (
     <div className="h-screen bg-background flex flex-col font-sans antialiased text-dark overflow-hidden">
       <NavBar userName={currentUser.name} onNavigate={onNavigate} onLogout={handleLogout} />
-      {/* ... 하단 레이아웃 본문 코드 생략 (기존과 완벽 동일) ... */}
       <main className="flex-1 h-0 max-w-6xl w-full mx-auto px-16 py-8 flex flex-col md:flex-row gap-8 items-stretch overflow-hidden">
         <div className="w-[45%] flex flex-col shrink-0 h-full gap-4">
           <div className="flex justify-between items-baseline select-none">
