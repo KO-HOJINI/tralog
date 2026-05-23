@@ -34,11 +34,10 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
 
   return (
     <div className="flex flex-col gap-5 w-full h-full">
-      {/* 🗺️ [카드 1] 대한민국 지도 박스 */}
-      {/* 🛠️ flex-7 대신 flex-1 h-0을 주어 위쪽 남는 세로 공간을 자연스럽게 꽉 채우도록 변경 */}
+      {/* 지도 */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="flex-1 h-0 w-full bg-linear-to-b from-[#bce3de] to-[#a3d5cf] rounded-[40px] p-5 shadow-custom border border-white/40 cursor-pointer flex flex-col items-center justify-center hover:scale-[1.002] transition-all duration-300 relative group"
+        className="box-custom flex-1 h-0 w-full card-map-theme relative group"
       >
         <div className="w-full max-w-80 h-[95%] bg-white/20 backdrop-blur-xs rounded-4xl border border-white/30 p-4 flex flex-col items-center justify-center relative overflow-hidden">
           <div className="w-44 h-[80%] border border-dashed border-slate-700/20 rounded-full flex flex-col items-center justify-center bg-white/10 shadow-inner">
@@ -58,8 +57,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
       </div>
 
       {/* 💛 [카드 2] 달성률 대형 카드 */}
-      {/* 🛠️ flex-3 제거 및 h-fit 구조 변경: 위아래가 과도하게 길어지지 않고 내용물에 맞춤 */}
-      <div className="h-fit w-full bg-linear-to-br from-[#EAB308] via-[#EAB308] to-[#D97706] rounded-4xl p-5 shadow-custom flex flex-col gap-4 text-dark relative justify-center">
+      <div className="box-custom h-fit w-full card-achieve-theme">
         <div className="flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start shrink-0">
             <div className="flex flex-col gap-0.5">
@@ -75,10 +73,9 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
             </div>
 
             <div className="text-right flex flex-col items-end leading-none">
-              <span className="text-number-accent text-xl font-bold">
-                {visitedCount}
-              </span>
-              <span className="text-number-accent text-[11px] font-bold text-slate-950/50 mt-0.5">
+              {/* 🛠️ text-number-accent 활용 */}
+              <span className="text-number-accent text-xl">{visitedCount}</span>
+              <span className="text-number-accent text-[11px] text-slate-950/50 mt-0.5">
                 / 17 지역
               </span>
             </div>

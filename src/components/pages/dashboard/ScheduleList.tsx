@@ -31,9 +31,9 @@ export default function ScheduleList({
   }
 
   return (
-    <div className="flex flex-col gap-5 w-full h-full overflow-hidden">
+    <div className="flex-col-full gap-5">
       {/* 헤더 */}
-      <div className="flex justify-between items-center px-1 flex-shrink-0">
+      <div className="flex justify-between items-center px-1 shrink-0">
         <div className="flex flex-col gap-0.5">
           <h1>나의 여행 일정</h1>
           <p className="text-body-main text-slate-400">
@@ -42,42 +42,54 @@ export default function ScheduleList({
         </div>
         <button
           onClick={() => onNavigate("schedule")}
-          className="btn btn-custom h-10 px-5 bg-primary hover:bg-teal-700 text-white transition-all flex-shrink-0"
+          className="btn btn-custom h-10 px-5 bg-primary hover:bg-teal-700 text-white transition-all shrink-0"
         >
           <h3 className="text-white font-bold">+ 새 일정 추가</h3>
         </button>
       </div>
 
       {/* 카드 리스트 컨테이너 */}
-      <div className="flex-1 h-0 overflow-y-auto pt-2 pb-4 px-2 figma-scrollbar">
-        {schedules.length === 0 ? (
-          <div className="bg-pure-white box-custom p-20 text-center border border-slate-200/50 w-full">
-            <p className="text-sm text-gray font-medium">
-              등록된 여행 일정이 없습니다.
-            </p>
-          </div>
-        ) : (
-          <div className="flex flex-wrap gap-5">
-            {schedules.map((schedule, index) => {
-              const isFirst = index === 0;
+      <div className="flex-1 h-0 overflow-y-auto pt-2 pb-4 px-2 scrollbar">
+        <div className="flex flex-wrap gap-5">
+          {/* 기존 일정 카드 리스트 렌더링 */}
+          {schedules.map((schedule, index) => {
+            const isFirst = index === 0;
 
-              return (
-                <div
-                  key={schedule.id}
-                  className={`shrink-0 transition-all duration-300 ${
-                    isFirst
-                      ? "w-full h-80"
-                      : "w-full 2xl:w-[calc(50%-10px)] h-64" /* 🛠️ xl에서 2xl로 수정 */
-                  }`}
-                >
-                  <div className="w-full h-full">
-                    <ScheduleCard schedule={schedule} onNavigate={onNavigate} />
-                  </div>
+            return (
+              <div
+                key={schedule.id}
+                className={`shrink-0 transition-all duration-300 ${
+                  isFirst ? "w-full h-80" : "w-full 2xl:w-[calc(50%-10px)] h-64"
+                }`}
+              >
+                <div className="w-full h-full">
+                  <ScheduleCard schedule={schedule} onNavigate={onNavigate} />
                 </div>
-              );
-            })}
+              </div>
+            );
+          })}
+
+          {/* 일정 추가 카드 */}
+          <div
+            className={`box-custom shrink-0 transition-all duration-300 border-2 border-dashed border-slate-200 hover:border-slate-300 bg-slate-50 hover:bg-slate-100 overflow-hidden 
+              ${
+                schedules.length === 0
+                  ? "w-full h-80"
+                  : "w-full 2xl:w-[calc(50%-10px)] h-64"
+              }`}
+          >
+            <button
+              onClick={() => onNavigate("schedule")}
+              className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-slate-600 transition-all group rounded-[inherit]"
+            >
+              {/* 🛠️ text-number-accent 유틸리티 매핑 */}
+              <span className="text-number-accent font-light p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform flex items-center justify-center w-12 h-12 border border-slate-100">
+                +
+              </span>
+              <span className="text-body-main">새로운 여행 일정 추가하기</span>
+            </button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );
