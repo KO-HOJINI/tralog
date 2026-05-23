@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@plugin 'daisyui';
+
+:root {
+  --color-primary: #0d9488;
+  --color-secondary: #f59e0b;
+  --color-background: #f8fafc;
+  --color-dark: #0f172a;
+  --color-gray: #475569;
+  --color-pure-white: #ffffff;
+}
+@theme {
+  --color-primary: #0d9488;
+  --color-secondary: #f59e0b;
+  --color-background: #f8fafc;
+  --color-dark: #0f172a;
+  --color-gray: #475569;
+  --color-pure-white: #ffffff;
+}
+
+@utility shadow-custom {
+  box-shadow:
+    0 10px 30px -5px rgba(15, 23, 42, 0.03),
+    0 4px 12px -2px rgba(15, 23, 42, 0.01);
+}
+
+@utility round-btn {
+  border-radius: 16px;
+}
+
+@utility btn-custom {
+  border-radius: 20px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  &:hover {
+    filter: brightness(0.95);
+  }
+}
+
+@utility box-custom {
+  border-radius: 32px;
+  border: none;
+  box-shadow:
+    0 8px 20px -4px rgba(15, 23, 42, 0.04),
+    0 3px 8px -1px rgba(15, 23, 42, 0.02);
+}
+
+@utility input-custom {
+  background-color: var(--color-pure-white);
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  color: var(--color-dark);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px 0px rgba(15, 23, 42, 0.015);
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  }
+}
+
+@utility scrollbar {
+  &::-webkit-scrollbar {
+    width: 14px;
+  }
+  &::-webkit-scrollbar-track {
+    background: #ffffff;
+    border: 1px solid #0f172a;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #475569;
+    border: 2px solid #ffffff;
+    border-radius: 10px;
+  }
+}
+
+/* ✍️ 이미지 배경 위 텍스트가 파묻히지 않도록 정교한 텍스트 가독성 아웃라인 처리 */
+@utility text-shadow-glow {
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 2px rgba(0, 0, 0, 0.9);
+}
+
+@media (max-height: 720px) {
+  .hide-on-short-screen {
+    display: none !important;
+  }
+}

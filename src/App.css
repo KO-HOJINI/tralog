@@ -1,0 +1,80 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Urbanist:wght@700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: "Noto Sans KR", sans-serif;
+    background-color: #f8fafc; /* Background */
+    color: #0f172a; /* dark */
+  }
+
+  h1 {
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 34px;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+  }
+
+  h2 {
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 26px;
+    letter-spacing: -0.01em;
+    color: #0f172a;
+  }
+
+  h3 {
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: normal;
+    letter-spacing: 0em;
+    color: #0f172a;
+  }
+}
+
+@layer components {
+  /* body/main */
+  .text-body-main {
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 22px;
+    letter-spacing: 0em;
+    color: #475569; /* gray */
+  }
+
+  /* body/caption */
+  .text-body-caption {
+    font-family: "Noto Sans KR", sans-serif;
+    font-weight: 400;
+    font-size: 12px;
+    line-height: normal;
+    letter-spacing: 0em;
+    color: #475569; /* gray */
+  }
+
+  /* Logo */
+  .text-logo {
+    font-family: "Urbanist", sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    line-height: normal;
+    letter-spacing: -0.01em;
+  }
+
+  /* number/accent */
+  .text-number-accent {
+    font-family: "Urbanist", sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: normal;
+    letter-spacing: 0em;
+  }
+}
