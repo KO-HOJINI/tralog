@@ -1,7 +1,69 @@
-export default function MyMapHistory () {
+interface MyMapHistoryProps {
+  onSelectRegion: (region: string) => void;
+  onNavigate: (page: string) => void;
+}
+
+export default function MyMapHistory({
+  onSelectRegion,
+  onNavigate,
+}: MyMapHistoryProps) {
+  const travelHistory = [
+    { name: "인천광역시" },
+    { name: "서울특별시" },
+    { name: "부산광역시" },
+    { name: "제주시" },
+  ];
+
   return (
-    <>
-      <h1>MyMapHistory Component</h1>
-    </>
+    <div className="flex-col-full gap-4">
+      {/* 타이틀 헤더 */}
+      <div className="bg-pure-white box-custom p-5 shadow-card shrink-0">
+        <h2 className="text-lg font-bold">나의 여행 기록</h2>
+      </div>
+
+      {/* 스크롤 리스트 바디 */}
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar space-y-4">
+        {/* 지역 추가 카드 상단 고정 */}
+        <div className="bg-primary text-pure-white box-custom p-5 flex items-center justify-between shadow-card">
+          <div className="flex items-center gap-2 select-none">
+            <span className="text-base font-bold">지역 추가</span>
+            <span className="text-sm">📷</span>
+          </div>
+          <button
+            onClick={() => onNavigate("schedule")}
+            className="btn-custom bg-secondary text-pure-white px-5 py-2 text-xs font-bold shadow-sm"
+          >
+            사진 등록
+          </button>
+        </div>
+
+        {/* 저장 목록 바인딩 */}
+        {travelHistory.map((history, idx) => (
+          <div
+            key={idx}
+            className="bg-pure-white border border-slate-100/70 box-custom p-5 flex items-center justify-between shadow-card hover:border-slate-200 transition-all"
+          >
+            <span className="text-base font-bold text-dark">
+              {history.name}
+            </span>
+            <div className="flex items-center gap-3">
+              {/* 버튼 배경 색상을 요구사항에 맞춰 bg-gray로 적용 */}
+              <button
+                onClick={() => onNavigate("schedule")}
+                className="btn-custom bg-gray text-pure-white px-4 py-2 text-xs font-medium"
+              >
+                지난 일정 보기
+              </button>
+              <button
+                onClick={() => onSelectRegion(history.name)}
+                className="btn-custom bg-secondary text-pure-white px-4 py-2 text-xs font-medium shadow-sm"
+              >
+                사진 보기
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

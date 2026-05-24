@@ -57,7 +57,10 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
       </div>
 
       {/* 💛 [카드 2] 달성률 대형 카드 */}
-      <div className="box-custom h-fit w-full card-achieve-theme">
+      <div
+        onClick={() => onNavigate("mymap")}
+        className="box-custom h-fit w-full card-achieve-theme"
+      >
         <div className="flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start shrink-0">
             <div className="flex flex-col gap-0.5">
