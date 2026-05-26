@@ -70,7 +70,7 @@ export default function MyMapPage({
       <main className="flex-1 h-0 w-[70%] mx-auto py-6 flex flex-row gap-8 items-stretch overflow-hidden">
         {/* 좌측 섹션 (50%) : 나만의 지도 채우기 */}
         <div className="w-1/2 flex flex-col shrink-0 h-full bg-pure-white box-custom p-6 shadow-card overflow-hidden">
-          <h2 className="text-lg font-bold mb-4">나만의 지도 채우기</h2>
+          <h2 className="mb-4">나만의 지도 채우기</h2>
           <div className="flex-1 flex items-center justify-center bg-slate-50/50 border border-slate-100 rounded-3xl p-4 overflow-hidden">
             <InteractiveMap
               selectedRegion={selectedRegion}

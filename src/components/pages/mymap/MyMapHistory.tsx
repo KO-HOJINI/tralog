@@ -32,7 +32,7 @@ export default function MyMapHistory({
     <div className="flex-col-full gap-4">
       {/* 타이틀 헤더 */}
       <div className="bg-pure-white box-custom p-5 shadow-card shrink-0">
-        <h2 className="text-lg font-bold">나의 여행 기록</h2>
+        <h2>나의 여행 기록</h2>
       </div>
 
       {/* 스크롤 리스트 바디 */}
@@ -40,12 +40,14 @@ export default function MyMapHistory({
         {/* 지역 추가 카드 상단 고정 */}
         <div className="bg-primary text-pure-white box-custom p-5 flex items-center justify-between shadow-card">
           <div className="flex items-center gap-2 select-none">
-            <span className="text-base font-bold">지역 추가</span>
-            <span className="text-sm">📷</span>
+            <span className="text-body-main font-bold text-pure-white">
+              지역 추가
+            </span>
+            <span className="text-body-main">📷</span>
           </div>
           <button
             onClick={() => onNavigate("schedule")}
-            className="btn-custom bg-secondary text-pure-white px-5 py-2 text-xs font-bold shadow-sm"
+            className="btn-custom bg-secondary text-pure-white px-5 py-2 text-body-caption font-bold shadow-sm"
           >
             사진 등록
           </button>
@@ -57,19 +59,19 @@ export default function MyMapHistory({
             key={idx}
             className="bg-pure-white border border-slate-100/70 box-custom p-5 flex items-center justify-between shadow-card hover:border-slate-200 transition-all"
           >
-            <span className="text-base font-bold text-dark">
+            <span className="text-body-main font-bold text-dark">
               {history.name}
             </span>
             <div className="flex items-center gap-3">
               <button
                 onClick={() => onNavigate("schedule")}
-                className="btn-custom bg-gray text-pure-white px-4 py-2 text-xs font-medium"
+                className="btn-custom bg-gray text-pure-white px-4 py-2 text-body-caption font-medium"
               >
                 지난 일정 보기
               </button>
               <button
                 onClick={() => onSelectRegion(history.name)}
-                className="btn-custom bg-secondary text-pure-white px-4 py-2 text-xs font-medium shadow-sm"
+                className="btn-custom bg-secondary text-pure-white px-4 py-2 text-body-caption font-medium shadow-sm"
               >
                 사진 보기
               </button>

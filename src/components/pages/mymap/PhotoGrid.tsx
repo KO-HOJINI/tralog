@@ -82,10 +82,10 @@ export default function PhotoGrid({
     <div className="flex-col-full gap-4">
       {/* 헤더 바 */}
       <div className="bg-pure-white box-custom p-5 shadow-card flex items-center justify-between shrink-0">
-        <h2 className="text-lg font-bold">상세 사진</h2>
+        <h2>상세 사진</h2>
         <button
           onClick={onBack}
-          className="btn-custom bg-secondary text-pure-white px-5 py-1.5 text-xs font-bold shadow-sm"
+          className="btn-custom bg-secondary text-pure-white px-5 py-1.5 text-body-caption font-bold shadow-sm"
         >
           돌아가기
         </button>
@@ -95,11 +95,13 @@ export default function PhotoGrid({
       <div className="flex-1 bg-pure-white box-custom p-6 shadow-card flex flex-col overflow-hidden">
         {/* 상단 현재 선택된 도시 표시 및 대표사진 확정 컨트롤 */}
         <div className="bg-primary text-pure-white box-custom p-4 mb-5 flex items-center justify-between shrink-0">
-          <span className="text-base font-bold">{regionName}</span>
+          <span className="text-body-main font-bold text-pure-white">
+            {regionName}
+          </span>
           <button
             onClick={handleSetCover}
             disabled={selectedIndex === null}
-            className="btn-custom bg-secondary text-pure-white px-4 py-1.5 text-xs font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-custom bg-secondary text-pure-white px-4 py-1.5 text-body-caption font-bold shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             대표사진 선택
           </button>
@@ -108,7 +110,7 @@ export default function PhotoGrid({
         {/* 3열 사진 배열 그리드 판넬 */}
         <div className="flex-1 overflow-y-auto scrollbar pr-1 mb-5">
           {currentRecord.images.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-slate-400 text-body-main">
+            <div className="h-full flex items-center justify-center text-body-main text-gray/60">
               등록된 사진이 없습니다. 아래에서 사진을 추가해보세요!
             </div>
           ) : (
@@ -132,10 +134,10 @@ export default function PhotoGrid({
                     />
                     {/* 체크 선택 여부 오버레이 인디케이터 */}
                     <div
-                      className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center border text-xs font-bold transition-all ${
+                      className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center border text-body-caption font-bold transition-all ${
                         isSelected
-                          ? "bg-primary text-white border-primary"
-                          : "bg-white/80 text-transparent border-slate-300"
+                          ? "bg-primary text-pure-white border-primary"
+                          : "bg-pure-white/80 text-transparent border-slate-300"
                       }`}
                     >
                       ✓
@@ -149,7 +151,7 @@ export default function PhotoGrid({
 
         {/* 로컬 파일 직접 사진 추가 업로드 인풋 섹션 */}
         <div className="border-t border-slate-100/80 pt-4 flex flex-col gap-2 shrink-0">
-          <label className="text-xs font-bold text-dark">
+          <label className="text-body-caption font-bold text-dark">
             사진 추가 업로드
           </label>
           <div className="flex gap-3">
@@ -160,12 +162,12 @@ export default function PhotoGrid({
               onChange={handleFileChange}
               className="hidden"
             />
-            <div className="flex-1 input-custom px-4 py-2 text-xs flex items-center text-slate-400 truncate bg-pure-white">
+            <div className="flex-1 input-custom px-4 py-2 text-body-caption flex items-center text-gray/60 truncate bg-pure-white">
               {uploadedFileName}
             </div>
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="btn-custom bg-primary text-pure-white px-5 py-2 text-xs font-bold shadow-sm whitespace-nowrap"
+              className="btn-custom bg-primary text-pure-white px-5 py-2 text-body-caption font-bold shadow-sm whitespace-nowrap"
             >
               파일 찾기
             </button>

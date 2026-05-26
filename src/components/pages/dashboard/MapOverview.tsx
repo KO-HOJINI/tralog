@@ -1,65 +1,52 @@
-// MapOverview.tsx
+import InteractiveMap from "../mymap/InteractiveMap";
+import type { MapRecord } from "../mymap/MyMapPage";
+
 interface MapOverviewProps {
   userId: string;
   onNavigate: (page: string) => void;
 }
 
-interface MapRecord {
-  region: string;
-  images: string[];
-}
-
 export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
-  const storedMap = localStorage.getItem(`tralog_map_${userId}`);
+  const storedData = localStorage.getItem(`tralog_map_${userId}`);
+  const mapRecords: MapRecord[] = storedData ? JSON.parse(storedData) : [];
 
-  const { visitedCount, achievementRate } = (() => {
-    if (storedMap) {
-      const records = JSON.parse(storedMap) as MapRecord[];
-      const activeRegions = records.filter(
-        (r) => r.images && r.images.length > 0,
-      ).length;
-      return {
-        visitedCount: activeRegions,
-        achievementRate: Math.round((activeRegions / 17) * 100),
-      };
-    }
-    const defaultCount = userId === "admin" ? 6 : 0;
-    return {
-      visitedCount: defaultCount,
-      achievementRate: Math.round((defaultCount / 17) * 100),
-    };
-  })();
+  const visitedCount = mapRecords.filter(
+    (r) => r.images && r.images.length > 0,
+  ).length;
 
+  const achievementRate = Math.round((visitedCount / 17) * 100);
   const remainingCount = 17 - visitedCount;
 
   return (
     <div className="flex flex-col gap-5 w-full h-full">
-      {/* 지도 */}
+      {/* 지도 섹션 */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="box-custom flex-1 h-0 w-full card-map-theme relative group"
+        className="box-custom flex-1 h-0 w-full card-map-theme relative group cursor-pointer overflow-hidden flex items-center justify-center p-0"
       >
-        <div className="w-full max-w-80 h-[95%] bg-white/20 backdrop-blur-xs rounded-4xl border border-white/30 p-4 flex flex-col items-center justify-center relative overflow-hidden">
-          <div className="w-44 h-[80%] border border-dashed border-slate-700/20 rounded-full flex flex-col items-center justify-center bg-white/10 shadow-inner">
-            <span className="text-xs text-slate-800 font-extrabold tracking-widest opacity-40 text-center px-2 select-none">
-              KOREA MAP FRAME
-            </span>
-            <span className="text-[11px] text-slate-700 font-medium opacity-30 mt-1 text-center px-4 leading-tight select-none">
-              여기에 완성된 지도가
-              <br />
-              렌더링됩니다
-            </span>
+        {/* 내부 컨테이너 패딩 조절 및 반응형 정렬 구조 변경 */}
+        <div className="w-full h-full bg-white/10 backdrop-blur-xs flex flex-col items-center justify-center relative p-4">
+          {/* 지도가 상하단으로 절대 잘리지 않도록 가로 세로 최대 높이를 균형있게 제한 */}
+          <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden">
+            <InteractiveMap
+              selectedRegion={null}
+              onSelectRegion={() => {}}
+              mapRecords={mapRecords}
+              readOnly={true}
+            />
           </div>
-          <span className="absolute bottom-3 text-[11px] font-semibold text-slate-700/60 bg-white/40 px-3 py-1 rounded-full backdrop-blur-xs whitespace-nowrap select-none">
-            🗺️ 지도를 눌러 지역별 추억 기록하기
+
+          {/* 하단 플로팅 라벨 */}
+          <span className="absolute bottom-3 text-[11px] font-bold text-slate-700/80 bg-white/70 px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm border border-white/40 group-hover:bg-primary group-hover:text-white transition-all">
+            🗺️ 지도를 눌러 추억 기록하기
           </span>
         </div>
       </div>
 
-      {/* 💛 [카드 2] 달성률 대형 카드 */}
+      {/* 달성률 카드 (기존 테마 및 규격 유지) */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="box-custom h-fit w-full card-achieve-theme"
+        className="box-custom h-fit w-full card-achieve-theme cursor-pointer hover:scale-[1.01] transition-transform"
       >
         <div className="flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start shrink-0">
@@ -76,49 +63,47 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
             </div>
 
             <div className="text-right flex flex-col items-end leading-none">
-              {/* 🛠️ text-number-accent 활용 */}
-              <span className="text-number-accent text-xl">{visitedCount}</span>
-              <span className="text-number-accent text-[11px] text-slate-950/50 mt-0.5">
+              <span className="text-number-accent text-xl font-bold">
+                {visitedCount}
+              </span>
+              <span className="text-[11px] text-slate-500 font-medium mt-0.5">
                 / 17 지역
               </span>
             </div>
           </div>
 
           <div className="flex flex-col gap-1.5 w-full mt-1">
-            <div className="w-full bg-white rounded-full h-2.5 p-0.5 shadow-inner">
+            <div className="w-full bg-slate-100 rounded-full h-2.5 p-0.5 shadow-inner">
               <div
-                className="h-full rounded-full transition-all duration-700 bg-gray"
+                className="h-full rounded-full transition-all duration-1000 ease-out bg-gray"
                 style={{ width: `${achievementRate}%` }}
               />
             </div>
             <div className="flex justify-between items-center px-0.5">
-              <span className="text-[10px] font-bold text-dark opacity-85">
+              <span className="text-[10px] font-bold text-slate-500">
                 달성률
               </span>
-              <span className="text-[11px] font-bold text-dark">
+              <span className="text-[11px] font-extrabold text-primary">
                 {achievementRate}%
               </span>
             </div>
           </div>
         </div>
 
-        {/* 하단 안내 배너 */}
-        <div className="box-custom w-full bg-gray py-2 px-4 flex items-center justify-center gap-1 shrink-0 hide-on-short-screen mt-1">
-          <div className="flex gap-1.5 items-center justify-center text-center w-full select-none text-xs">
+        <div className="box-custom w-full bg-gray py-2 px-4 flex items-center justify-center gap-1 shrink-0 mt-3">
+          <div className="flex gap-1.5 items-center justify-center text-xs">
             {remainingCount > 0 ? (
               <>
-                <span>🔥</span>
-                <h3 className="text-secondary font-bold m-0 text-xs inline">
+                <span className="text-white opacity-90">🔥</span>
+                <span className="text-secondary font-bold">
                   {remainingCount}개 지역
-                </h3>
-                <h3 className="text-white font-bold m-0 text-xs inline">
-                  만 더 가면 완성!
-                </h3>
+                </span>
+                <span className="text-white opacity-90">만 더 가면 완성!</span>
               </>
             ) : (
-              <h3 className="text-white font-bold m-0 text-xs text-center">
+              <span className="text-white font-bold">
                 🎉 대한민국 정복 완료!
-              </h3>
+              </span>
             )}
           </div>
         </div>
