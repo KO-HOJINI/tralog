@@ -15,9 +15,10 @@ export default function PhotoGrid({
   onSaveRecords,
 }: PhotoGridProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // 에러 해결: 렌더링 도중 Ref 접근을 방지하기 위해 파일 이름을 추적하는 전용 State 추가
-  const [uploadedFileName, setUploadedFileName] = useState<string>("선택된 파일 없음");
+  const [uploadedFileName, setUploadedFileName] =
+    useState<string>("선택된 파일 없음");
 
   const currentRecord = mapRecords.find((r) => r.region === regionName) || {
     region: regionName,
@@ -52,12 +53,12 @@ export default function PhotoGrid({
 
       const updatedRecords = mapRecords.some((r) => r.region === regionName)
         ? mapRecords.map((r) =>
-            r.region === regionName ? { ...r, images: updatedImages } : r
+            r.region === regionName ? { ...r, images: updatedImages } : r,
           )
         : [...mapRecords, { region: regionName, images: updatedImages }];
 
       onSaveRecords(updatedRecords);
-      
+
       // 업로드 완료 후 인풋 폼 초기화 및 파일명 안내 초기화
       setUploadedFileName("선택된 파일 없음");
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -71,7 +72,7 @@ export default function PhotoGrid({
     const selectedSrc = currentRecord.images[selectedIndex];
 
     const updatedRecords = mapRecords.map((r) =>
-      r.region === regionName ? { ...r, coverImage: selectedSrc } : r
+      r.region === regionName ? { ...r, coverImage: selectedSrc } : r,
     );
     onSaveRecords(updatedRecords);
     alert(`${regionName}의 대표사진이 지정되었습니다! 지도를 확인해보세요.`);
@@ -159,7 +160,6 @@ export default function PhotoGrid({
               onChange={handleFileChange}
               className="hidden"
             />
-            {/* 에러 해결: ref.current 대신 리액트 컴포넌트 내부 State를 렌더링함 */}
             <div className="flex-1 input-custom px-4 py-2 text-xs flex items-center text-slate-400 truncate bg-pure-white">
               {uploadedFileName}
             </div>

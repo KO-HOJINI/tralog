@@ -1,4 +1,8 @@
+import { geoMercator, geoPath } from "d3-geo";
+import type { FeatureCollection, Feature, Geometry } from "geojson";
 import type { MapRecord } from "./MyMapPage";
+
+import koreaGeoJson from "../../../../public/content/korea-provinces.json";
 
 interface InteractiveMapProps {
   selectedRegion: string | null;
@@ -6,36 +10,41 @@ interface InteractiveMapProps {
   mapRecords: MapRecord[];
 }
 
+interface ProvinceProperties {
+  code: string;
+  name: string;
+  name_eng: string;
+}
+
+// 빌드 타임에 JSON 타입을 GeoJSON 표준 타입 스펙으로 안전하게 단언(Casting)합니다.
+const geoData = koreaGeoJson as unknown as FeatureCollection<
+  Geometry,
+  ProvinceProperties
+>;
+
 export default function InteractiveMap({
   selectedRegion,
   onSelectRegion,
   mapRecords,
 }: InteractiveMapProps) {
-  // 대한민국 대표 주요 행정구역 레이아웃 및 패스 좌표 데이터 설정
-  const regions = [
-    { id: "seoul", name: "서울특별시", d: "M 42,55 L 52,50 L 56,58 L 46,64 Z" },
-    {
-      id: "incheon",
-      name: "인천광역시",
-      d: "M 28,56 L 40,54 L 36,64 L 26,62 Z",
-    },
-    {
-      id: "busan",
-      name: "부산광역시",
-      d: "M 82,130 L 94,124 L 90,136 L 78,140 Z",
-    },
-    {
-      id: "jeju",
-      name: "제주시",
-      d: "M 36,175 Q 56,168 76,175 Q 56,188 36,175 Z",
-    },
-  ];
+  // SVG 도화지 크기 설정
+  const width = 500;
+  const height = 600;
+
+  // 대한민국 중심부 좌표 투영 설정
+  const projection = geoMercator()
+    .center([127.6, 35.9]) // 대한민국의 실제 지리적 중심점 좌표 [경도, 위도]
+    .scale(5800) // 지도의 크기 (줌 레벨)
+    .translate([width / 2, height / 2]); // SVG 박스 정중앙에 위치하도록 평행이동
+
+  // 투영된 좌표를 바탕으로 SVG <path>의 d 속성 문자열을 생성하는 제너레이터
+  const pathGenerator = geoPath().projection(projection);
 
   return (
     <svg
-      viewBox="0 0 120 200"
+      viewBox={`0 0 ${width} ${height}`}
       className="w-full h-full max-h-[520px] select-none"
-      style={{ filter: "drop-shadow(0px 6px 16px rgba(15, 23, 42, 0.04))" }}
+      style={{ filter: "drop-shadow(0px 8px 20px rgba(15, 23, 42, 0.05))" }}
     >
       <defs>
         {mapRecords.map((record) => {
@@ -44,17 +53,16 @@ export default function InteractiveMap({
             <pattern
               key={`pattern-${record.region}`}
               id={`pattern-${record.region}`}
-              patternUnits="userSpaceOnUse"
-              width="100%"
-              height="100%"
-              viewBox="0 0 120 200"
+              patternContentUnits="objectBoundingBox"
+              width="1"
+              height="1"
             >
               <image
                 href={record.coverImage}
                 x="0"
                 y="0"
-                width="120"
-                height="200"
+                width="1"
+                height="1"
                 preserveAspectRatio="xMidYMid slice"
               />
             </pattern>
@@ -62,42 +70,68 @@ export default function InteractiveMap({
         })}
       </defs>
 
-      <g
-        fill="none"
-        stroke="#cbd5e1"
-        strokeWidth="0.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {regions.map((region) => {
-          const record = mapRecords.find((r) => r.region === region.name);
-          const hasCover = record && record.coverImage;
-          const isSelected = selectedRegion === region.name;
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {geoData.features.map(
+          (feature: Feature<Geometry, ProvinceProperties>, index) => {
+            if (!feature.properties) return null;
 
-          return (
-            <path
-              key={region.id}
-              d={region.d}
-              onClick={() => onSelectRegion(isSelected ? null : region.name)}
-              className="cursor-pointer transition-all duration-300"
-              // 대표사진이 있으면 패턴을 입히고 없으면 기본 흰색 채움
-              fill={
-                hasCover
-                  ? `url(#pattern-${region.name})`
-                  : isSelected
-                    ? "rgba(13, 148, 136, 0.15)"
-                    : "#ffffff"
-              }
-              stroke={isSelected ? "#0d9488" : "#e2e8f0"}
-              strokeWidth={isSelected ? "1.5" : "0.7"}
-              style={{
-                filter: isSelected
-                  ? "drop-shadow(0px 0px 4px rgba(13, 148, 136, 0.3))"
-                  : "none",
-              }}
-            />
-          );
-        })}
+            const regionName = feature.properties.name;
+            const record = mapRecords.find((r) => r.region === regionName);
+            const hasCover = record && record.coverImage;
+            const isSelected = selectedRegion === regionName;
+
+            const dPath = pathGenerator(feature) || "";
+
+            // 무게중심 좌표(Centroid) 계산
+            const centroid = pathGenerator.centroid(feature);
+            const labelX = centroid ? centroid[0] : 0;
+            const labelY = centroid ? centroid[1] : 0;
+
+            return (
+              <g key={index} className="group">
+                <path
+                  d={dPath}
+                  onClick={() => onSelectRegion(isSelected ? null : regionName)}
+                  className="cursor-pointer transition-all duration-200 hover:fill-teal-500/10"
+                  fill={
+                    hasCover
+                      ? `url(#pattern-${regionName})`
+                      : isSelected
+                        ? "rgba(13, 148, 136, 0.18)"
+                        : "#ffffff"
+                  }
+                  stroke={isSelected ? "#0d9488" : "#cbd5e1"}
+                  strokeWidth={isSelected ? "2" : "0.8"}
+                  style={{
+                    filter: isSelected
+                      ? "drop-shadow(0px 0px 8px rgba(13, 148, 136, 0.4))"
+                      : "none",
+                  }}
+                />
+
+                {labelX && labelY && (
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    className={`pointer-events-none text-[10px] font-bold transition-all duration-200 ${
+                      isSelected
+                        ? "fill-teal-700 text-[11px]"
+                        : "fill-slate-500"
+                    } ${
+                      hasCover
+                        ? "fill-white font-extrabold drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.95)] text-[10px]"
+                        : ""
+                    }`}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {regionName.slice(0, 2)}
+                  </text>
+                )}
+              </g>
+            );
+          },
+        )}
       </g>
     </svg>
   );

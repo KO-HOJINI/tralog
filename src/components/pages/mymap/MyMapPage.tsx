@@ -11,7 +11,7 @@ interface UserSession {
 
 export interface MapRecord {
   region: string;
-  images: string[];    // 업로드된 이미지들의 Base64 데이터 스트링 배열
+  images: string[]; // 업로드된 이미지들의 Base64 데이터 스트링 배열
   coverImage?: string; // 유저가 대표사진으로 선택한 이미지
 }
 
@@ -45,7 +45,10 @@ export default function MyMapPage({
   const saveRecords = (updated: MapRecord[]) => {
     if (!currentUser) return;
     setMapRecords(updated);
-    localStorage.setItem(`tralog_map_${currentUser.id}`, JSON.stringify(updated));
+    localStorage.setItem(
+      `tralog_map_${currentUser.id}`,
+      JSON.stringify(updated),
+    );
   };
 
   const handleLogout = () => {

@@ -7,11 +7,25 @@ export default function MyMapHistory({
   onSelectRegion,
   onNavigate,
 }: MyMapHistoryProps) {
+  // 대한민국 표준 17개 광역지자체 풀 리스트 동기화
   const travelHistory = [
-    { name: "인천광역시" },
     { name: "서울특별시" },
+    { name: "인천광역시" },
+    { name: "경기도" },
+    { name: "강원특별자치도" },
+    { name: "충청북도" },
+    { name: "충청남도" },
+    { name: "세종특별자치시" },
+    { name: "대전광역시" },
+    { name: "경상북도" },
+    { name: "대구광역시" },
+    { name: "울산광역시" },
     { name: "부산광역시" },
-    { name: "제주시" },
+    { name: "경상남도" },
+    { name: "전북특별자치도" },
+    { name: "광주광역시" },
+    { name: "전라남도" },
+    { name: "제주특별자치도" },
   ];
 
   return (
@@ -22,7 +36,7 @@ export default function MyMapHistory({
       </div>
 
       {/* 스크롤 리스트 바디 */}
-      <div className="flex-1 overflow-y-auto pr-1 scrollbar space-y-4">
+      <div className="flex-1 overflow-y-auto pr-1 scrollbar space-y-4 max-h-[calc(100vh-180px)]">
         {/* 지역 추가 카드 상단 고정 */}
         <div className="bg-primary text-pure-white box-custom p-5 flex items-center justify-between shadow-card">
           <div className="flex items-center gap-2 select-none">
@@ -47,7 +61,6 @@ export default function MyMapHistory({
               {history.name}
             </span>
             <div className="flex items-center gap-3">
-              {/* 버튼 배경 색상을 요구사항에 맞춰 bg-gray로 적용 */}
               <button
                 onClick={() => onNavigate("schedule")}
                 className="btn-custom bg-gray text-pure-white px-4 py-2 text-xs font-medium"
