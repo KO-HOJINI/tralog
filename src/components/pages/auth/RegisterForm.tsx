@@ -5,14 +5,6 @@ interface RegisterFormProps {
   onToggleLogin: () => void;
 }
 
-interface UserData {
-  id: string;
-  password?: string;
-  name?: string;
-  birth?: string;
-  email?: string;
-}
-
 export default function RegisterForm({
   onRegisterSuccess,
   onToggleLogin,
@@ -35,7 +27,7 @@ export default function RegisterForm({
     email: "",
   });
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const newErrors = {
@@ -82,34 +74,38 @@ export default function RegisterForm({
     setErrors(newErrors);
     if (!isValid) return;
 
-    /* 🛠️ 해결 지점: 기존 'any[]' 대신 'UserData[]'로 로컬 스토리지 데이터 타입을 명시합니다. */
-    const existingUsers: UserData[] = JSON.parse(
-      localStorage.getItem("tralog_users_list") || "[]",
-    );
+    // 🛠️ 변경 지점: 로컬스토리지 코드를 제거하고 Node.js 백엔드 API 연동
+    try {
+      const response = await fetch("http://localhost:5000/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id: formData.id,
+          password: formData.password,
+          name: formData.name,
+          birth: formData.birth,
+          email: formData.email,
+        }),
+      });
 
-    /* 🛠️ 해결 지점: 'user: any'로 선언되어 린트 에러를 내뿜던 부분을 'user: UserData' 타입으로 안전하게 교체했습니다. */
-    const isIdTaken = existingUsers.some(
-      (user: UserData) => user.id === formData.id,
-    );
+      const data = await response.json();
 
-    if (isIdTaken) {
-      setErrors((prev) => ({ ...prev, id: "이미 사용 중인 아이디입니다." }));
-      return;
+      if (response.ok) {
+        alert("회원가입이 완료되었습니다!");
+        onRegisterSuccess();
+      } else {
+        // 서버에서 던져준 아이디 중복 에러 메시지 처리
+        setErrors((prev) => ({
+          ...prev,
+          id: data.message || "오류가 발생했습니다.",
+        }));
+      }
+    } catch (error) {
+      console.error("서버 통신 오류:", error);
+      alert("백엔드 서버가 켜져 있는지 확인해 주세요.");
     }
-
-    const newUser: UserData = {
-      id: formData.id,
-      password: formData.password,
-      name: formData.name,
-      birth: formData.birth,
-      email: formData.email,
-    };
-
-    existingUsers.push(newUser);
-    localStorage.setItem("tralog_users_list", JSON.stringify(existingUsers));
-
-    alert("회원가입이 완료되었습니다!");
-    onRegisterSuccess();
   };
 
   return (

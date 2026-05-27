@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ScheduleCard from "./ScheduleCard";
 
+// 1. dDay의 '?' 옵셔널 마크 제거 (에러 79번 해결)
 interface TravelSchedule {
   id: string;
   title: string;
@@ -9,6 +10,15 @@ interface TravelSchedule {
   endDate: string;
   dDay: string;
   bgImage?: string;
+}
+
+// 2. DB에서 넘어오는 데이터 타입 명시 (에러 32번 'any' 해결)
+interface DBSchedule {
+  id: string;
+  title: string;
+  region: string;
+  start_date: string;
+  end_date: string;
 }
 
 interface ScheduleListProps {
@@ -20,15 +30,46 @@ export default function ScheduleList({
   userId,
   onNavigate,
 }: ScheduleListProps) {
-  const [prevUserId, setPrevUserId] = useState<string>(userId);
-  const [schedules, setSchedules] = useState<TravelSchedule[]>(() =>
-    getInitialSchedules(userId),
-  );
+  const [schedules, setSchedules] = useState<TravelSchedule[]>([]);
 
-  if (userId !== prevUserId) {
-    setPrevUserId(userId);
-    setSchedules(getInitialSchedules(userId));
-  }
+  useEffect(() => {
+    if (!userId) return;
+
+    fetch(`http://localhost:5000/api/schedules/active/${userId}`)
+      .then((res) => res.json())
+      .then((data: DBSchedule[]) => {
+        // data를 DBSchedule 배열로 타이핑하여 any 제거
+        const formattedSchedules = data.map((item) => {
+          // D-Day 계산 로직
+          const today = new Date();
+          // 시간을 자정으로 맞춰서 순수 날짜만 비교
+          today.setHours(0, 0, 0, 0);
+          const start = new Date(item.start_date);
+          start.setHours(0, 0, 0, 0);
+
+          const diffTime = start.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          const dDayString =
+            diffDays > 0
+              ? `D-${diffDays}`
+              : diffDays === 0
+                ? "D-Day"
+                : `D+${Math.abs(diffDays)}`;
+
+          return {
+            id: item.id,
+            title: item.title,
+            location: item.region,
+            startDate: item.start_date.split("T")[0],
+            endDate: item.end_date.split("T")[0],
+            dDay: dDayString,
+          };
+        });
+        setSchedules(formattedSchedules);
+      })
+      .catch((err) => console.error("일정 로드 오류:", err));
+  }, [userId]);
 
   return (
     <div className="flex-col-full gap-5">
@@ -82,7 +123,6 @@ export default function ScheduleList({
               onClick={() => onNavigate("schedule")}
               className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-slate-600 transition-all group rounded-[inherit]"
             >
-              {/* 🛠️ text-number-accent 유틸리티 매핑 */}
               <span className="text-number-accent font-light p-3 bg-white rounded-full shadow-sm group-hover:scale-110 transition-transform flex items-center justify-center w-12 h-12 border border-slate-100">
                 +
               </span>
@@ -95,69 +135,4 @@ export default function ScheduleList({
   );
 }
 
-function getInitialSchedules(userId: string): TravelSchedule[] {
-  const key = `tralog_schedules_${userId}`;
-  const stored = localStorage.getItem(key);
-  let parsed: TravelSchedule[] = [];
-
-  if (stored) {
-    try {
-      parsed = JSON.parse(stored);
-    } catch {
-      parsed = [];
-    }
-  }
-
-  const isOldData =
-    parsed.length > 0 &&
-    (parsed.length !== 4 || !parsed[0].dDay || !parsed[0].bgImage);
-
-  if (parsed.length === 0 || isOldData || userId === "admin") {
-    const mockSchedules: TravelSchedule[] = [
-      {
-        id: "s-1",
-        title: "에메랄드빛 제주 바다 여행",
-        location: "제주특별자치도 제주시 협재",
-        startDate: "2026-06-15",
-        endDate: "2026-06-18",
-        dDay: "D-23",
-        bgImage:
-          "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-      },
-      {
-        id: "s-2",
-        title: "고즈넉한 경주 야경 산책",
-        location: "경상북도 경주시",
-        startDate: "2026-09-04",
-        endDate: "2026-09-06",
-        dDay: "D-104",
-        bgImage:
-          "https://images.unsplash.com/photo-1624956578877-2e11e03214bc?auto=format&fit=crop&w=600&q=80",
-      },
-      {
-        id: "s-3",
-        title: "부산 광안리 해변과 식도락 투어",
-        location: "부산광역시 수영구",
-        startDate: "2026-10-10",
-        endDate: "2026-10-12",
-        dDay: "D-140",
-        bgImage:
-          "https://images.unsplash.com/photo-1578052445100-3486df1f524d?auto=format&fit=crop&w=600&q=80",
-      },
-      {
-        id: "s-4",
-        title: "강릉 안목해변 커피거리 휴가",
-        location: "강원특별자치도 강릉시",
-        startDate: "2026-11-20",
-        endDate: "2026-11-22",
-        dDay: "D-181",
-        bgImage:
-          "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&w=600&q=80",
-      },
-    ];
-    localStorage.setItem(key, JSON.stringify(mockSchedules));
-    return mockSchedules;
-  }
-
-  return parsed;
-}
+// 3. 에러 111번의 원인이었던 getInitialSchedules 함수는 더 이상 필요하지 않으므로 완전히 삭제했습니다.

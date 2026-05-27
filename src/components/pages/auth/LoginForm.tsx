@@ -14,7 +14,7 @@ export default function LoginForm({
   const [idError, setIdError] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
 
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIdError("");
     setPasswordError("");
@@ -30,27 +30,39 @@ export default function LoginForm({
     }
     if (!isValid) return;
 
-    const existingUsers = JSON.parse(
-      localStorage.getItem("tralog_users_list") || "[]",
-    );
-    const matchedUser = existingUsers.find(
-      (user: { id: string }) => user.id === id,
-    );
+    // 🛠️ 변경 지점: 로컬스토리지의 유저 탐색 코드를 지우고 백엔드 API 연동
+    try {
+      const response = await fetch("http://localhost:5000/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ id, password }),
+      });
 
-    if (!matchedUser) {
-      setIdError("등록되지 않은 아이디입니다.");
-      return;
-    }
-    if (matchedUser.password !== password) {
-      setPasswordError("비밀번호가 일치하지 않습니다.");
-      return;
-    }
+      const data = await response.json();
 
-    localStorage.setItem(
-      "tralog_current_user",
-      JSON.stringify({ id: matchedUser.id, name: matchedUser.name || id }),
-    );
-    onLoginSuccess();
+      if (response.ok) {
+        // 현재 유저의 상태 관리를 위한 대시보드 호환용 세션 저장 (id, name 보관)
+        localStorage.setItem(
+          "tralog_current_user",
+          JSON.stringify({ id: data.id, name: data.name }),
+        );
+        onLoginSuccess();
+      } else {
+        // 서버에서 가공해 보낸 정밀 필드 에러 맵핑
+        if (data.field === "id") {
+          setIdError(data.message);
+        } else if (data.field === "password") {
+          setPasswordError(data.message);
+        } else {
+          alert(data.message || "로그인 실패");
+        }
+      }
+    } catch (error) {
+      console.error("서버 통신 오류:", error);
+      alert("백엔드 서버가 작동 중인지 확인해 주세요.");
+    }
   };
 
   return (

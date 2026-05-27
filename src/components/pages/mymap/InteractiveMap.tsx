@@ -2,8 +2,7 @@ import { geoMercator, geoPath } from "d3-geo";
 import type { FeatureCollection, Feature, Geometry } from "geojson";
 import type { MapRecord } from "./MyMapPage";
 
-// GeoJSON 파일 로드
-import koreaGeoJson from "../../../../public/content/korea-provinces.json";
+import koreaGeoJson from "../../content/korea-provinces.json";
 
 interface InteractiveMapProps {
   selectedRegion: string | null;
@@ -139,7 +138,7 @@ export default function InteractiveMap({
             const centroid = pathGenerator.centroid(feature);
             let [labelX, labelY] = centroid || [0, 0];
 
-            // 라벨 오프셋 정밀 미세 조정
+            // 라벨 오프셋 조정
             if (regionKey === "경기도") {
               labelX += 16;
               labelY += 40;
@@ -156,7 +155,7 @@ export default function InteractiveMap({
             }
             if (regionKey === "제주특별자치도") {
               labelY += 5;
-            } // 독립 박스 정중앙 정렬
+            }
 
             return (
               <g key={index}>
