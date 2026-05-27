@@ -1,5 +1,8 @@
+// src/components/pages/dashboard/MapOverview.tsx
+import { useState, useEffect } from "react";
 import InteractiveMap from "../mymap/InteractiveMap";
 import type { MapRecord } from "../mymap/MyMapPage";
+import { API_BASE_URL } from "../../../config/api";
 
 interface MapOverviewProps {
   userId: string;
@@ -7,8 +10,16 @@ interface MapOverviewProps {
 }
 
 export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
-  const storedData = localStorage.getItem(`tralog_map_${userId}`);
-  const mapRecords: MapRecord[] = storedData ? JSON.parse(storedData) : [];
+  // ✅ Fix: localStorage 대신 DB에서 mapRecords를 fetch
+  const [mapRecords, setMapRecords] = useState<MapRecord[]>([]);
+
+  useEffect(() => {
+    if (!userId) return;
+    fetch(`${API_BASE_URL}/api/map/records/${userId}`)
+      .then((res) => res.json())
+      .then((data: MapRecord[]) => setMapRecords(data))
+      .catch((err) => console.error("지도 기록 로드 오류:", err));
+  }, [userId]);
 
   const visitedCount = mapRecords.filter(
     (r) => r.images && r.images.length > 0,
@@ -24,10 +35,9 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
         onClick={() => onNavigate("mymap")}
         className="box-custom flex-1 h-0 w-full card-map-theme relative group cursor-pointer overflow-hidden flex items-center justify-center p-0"
       >
-        {/* 내부 컨테이너 패딩 조절 및 반응형 정렬 구조 변경 */}
         <div className="w-full h-full bg-white/10 backdrop-blur-xs flex flex-col items-center justify-center relative p-4">
-          {/* 지도가 상하단으로 절대 잘리지 않도록 가로 세로 최대 높이를 균형있게 제한 */}
           <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden">
+            {/* ✅ DB에서 받아온 mapRecords 전달 → 커버이미지 반영됨 */}
             <InteractiveMap
               selectedRegion={null}
               onSelectRegion={() => {}}
@@ -36,14 +46,13 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
             />
           </div>
 
-          {/* 하단 플로팅 라벨 */}
           <span className="absolute bottom-3 text-[11px] font-bold text-slate-700/80 bg-white/70 px-4 py-1.5 rounded-full backdrop-blur-md shadow-sm border border-white/40 group-hover:bg-primary group-hover:text-white transition-all">
             🗺️ 지도를 눌러 추억 기록하기
           </span>
         </div>
       </div>
 
-      {/* 달성률 카드 (기존 테마 및 규격 유지) */}
+      {/* 달성률 카드 */}
       <div
         onClick={() => onNavigate("mymap")}
         className="box-custom h-fit w-full card-achieve-theme cursor-pointer hover:scale-[1.01] transition-transform"

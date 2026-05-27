@@ -1,4 +1,6 @@
+// src/components/pages/mymap/PhotoGrid.tsx
 import React, { useState, useRef } from "react";
+import { API_BASE_URL } from "../../../config/api";
 import type { MapRecord } from "./MyMapPage";
 
 interface PhotoGridProps {
@@ -19,7 +21,9 @@ export default function PhotoGrid({
     useState<string>("선택된 파일 없음");
   const [isUploading, setIsUploading] = useState<boolean>(false);
 
-  const currentRecord = mapRecords.find((r) => r.region === regionName) || {
+  // ✅ Fix 1: currentRecord를 mapRecords prop 기반으로 매 렌더마다 재계산
+  // (이전에는 useState 초기값으로만 설정되어 onRefresh 후 갱신이 안 됐음)
+  const currentRecord = mapRecords.find((r) => r.region === regionName) ?? {
     region: regionName,
     images: [],
     coverImage: "",
@@ -27,6 +31,7 @@ export default function PhotoGrid({
 
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
+  // ✅ Fix 2: 업로드 후 selectedIndex를 초기화하여 이전 선택이 잘못된 인덱스를 가리키는 문제 방지
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -37,11 +42,15 @@ export default function PhotoGrid({
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
+
+      // ✅ Fix 3: active schedule ID가 없을 경우 "direct-{region}" 형식으로 fallback
+      // server.js의 direct- prefix 처리 로직과 일치시킴
       const activeScheduleId =
-        localStorage.getItem("tralog_active_schedule_id") || "s-1";
+        localStorage.getItem("tralog_active_schedule_id") ||
+        `direct-${regionName}`;
 
       try {
-        const response = await fetch("http://localhost:5000/api/map/upload", {
+        const response = await fetch(`${API_BASE_URL}/api/map/upload`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -52,10 +61,9 @@ export default function PhotoGrid({
         });
 
         if (response.ok) {
-          alert("사진이 DB에 안전하게 저장되었습니다!");
-          onRefresh();
+          setSelectedIndex(null); // 업로드 완료 시 선택 초기화
+          onRefresh(); // 부모에서 mapRecords를 다시 fetch → currentRecord 자동 갱신
         } else {
-          // 💡 에러의 정확한 원인을 파싱해서 화면에 띄워줍니다.
           const errorData = await response.json().catch(() => ({}));
           const errorMsg =
             errorData.error || errorData.message || "알 수 없는 에러";
@@ -63,9 +71,11 @@ export default function PhotoGrid({
             `❌ 서버 업로드 실패\n상태 코드: ${response.status}\n원인: ${errorMsg}`,
           );
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "알 수 없는 오류";
         console.error("업로드 에러:", error);
-        alert(`🚨 서버 연결 실패: ${error.message}`);
+        alert(`🚨 서버 연결 실패: ${message}`);
       } finally {
         setIsUploading(false);
         setUploadedFileName("선택된 파일 없음");
@@ -80,10 +90,11 @@ export default function PhotoGrid({
     if (selectedIndex === null) return;
     const selectedSrc = currentRecord.images[selectedIndex];
     const activeScheduleId =
-      localStorage.getItem("tralog_active_schedule_id") || "s-1";
+      localStorage.getItem("tralog_active_schedule_id") ||
+      `direct-${regionName}`;
 
     try {
-      const response = await fetch("http://localhost:5000/api/map/cover", {
+      const response = await fetch(`${API_BASE_URL}/api/map/cover`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,6 +106,7 @@ export default function PhotoGrid({
 
       if (response.ok) {
         alert(`${regionName}의 대표 사진이 지도로 반영되었습니다!`);
+        setSelectedIndex(null);
         onRefresh();
       }
     } catch (error) {
@@ -102,8 +114,39 @@ export default function PhotoGrid({
     }
   };
 
+  // ✅ Fix 4: 사진 삭제 기능 추가 (기존 코드에 없던 프론트 연동)
+  const handleDeletePhoto = async () => {
+    if (selectedIndex === null) return;
+    if (!window.confirm("선택한 사진을 삭제하시겠습니까?")) return;
+
+    const selectedSrc = currentRecord.images[selectedIndex];
+    const activeScheduleId =
+      localStorage.getItem("tralog_active_schedule_id") ||
+      `direct-${regionName}`;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/map/photo`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          schedule_id: activeScheduleId,
+          region: regionName,
+          image_data: selectedSrc,
+        }),
+      });
+
+      if (response.ok) {
+        setSelectedIndex(null);
+        onRefresh();
+      }
+    } catch (error) {
+      console.error("삭제 에러:", error);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full h-full min-h-0 overflow-hidden">
+      {/* 헤더 */}
       <div className="bg-pure-white box-custom p-5 shadow-card flex items-center justify-between shrink-0">
         <h2 className="m-0">상세 사진</h2>
         <button
@@ -115,19 +158,31 @@ export default function PhotoGrid({
       </div>
 
       <div className="flex-1 bg-pure-white box-custom p-6 shadow-card flex flex-col min-h-0 overflow-hidden">
+        {/* 상단 컨트롤 바 */}
         <div className="bg-primary box-custom p-4 mb-5 flex items-center justify-between shrink-0">
           <span className="text-body-main font-bold text-pure-white">
             {regionName} ({currentRecord.images.length}장)
           </span>
-          <button
-            onClick={handleSetCover}
-            disabled={selectedIndex === null || isUploading}
-            className="btn-custom bg-secondary text-pure-white px-4 py-1.5 text-body-caption font-bold shadow-sm disabled:opacity-50"
-          >
-            대표사진 선택
-          </button>
+          <div className="flex gap-2">
+            {/* ✅ 삭제 버튼 추가 */}
+            <button
+              onClick={handleDeletePhoto}
+              disabled={selectedIndex === null || isUploading}
+              className="btn-custom bg-red-400 text-pure-white px-4 py-1.5 text-body-caption font-bold shadow-sm disabled:opacity-40"
+            >
+              사진 삭제
+            </button>
+            <button
+              onClick={handleSetCover}
+              disabled={selectedIndex === null || isUploading}
+              className="btn-custom bg-secondary text-pure-white px-4 py-1.5 text-body-caption font-bold shadow-sm disabled:opacity-50"
+            >
+              대표사진 선택
+            </button>
+          </div>
         </div>
 
+        {/* 사진 그리드 영역 */}
         <div className="flex-1 min-h-0 overflow-y-auto scrollbar pr-1 mb-5">
           {currentRecord.images.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-body-main text-gray select-none opacity-60">
@@ -141,8 +196,10 @@ export default function PhotoGrid({
                 const isCover = currentRecord.coverImage === imgSrc;
                 return (
                   <div
-                    key={index}
-                    onClick={() => setSelectedIndex(index)}
+                    key={`${imgSrc.slice(-20)}-${index}`}
+                    onClick={() =>
+                      setSelectedIndex(isSelected ? null : index)
+                    }
                     className={`aspect-square rounded-[24px] overflow-hidden relative border-2 cursor-pointer transition-all ${
                       isSelected
                         ? "border-primary scale-[0.98] shadow-md"
@@ -155,9 +212,9 @@ export default function PhotoGrid({
                       src={
                         imgSrc.startsWith("data:")
                           ? imgSrc
-                          : `http://localhost:5000${imgSrc}`
+                          : `${API_BASE_URL}${imgSrc}`
                       }
-                      alt="Travel moment"
+                      alt={`${regionName} 여행 사진 ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
                     <div
@@ -178,6 +235,7 @@ export default function PhotoGrid({
           )}
         </div>
 
+        {/* 하단 업로드 영역 */}
         <div className="border-t border-slate-100/80 pt-4 flex flex-col gap-2 shrink-0">
           <label className="text-body-caption font-bold text-dark">
             사진 추가 업로드{" "}

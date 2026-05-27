@@ -1,10 +1,13 @@
+// src/components/pages/dashboard/DashboardPage.tsx
 import { useState, useEffect } from "react";
 import NavBar from "../../Navbar";
 import MapOverview from "./MapOverview";
 import ScheduleList from "./ScheduleList";
 
 interface DashboardPageProps {
-  onNavigate: (page: string) => void;
+  // ✅ Fix: App.tsx의 onNavigate도 scheduleId를 받을 수 있어야 합니다.
+  // App.tsx에서 onNavigate 함수 시그니처를 (page: string, scheduleId?: string) => void 로 수정하세요.
+  onNavigate: (page: string, scheduleId?: string) => void;
 }
 
 interface UserSession {

@@ -144,7 +144,7 @@ export default function InteractiveMap({
               labelY += 40;
             }
             if (regionKey === "인천광역시") {
-              labelX -= 15;
+              labelX += 20;
               labelY += 15;
             }
             if (regionKey === "충청남도") {

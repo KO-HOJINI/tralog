@@ -1,24 +1,24 @@
 import "./App.css";
 import { useState } from "react";
-// 폴더 구조 설계 단계에서 계획한 페이지 컴포넌트들을 미리 임포트합니다.
-// (아직 파일들을 만들지 않았다면 에러가 날 수 있으니 임시로 아래에 더미 컴포넌트를 만들어 두었습니다.)
 import LoginPage from "./components/pages/auth/LoginPage";
 import DashboardPage from "./components/pages/dashboard/DashboardPage";
 import MyMapPage from "./components/pages/mymap/MyMapPage";
 import HandleSchedulePage from "./components/pages/schedule/HandleSchedulePage";
 
-export default App;
 function App() {
-  // 현재 어떤 페이지를 보여줄지 제어하는 상태 (기본값: 'login')
-  // 'login' | 'dashboard' | 'mymap' | 'schedule'
   const [currentPage, setCurrentPage] = useState<string>("login");
 
-  // 페이지 이동을 쉽게 도와주는 함수
-  const navigateTo = (pageName: string) => {
+  // ✅ Fix: scheduleId를 받아서 localStorage에 저장 후 페이지 이동
+  // "schedule" 페이지로 이동하면 새 일정이므로 localStorage를 초기화
+  const navigateTo = (pageName: string, scheduleId?: string) => {
+    if (scheduleId) {
+      localStorage.setItem("tralog_active_schedule_id", scheduleId);
+    } else if (pageName === "schedule") {
+      localStorage.removeItem("tralog_active_schedule_id");
+    }
     setCurrentPage(pageName);
   };
 
-  // 현재 상태(currentPage)에 따라 해당 페이지 컴포넌트를 리턴하는 로직
   const renderPage = () => {
     switch (currentPage) {
       case "login":
@@ -27,7 +27,9 @@ function App() {
         return <DashboardPage onNavigate={navigateTo} />;
       case "mymap":
         return <MyMapPage onNavigate={navigateTo} />;
+      // ✅ Fix: "schedule"과 "handleschedule" 둘 다 HandleSchedulePage로 연결
       case "schedule":
+      case "handleschedule":
         return <HandleSchedulePage onNavigate={navigateTo} />;
       default:
         return <LoginPage onNavigate={navigateTo} />;
@@ -36,10 +38,9 @@ function App() {
 
   return (
     <div className="App min-h-screen bg-base-100 font-sans">
-      {/* 상태에 따라 바뀌는 페이지가 여기에 렌더링됩니다 */}
       {renderPage()}
 
-      {/* 과제 개발 및 시연 편의용 테스트 내비게이터 바 (나중에 지우셔도 됩니다) */}
+      {/* 개발용 테스트 네비게이터 */}
       <div className="fixed bottom-4 right-4 bg-neutral text-neutral-content p-2 rounded-xl shadow-custom text-xs flex gap-2 z-50 opacity-50 hover:opacity-100 transition-opacity">
         <span className="font-bold self-center">test:</span>
         <button
@@ -61,7 +62,7 @@ function App() {
           나만의지도
         </button>
         <button
-          onClick={() => navigateTo("schedule")}
+          onClick={() => navigateTo("handleschedule")}
           className="btn btn-xs btn-primary text-white"
         >
           일정편집
@@ -70,3 +71,5 @@ function App() {
     </div>
   );
 }
+
+export default App;

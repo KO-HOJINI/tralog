@@ -1,9 +1,10 @@
-// MyMapHistory.tsx 풀코드
+// src/components/pages/mymap/MyMapHistory.tsx
 import { useState, useEffect } from "react";
+import { API_BASE_URL } from "../../../config/api";
 
 interface MyMapHistoryProps {
   onSelectRegion: (region: string) => void;
-  onNavigate: (page: string) => void;
+  onNavigate: (page: string, scheduleId?: string) => void;
 }
 
 interface ScheduleRow {
@@ -14,25 +15,11 @@ interface ScheduleRow {
   end_date: string;
 }
 
-// 대한민국 대표 행정구역 리스트 (InteractiveMap 매핑용)
 const REGION_OPTIONS = [
-  "서울특별시",
-  "부산광역시",
-  "대구광역시",
-  "인천광역시",
-  "광주광역시",
-  "대전광역시",
-  "울산광역시",
-  "세종특별자치시",
-  "경기도",
-  "강원특별자치도",
-  "충청북도",
-  "충청남도",
-  "전라북도",
-  "전라남도",
-  "경상북도",
-  "경상남도",
-  "제주특별자치도",
+  "서울특별시", "부산광역시", "대구광역시", "인천광역시",
+  "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
+  "경기도", "강원특별자치도", "충청북도", "충청남도",
+  "전라북도", "전라남도", "경상북도", "경상남도", "제주특별자치도",
 ];
 
 export default function MyMapHistory({
@@ -40,44 +27,68 @@ export default function MyMapHistory({
   onNavigate,
 }: MyMapHistoryProps) {
   const [historyList, setHistoryList] = useState<ScheduleRow[]>([]);
-  const [isAddingSection, setIsAddingSection] = useState<boolean>(false);
-  const [selectedNewRegion, setSelectedNewRegion] = useState<string>("");
+  const [isAddingSection, setIsAddingSection] = useState(false);
+  const [selectedNewRegion, setSelectedNewRegion] = useState("");
+  // ✅ 삭제 중인 항목 ID 추적 (버튼 중복 클릭 방지)
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
+  const loadHistory = () => {
     const session = localStorage.getItem("tralog_current_user");
     if (!session) return;
     const user = JSON.parse(session);
 
-    // 백엔드로부터 완료된 지난 여정 리스트 로드
-    fetch(`http://localhost:5000/api/schedules/history/${user.id}`)
+    fetch(`${API_BASE_URL}/api/schedules/history/${user.id}`)
       .then((res) => res.json())
       .then((data) => setHistoryList(data))
       .catch((err) => console.error("히스토리 로드 오류:", err));
+  };
+
+  useEffect(() => {
+    loadHistory();
   }, []);
 
   const handleViewSchedule = (scheduleId: string) => {
     localStorage.setItem("tralog_active_schedule_id", scheduleId);
-    onNavigate("handleschedule");
+    onNavigate("handleschedule", scheduleId);
   };
 
-  // 일정 없는 지역 사진 직접 추가 처리
+  // ✅ 일정 삭제 핸들러 (DB 연동)
+  const handleDeleteSchedule = async (scheduleId: string, title: string) => {
+    if (!window.confirm(`"${title}" 일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.`)) return;
+
+    setDeletingId(scheduleId);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        // 로컬 상태에서 즉시 제거 (re-fetch 없이 빠른 UI 반응)
+        setHistoryList((prev) => prev.filter((h) => h.id !== scheduleId));
+      } else {
+        const err = await res.json().catch(() => ({}));
+        alert(`삭제 실패: ${err.message || "서버 오류"}`);
+      }
+    } catch (e) {
+      alert("서버 연결 오류가 발생했습니다.");
+      console.error("삭제 오류:", e);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleDirectRegionSubmit = () => {
     if (!selectedNewRegion) {
       alert("기록을 추가할 지역을 선택해 주세요.");
       return;
     }
-
-    // 💡 중요: 업로드 실패를 방지하기 위해 가상 스케줄 ID를 부여하여 매핑 유도
-    localStorage.setItem(
-      "tralog_active_schedule_id",
-      `direct-${selectedNewRegion}`,
-    );
+    localStorage.setItem("tralog_active_schedule_id", `direct-${selectedNewRegion}`);
     onSelectRegion(selectedNewRegion);
   };
 
   return (
     <div className="flex-col-full gap-4">
-      {/* 타이틀 헤더 영역 */}
+      {/* 타이틀 헤더 */}
       <div className="flex flex-col gap-0.5 px-1 shrink-0 select-none">
         <h2>나의 여행 기록 히스토리</h2>
         <p className="text-body-caption text-slate-400">
@@ -87,7 +98,7 @@ export default function MyMapHistory({
 
       {/* 리스트 스크롤 영역 */}
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar pr-1 flex flex-col gap-3">
-        {/* 맨 윗줄: 일정 미생성 지역 사진 추가 카드 */}
+        {/* 일정 미생성 지역 직접 추가 카드 */}
         {!isAddingSection ? (
           <div
             onClick={() => setIsAddingSection(true)}
@@ -107,10 +118,7 @@ export default function MyMapHistory({
                 📍 추억을 기록할 새로운 지역 선택
               </span>
               <button
-                onClick={() => {
-                  setIsAddingSection(false);
-                  setSelectedNewRegion("");
-                }}
+                onClick={() => { setIsAddingSection(false); setSelectedNewRegion(""); }}
                 className="text-slate-400 hover:text-dark text-xs font-medium transition-colors"
               >
                 취소
@@ -124,9 +132,7 @@ export default function MyMapHistory({
               >
                 <option value="">-- 지역을 선택하세요 --</option>
                 {REGION_OPTIONS.map((reg) => (
-                  <option key={reg} value={reg}>
-                    {reg}
-                  </option>
+                  <option key={reg} value={reg}>{reg}</option>
                 ))}
               </select>
               <button
@@ -139,7 +145,7 @@ export default function MyMapHistory({
           </div>
         )}
 
-        {/* 기존 히스토리 리스트 렌더링 */}
+        {/* 히스토리 리스트 */}
         {historyList.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-slate-400 select-none text-sm">
             아직 완료된 일정 기록이 없습니다.
@@ -159,8 +165,8 @@ export default function MyMapHistory({
                   {history.end_date.split("T")[0]})
                 </span>
               </div>
-              {/* 🎨 버튼 스타일 통일 완료 */}
-              <div className="flex items-center gap-3">
+
+              <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => handleViewSchedule(history.id)}
                   className="btn btn-custom h-9 px-4 bg-gray text-white text-body-caption font-bold transition-all"
@@ -172,6 +178,14 @@ export default function MyMapHistory({
                   className="btn btn-custom h-9 px-4 bg-secondary text-white text-body-caption font-bold transition-all shadow-xs"
                 >
                   사진 보기
+                </button>
+                {/* ✅ 삭제 버튼 추가 */}
+                <button
+                  onClick={() => handleDeleteSchedule(history.id, history.title)}
+                  disabled={deletingId === history.id}
+                  className="btn btn-custom h-9 px-3 bg-red-50 hover:bg-red-100 text-red-500 text-body-caption font-bold transition-all border border-red-200/60 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {deletingId === history.id ? "삭제 중..." : "🗑️ 삭제"}
                 </button>
               </div>
             </div>
