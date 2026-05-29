@@ -8,13 +8,18 @@ import HandleSchedulePage from "./components/pages/schedule/HandleSchedulePage";
 function App() {
   const [currentPage, setCurrentPage] = useState<string>("login");
 
-  // ✅ Fix: scheduleId를 받아서 localStorage에 저장 후 페이지 이동
-  // "schedule" 페이지로 이동하면 새 일정이므로 localStorage를 초기화
+  // ✅ 상태로 활성화된 일정 ID를 관리하여 변경 시 리렌더링을 유도
+  const [activeScheduleId, setActiveScheduleId] = useState<string | undefined>(
+    () => localStorage.getItem("tralog_active_schedule_id") || undefined,
+  );
+
   const navigateTo = (pageName: string, scheduleId?: string) => {
     if (scheduleId) {
       localStorage.setItem("tralog_active_schedule_id", scheduleId);
-    } else if (pageName === "schedule") {
-      localStorage.removeItem("tralog_active_schedule_id");
+      setActiveScheduleId(scheduleId);
+    } else if (pageName === "schedule" || pageName === "handleschedule") {
+      const localId = localStorage.getItem("tralog_active_schedule_id");
+      if (localId) setActiveScheduleId(localId);
     }
     setCurrentPage(pageName);
   };
@@ -27,10 +32,16 @@ function App() {
         return <DashboardPage onNavigate={navigateTo} />;
       case "mymap":
         return <MyMapPage onNavigate={navigateTo} />;
-      // ✅ Fix: "schedule"과 "handleschedule" 둘 다 HandleSchedulePage로 연결
       case "schedule":
       case "handleschedule":
-        return <HandleSchedulePage onNavigate={navigateTo} />;
+        // ✅ key prop에 ID를 넘겨주어, ID가 바뀌면 컴포넌트가 강제로 새로 마운트되도록 수정
+        return (
+          <HandleSchedulePage
+            key={activeScheduleId || "new"}
+            scheduleId={activeScheduleId}
+            onNavigate={navigateTo}
+          />
+        );
       default:
         return <LoginPage onNavigate={navigateTo} />;
     }
