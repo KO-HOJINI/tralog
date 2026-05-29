@@ -1,14 +1,28 @@
+/* ===================================================
+ * App.css - 전역 타이포그래피 & 컴포넌트 스타일
+ *
+ * 구글 폰트 2개 사용:
+ * - Noto Sans KR: 본문/제목 한국어용
+ * - Urbanist: 로고/숫자 강조용 (영문 전용)
+ * =================================================== */
+
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Urbanist:wght@700;800&display=swap");
 
 @import 'tailwindcss';
 
+
+/* ===================================================
+ * 전역 기본 스타일 (base layer)
+ * =================================================== */
+
 @layer base {
   body {
     font-family: "Noto Sans KR", sans-serif;
-    background-color: #f8fafc; /* Background */
-    color: #0f172a; /* dark */
+    background-color: #f8fafc; /* --color-background */
+    color: #0f172a;             /* --color-dark */
   }
 
+  /* 페이지 대제목 */
   h1 {
     font-family: "Noto Sans KR", sans-serif;
     font-weight: 700;
@@ -18,6 +32,7 @@
     color: #0f172a;
   }
 
+  /* 섹션 제목 */
   h2 {
     font-family: "Noto Sans KR", sans-serif;
     font-weight: 700;
@@ -27,6 +42,7 @@
     color: #0f172a;
   }
 
+  /* 소제목 / 버튼 텍스트용 */
   h3 {
     font-family: "Noto Sans KR", sans-serif;
     font-weight: 700;
@@ -37,28 +53,33 @@
   }
 }
 
+
+/* ===================================================
+ * 텍스트 컴포넌트 스타일 (component layer)
+ * =================================================== */
+
 @layer components {
-  /* body/main */
+  /* 일반 본문 텍스트 */
   .text-body-main {
     font-family: "Noto Sans KR", sans-serif;
     font-weight: 400;
     font-size: 14px;
     line-height: 22px;
     letter-spacing: 0em;
-    color: #475569; /* gray */
+    color: #475569; /* --color-gray */
   }
 
-  /* body/caption */
+  /* 보조 텍스트 (날짜, 힌트 등) */
   .text-body-caption {
     font-family: "Noto Sans KR", sans-serif;
     font-weight: 400;
     font-size: 12px;
     line-height: normal;
     letter-spacing: 0em;
-    color: #475569; /* gray */
+    color: #475569; /* --color-gray */
   }
 
-  /* Logo */
+  /* 로고용 - Urbanist 폰트 */
   .text-logo {
     font-family: "Urbanist", sans-serif;
     font-weight: 800;
@@ -67,7 +88,7 @@
     letter-spacing: -0.01em;
   }
 
-  /* number/accent */
+  /* 숫자 강조 (D-Day, 달성률 등) - Urbanist 폰트 */
   .text-number-accent {
     font-family: "Urbanist", sans-serif;
     font-weight: 700;

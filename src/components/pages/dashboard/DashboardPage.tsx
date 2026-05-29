@@ -1,12 +1,16 @@
-// src/components/pages/dashboard/DashboardPage.tsx
+// ===================================================
+// DashboardPage.tsx - 메인 대시보드 페이지
+//
+// 로그인된 유저의 지도 현황 + 여행 일정 목록을 보여줌
+// localStorage에서 세션 불러옴 (없으면 로그인 페이지로 redirect)
+// ===================================================
+
 import { useState, useEffect } from "react";
 import NavBar from "../../Navbar";
 import MapOverview from "./MapOverview";
 import ScheduleList from "./ScheduleList";
 
 interface DashboardPageProps {
-  // ✅ Fix: App.tsx의 onNavigate도 scheduleId를 받을 수 있어야 합니다.
-  // App.tsx에서 onNavigate 함수 시그니처를 (page: string, scheduleId?: string) => void 로 수정하세요.
   onNavigate: (page: string, scheduleId?: string) => void;
 }
 
@@ -16,11 +20,13 @@ interface UserSession {
 }
 
 export default function DashboardPage({ onNavigate }: DashboardPageProps) {
+  // localStorage에서 세션 초기값으로 설정
   const [currentUser, setCurrentUser] = useState<UserSession | null>(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
+  // 로그인 안 됐으면 로그인 페이지로 보냄
   useEffect(() => {
     if (!currentUser) {
       onNavigate("login");
@@ -43,6 +49,7 @@ export default function DashboardPage({ onNavigate }: DashboardPageProps) {
         onLogout={handleLogout}
       />
 
+      {/* 좌: 지도 / 우: 일정 목록 */}
       <main className="flex-1 h-0 w-[70%] mx-auto py-6 flex flex-row gap-8 items-stretch overflow-hidden">
         <div className="w-[40%] min-w-70 flex flex-col shrink-0 h-full">
           <MapOverview userId={currentUser.id} onNavigate={onNavigate} />
