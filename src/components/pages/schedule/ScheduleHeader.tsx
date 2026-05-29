@@ -1,75 +1,76 @@
+// src/components/pages/schedule/ScheduleHeader.tsx
+
 interface ScheduleHeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isEditing: boolean;
-  setIsEditing: (edit: boolean) => void;
+  onToggleEdit: () => void;
+  onNavigate: (page: string) => void;
 }
 
 export default function ScheduleHeader({
   activeTab,
   setActiveTab,
   isEditing,
-  setIsEditing,
+  onToggleEdit,
 }: ScheduleHeaderProps) {
   return (
-    <div className="flex bg-slate-100 p-1 rounded-2xl shrink-0 select-none items-center justify-between gap-1">
-      {/* 탭 전환 영역 */}
-      <div className="flex flex-1 gap-1">
+    // ✅ 피그마 디자인: 길쭉한 하얀색 알약 모양의 배경 박스
+    <div className="flex items-center justify-between bg-white rounded-full shadow-sm px-2.5 py-2 w-[550px] border border-slate-100 select-none">
+      
+      {/* 왼쪽: 3개의 탭 메뉴 (피그마의 다크 그레이 색상 적용) */}
+      <div className="flex gap-1.5">
         <button
-          onClick={() => {
-            setActiveTab("timeline");
-          }}
-          className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all ${
+          onClick={() => setActiveTab("timeline")}
+          className={`px-5 py-1.5 text-xs font-bold rounded-full transition-all ${
             activeTab === "timeline"
-              ? "bg-pure-white text-dark shadow-sm"
-              : "text-gray hover:text-dark"
+              ? "bg-[#4b5563] text-white shadow-sm"
+              : "bg-transparent text-slate-500 hover:bg-slate-100"
           }`}
         >
-          🕒 타임라인
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("account");
-            setIsEditing(false);
-          }}
-          className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all ${
-            activeTab === "account"
-              ? "bg-pure-white text-dark shadow-sm"
-              : "text-gray hover:text-dark"
-          }`}
-        >
-          💰 가계부
+          타임라인
         </button>
         <button
           onClick={() => {
             setActiveTab("companion");
-            setIsEditing(false);
+            if (isEditing) onToggleEdit();
           }}
-          className={`flex-1 text-center py-2.5 text-xs font-bold rounded-xl transition-all ${
+          className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${
             activeTab === "companion"
-              ? "bg-pure-white text-dark shadow-sm"
-              : "text-gray hover:text-dark"
+              ? "bg-[#4b5563] text-white shadow-sm"
+              : "bg-transparent text-slate-500 hover:bg-slate-100"
           }`}
         >
           👥 일행 추가
         </button>
+        <button
+          onClick={() => {
+            setActiveTab("account");
+            if (isEditing) onToggleEdit();
+          }}
+          className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${
+            activeTab === "account"
+              ? "bg-[#4b5563] text-white shadow-sm"
+              : "bg-transparent text-slate-500 hover:bg-slate-100"
+          }`}
+        >
+          💳 가계부
+        </button>
       </div>
 
-      {/* 구분선 및 일정 편집 버튼 컨트롤러 */}
-      <div className="h-6 w-px bg-slate-300 mx-1 shrink-0" />
-
+      {/* 오른쪽: 청록색 일정 편집 버튼 */}
       <button
         disabled={activeTab !== "timeline"}
-        onClick={() => setIsEditing(!isEditing)}
-        className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all shrink-0 border-none ${
+        onClick={onToggleEdit}
+        className={`px-5 py-1.5 text-xs font-bold rounded-full transition-all shadow-sm ${
           activeTab !== "timeline"
-            ? "opacity-40 cursor-not-allowed text-slate-400 bg-transparent"
+            ? "bg-slate-100 text-slate-400 cursor-not-allowed"
             : isEditing
-              ? "bg-secondary text-white shadow-sm"
-              : "bg-dark text-white hover:bg-slate-800"
+              ? "bg-[#0d9488] text-white hover:bg-teal-700"
+              : "bg-[#0d9488] text-white hover:bg-teal-700"
         }`}
       >
-        {isEditing ? "✅ 완료" : "🛠️ 일정편집"}
+        {isEditing ? "✔️ 저장하기" : "일정 편집"}
       </button>
     </div>
   );

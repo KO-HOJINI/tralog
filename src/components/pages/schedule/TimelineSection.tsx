@@ -1,5 +1,5 @@
 // src/components/pages/schedule/TimelineSection.tsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import PlaceItemCard from "./PlaceItemCard";
 import { API_BASE_URL } from "../../../config/api";
 
@@ -8,250 +8,158 @@ interface TimelineItem {
   time: string;
   place: string;
   day_number: number;
+  memo?: string;
+}
+
+interface ApiPlaceData {
+  id: string;
+  visit_time: string;
+  place_name: string;
+  day_number: number;
+  memo?: string;
+}
+
+interface SearchResultItem {
+  place_name: string;
+  y: number;
+  x: number;
+}
+
+interface PlaceMarkerEvent {
+  id: string;
+  place_name: string;
+  day_number: number;
+  visit_time: string;
+  lat: number;
+  lng: number;
+}
+
+interface NaverSearchResult {
+  place_name: string;
+  mapx: string;
+  mapy: string;
+  address?: string;
+  roadAddress?: string;
 }
 
 interface TimelineSectionProps {
   userId: string;
-  scheduleId: string; // ✅ 추가: 어떤 일정인지 특정하기 위해 필요
+  scheduleId: string;
   isEditing: boolean;
-  onPlaceAdded?: (place: {
-    id: string;
-    place_name: string;
-    lat: number;
-    lng: number;
-    day_number: number;
-    visit_time: string;
-  }) => void; // ✅ 장소 추가 시 부모에 통지
-}
-
-interface NaverGeocodeAddress {
-  jibunAddress?: string;
-  roadAddress?: string;
-  address?: string;
-  y?: string;
-  x?: string;
-}
-
-interface NaverGeocodeResponse {
-  addresses?: NaverGeocodeAddress[];
-}
-
-interface NaverGeocodeService {
-  geocode: (
-    options: { query: string },
-    callback: (status: string, response: NaverGeocodeResponse) => void,
-  ) => void;
-  Status?: { OK?: string };
+  startDate?: string;
+  endDate?: string;
+  onPlaceAdded?: (place: PlaceMarkerEvent) => void;
 }
 
 export default function TimelineSection({
   scheduleId,
   isEditing,
+  startDate,
+  endDate,
   onPlaceAdded,
 }: TimelineSectionProps) {
+  // 현재 사용자가 선택해서 보고 있는 일차 탭 상태
   const [day, setDay] = useState<number>(1);
+  // 서버에서 받아온 전체 일정 아이템 리스트 상태
   const [allItems, setAllItems] = useState<TimelineItem[]>([]);
-  const [totalDays, setTotalDays] = useState<number>(1);
+  // 로딩 애니메이션 노출 여부 상태
   const [isLoading, setIsLoading] = useState(true);
+
+  // 새로운 장소 추가 폼 입력 상태들
   const [newTime, setNewTime] = useState("");
   const [newPlace, setNewPlace] = useState("");
-
-  // ✅ 네이버 지도 검색 상태
-  const [searchResults, setSearchResults] = useState<
-    Array<{ place_name: string; y: number; x: number }>
-  >([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [selectedSearchResult, setSelectedSearchResult] = useState<{
-    place_name: string;
-    y: number;
-    x: number;
-  } | null>(null);
+  const [selectedSearchResult, setSelectedSearchResult] =
+    useState<SearchResultItem | null>(null);
 
-  // ✅ DB에서 일정 데이터 fetch
-  const fetchPlaces = useCallback(async () => {
-    if (!scheduleId) return;
-    setIsLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`);
-      if (!res.ok) throw new Error("일정 로드 실패");
-      const data = await res.json();
+  // 부모에게 받아온 시작일과 종료일 데이터를 기반으로 총 여행 일수를 실시간 계산
+  let totalDays = 1;
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days =
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    totalDays = Math.max(days, 1);
+  }
 
-      // places 배열을 TimelineItem 형태로 매핑
-      const mapped: TimelineItem[] = (data.places || []).map(
-        (p: {
-          id: string;
-          visit_time: string;
-          place_name: string;
-          day_number: number;
-        }) => ({
+  // ✅ 해결 포인트: useEffect로 setDay를 호출하지 않고, 렌더링에 쓸 안전한 현재 일차값을 직접 산출
+  // 만약 날짜 수정으로 인해 총 일수가 선택된 일수보다 작아지면 자동으로 마지막 일차를 바라보게 처리
+  const currentDay = day > totalDays ? totalDays : day;
+
+  // 컴포넌트가 처음 열릴 때 데이터베이스에서 해당 일정의 장소 목록을 호출
+  useEffect(() => {
+    let isMounted = true;
+    const fetchPlaces = async () => {
+      if (!scheduleId) return;
+      setIsLoading(true);
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`);
+        if (!res.ok) throw new Error("일정 데이터 로드 실패");
+        const data = await res.json();
+        const mapped = (data.places || []).map((p: ApiPlaceData) => ({
           id: p.id,
           time: p.visit_time,
           place: p.place_name,
           day_number: p.day_number,
-        }),
-      );
-
-      setAllItems(mapped);
-
-      // 일정 기간에서 총 일수 계산
-      if (data.meta?.start_date && data.meta?.end_date) {
-        const start = new Date(data.meta.start_date);
-        const end = new Date(data.meta.end_date);
-        const days =
-          Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
-          1;
-        setTotalDays(Math.max(days, 1));
+          memo: p.memo,
+        }));
+        if (isMounted) setAllItems(mapped);
+      } catch (err) {
+        console.error("타임라인 동선 로딩 실패:", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
-    } catch (err) {
-      console.error("타임라인 fetch 오류:", err);
-    } finally {
-      setIsLoading(false);
-    }
+    };
+    void fetchPlaces();
+    return () => {
+      isMounted = false;
+    };
   }, [scheduleId]);
 
-  // ✅ 네이버 지도 검색 API를 통해 장소 검색 (가능하면 클라이언트 JS, 없으면 백엔드 Geocoding)
-  const handleSearchPlace = useCallback(async (query: string) => {
+  // 키워드를 입력할 때마다 백엔드의 네이버 검색 API 허브를 호출하는 핸들러
+  const handleSearchPlace = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
       setShowSearchResults(false);
       return;
     }
-
-    setIsSearching(true);
     try {
-      const naverService = (
-        window as unknown as {
-          naver?: { maps?: { Service?: NaverGeocodeService } };
-        }
-      )?.naver?.maps?.Service;
-      if (naverService?.geocode) {
-        naverService.geocode(
-          { query },
-          (status: string, response: NaverGeocodeResponse) => {
-            if (
-              status === (naverService.Status?.OK ?? "OK") &&
-              response?.addresses
-            ) {
-              const formatted = response.addresses.map((addr) => ({
-                place_name: addr.jibunAddress || addr.roadAddress || query,
-                y: Number(addr.y),
-                x: Number(addr.x),
-              }));
-              setSearchResults(formatted);
-              setShowSearchResults(formatted.length > 0);
-            } else {
-              setSearchResults([]);
-              setShowSearchResults(false);
-            }
-            setIsSearching(false);
-          },
-        );
-        return;
-      }
-
-      const url = `${API_BASE_URL}/api/places/search?query=${encodeURIComponent(query)}`;
-      console.log("🔍 검색 요청:", url);
-
-      const res = await fetch(url);
-      console.log("📨 응답 상태:", res.status);
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        console.error("❌ API 에러:", errorData);
-        setSearchResults([]);
-        setShowSearchResults(false);
-        return;
-      }
-
+      const res = await fetch(
+        `${API_BASE_URL}/api/places/search?query=${encodeURIComponent(query)}`,
+      );
+      if (!res.ok) return;
       const data = await res.json();
-      console.log("📦 검색 결과:", data);
 
-      const results = data.results || [];
-      if (results.length > 0) {
-        console.log("📍 첫 번째 결과 좌표:", {
-          y: results[0].y,
-          x: results[0].x,
-        });
-      }
-
-      setSearchResults(results);
-      setShowSearchResults(results.length > 0);
+      const cleaned = (data.results || []).map((r: NaverSearchResult) => ({
+        ...r,
+        place_name: r.place_name.replace(/<[^>]*>?/gm, ""), // 검색 텍스트 강조용 태그 삭제
+      }));
+      setSearchResults(cleaned);
+      setShowSearchResults(cleaned.length > 0);
     } catch (err) {
-      console.error("❌ 장소 검색 오류:", err);
-      setSearchResults([]);
-      setShowSearchResults(false);
-    } finally {
-      setIsSearching(false);
+      console.error("장소 연동 검색 실패:", err);
     }
-  }, []);
-
-  // ✅ 검색 결과에서 장소 선택
-  const handleSelectSearchResult = (result: {
-    place_name: string;
-    y: number;
-    x: number;
-  }) => {
-    console.log("🎯 검색 결과 선택:", result);
-    setSelectedSearchResult(result);
-    setNewPlace(result.place_name);
-    setShowSearchResults(false);
-    setSearchResults([]);
   };
 
-  useEffect(() => {
-    const loadPlaces = async () => {
-      await fetchPlaces();
-    };
-    void loadPlaces();
-  }, [fetchPlaces]);
-
-  // ✅ 현재 선택된 일차의 항목만 필터링 후 시간 순 정렬
-  const filteredItems = allItems
-    .filter((item) => item.day_number === day)
-    .sort((a, b) => a.time.localeCompare(b.time));
-
-  // ✅ 장소 추가: DB에 저장 후 로컬 상태 갱신
+  // 장소 추가 폼 전송 이벤트를 처리하는 핸들러
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTime || !newPlace.trim()) return;
+    if (!newTime.trim() || !newPlace.trim())
+      return alert("시간과 장소를 모두 입력해주세요.");
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime))
+      return alert("시간 형식을 올바르게 맞춰주세요 (예: 09:30)");
 
-    // 간단한 시간 형식 검증 (HH:MM)
-    const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-    if (!timeRegex.test(newTime)) {
-      alert("시간 형식이 올바르지 않습니다. (예: 09:30)");
-      return;
-    }
-
-    console.log("📝 장소 추가 시작:", { newPlace, selectedSearchResult });
-
-    // ✅ 검색 결과에서 선택한 좌표 사용 (필수)
-    if (!selectedSearchResult) {
-      alert("검색 결과에서 장소를 선택해주세요. (드롭다운에서 선택)");
-      console.warn("⚠️ 선택된 검색 결과가 없습니다.");
-      return;
-    }
-
-    const lat = selectedSearchResult.y;
-    const lng = selectedSearchResult.x;
-
-    console.log("✅ 선택된 좌표:", {
-      lat,
-      lng,
-      place_name: selectedSearchResult.place_name,
-    });
-
-    if (!lat || !lng) {
-      alert("좌표 정보가 없습니다. 다시 시도해주세요.");
-      return;
-    }
+    let target = selectedSearchResult;
+    if (!target && searchResults.length > 0) target = searchResults[0];
+    if (!target) return alert("검색 결과가 존재하지 않습니다.");
 
     const newId = `p-${Date.now()}`;
-    const newItem: TimelineItem = {
+    const newItem = {
       id: newId,
       time: newTime,
-      place: newPlace.trim(),
-      day_number: day,
+      place: target.place_name,
+      day_number: currentDay, // 보정된 안전한 일차값 적용
     };
 
     try {
@@ -261,79 +169,101 @@ export default function TimelineSection({
         body: JSON.stringify({
           id: newId,
           schedule_id: scheduleId,
-          day_number: day,
+          day_number: currentDay,
           visit_time: newTime,
-          place_name: newPlace.trim(),
-          lat,
-          lng,
+          place_name: target.place_name,
+          lat: target.y,
+          lng: target.x,
         }),
       });
-
       if (res.ok) {
-        console.log("✅ DB에 저장 완료");
         setAllItems((prev) => [...prev, newItem]);
-
-        // ✅ 부모에게 새 장소 통지 (마커 추가 위해)
         if (onPlaceAdded) {
-          console.log("📍 마커 추가 콜백 호출:", {
-            lat,
-            lng,
-            place_name: newPlace.trim(),
-          });
           onPlaceAdded({
             id: newId,
-            place_name: newPlace.trim(),
-            lat,
-            lng,
-            day_number: day,
+            place_name: target.place_name,
             visit_time: newTime,
+            day_number: currentDay,
+            lat: target.y,
+            lng: target.x,
           });
         }
-
         setNewTime("");
         setNewPlace("");
         setSelectedSearchResult(null);
         setSearchResults([]);
-        alert("장소가 추가되었습니다!");
-      } else {
-        const error = await res.json();
-        console.error("❌ 장소 저장 실패:", error);
-        alert("장소 추가에 실패했습니다.");
       }
     } catch (err) {
-      console.error("❌ 장소 추가 오류:", err);
-      alert("서버 연결 오류가 발생했습니다.");
+      console.error(err);
     }
   };
 
-  // ✅ 장소 삭제: DB에서 삭제 후 로컬 상태 갱신
+  // 장소 카드를 삭제할 때 가동되는 핸들러
   const handleDeleteItem = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
         method: "DELETE",
       });
-      if (res.ok) {
-        setAllItems((prev) => prev.filter((item) => item.id !== id));
-      } else {
-        alert("삭제에 실패했습니다.");
-      }
+      if (res.ok) setAllItems((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
-      console.error("장소 삭제 오류:", err);
+      console.error(err);
     }
   };
 
+  // 장소 카드 내부에서 인라인 메모를 저장할 때 가동되는 핸들러
+  const handleUpdateMemo = async (id: string, memo: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memo }),
+      });
+      if (res.ok)
+        setAllItems((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, memo } : item)),
+        );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 장소 카드 내부에서 인라인 비용을 가계부에 바로 올릴 때 가동되는 핸들러
+  const handleAddExpense = async (detail: string, amount: number) => {
+    try {
+      await fetch(`${API_BASE_URL}/api/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: `acc-${Date.now()}`,
+          schedule_id: scheduleId,
+          category: "기타",
+          detail,
+          amount,
+        }),
+      });
+      alert(`[가계부 기록 완료] ${detail} : ${amount.toLocaleString()}원 💳`);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 보정된 현재 일차(currentDay) 아이템만 필터링한 후 시간순으로 오름차순 정렬
+  const filteredItems = allItems
+    .filter((item) => item.day_number === currentDay)
+    .sort((a, b) => a.time.localeCompare(b.time));
+
   return (
-    <div className="box-custom bg-pure-white border border-slate-100 p-6 h-full flex flex-col gap-4 overflow-hidden">
-      {/* 일차 선택 필터 */}
-      <div className="flex gap-2 shrink-0 select-none flex-wrap">
+    <div className="p-6 h-full flex flex-col gap-5 overflow-hidden">
+      {/* n일차 상단 수평 탭 컨트롤러 컴포넌트 */}
+      <div className="flex gap-2 shrink-0 select-none overflow-x-auto pb-2 scrollbar-hide">
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
           <button
             key={d}
-            onClick={() => setDay(d)}
-            className={`px-3 py-1 text-xs font-bold rounded-lg border transition-colors ${
-              day === d
-                ? "bg-dark text-white border-dark"
-                : "bg-pure-white text-gray border-slate-200 hover:border-slate-300"
+            onClick={() => setDay(d)} // 탭을 클릭하면 명시적으로 해당 일차 상태 저장
+            className={`px-4 py-1.5 text-xs font-bold rounded-full transition-colors whitespace-nowrap border ${
+              currentDay === d
+                ? "bg-slate-700 text-white border-slate-700"
+                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
             }`}
           >
             {d}일차
@@ -341,37 +271,45 @@ export default function TimelineSection({
         ))}
       </div>
 
-      {/* 타임라인 메인 트랙 리스트 */}
-      <div className="flex-1 overflow-y-auto pr-1 relative border-l-2 border-slate-100 pl-4 ml-2 flex flex-col gap-3 py-2">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <span className="text-xs text-gray animate-pulse">
-              일정을 불러오는 중...
-            </span>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-xs text-gray/80 select-none">
-            {day}일차 일정이 없습니다. {isEditing && "아래에서 추가해 보세요!"}
-          </div>
-        ) : (
-          filteredItems.map((item) => (
-            <PlaceItemCard
-              key={item.id}
-              id={item.id}
-              time={item.time}
-              place={item.place}
-              isEditing={isEditing}
-              onDelete={handleDeleteItem}
-            />
-          ))
-        )}
+      {/* 동선 타임라인 메인 리스트 뷰 영역 */}
+      <div className="flex-1 overflow-y-auto px-2 relative py-2 scrollbar">
+        {/* 수직 타임라인 타임 축 구현선 */}
+        <div className="absolute left-6 top-4 bottom-4 w-0.5 bg-slate-200 rounded-full" />
+
+        <div className="flex flex-col gap-5 relative z-10">
+          {isLoading ? (
+            <div className="text-center text-xs text-slate-400 py-10">
+              일정을 불러오는 중입니다...
+            </div>
+          ) : filteredItems.length === 0 ? (
+            <div className="text-center text-xs text-slate-400 py-10">
+              {currentDay}일차에 등록된 일정이 없습니다. 아래에서 장소를
+              추가해보세요!
+            </div>
+          ) : (
+            filteredItems.map((item, index) => (
+              <PlaceItemCard
+                key={item.id}
+                id={item.id}
+                time={item.time}
+                place={item.place}
+                index={index + 1}
+                isEditing={isEditing}
+                memo={item.memo}
+                onDelete={handleDeleteItem}
+                onUpdateMemo={handleUpdateMemo}
+                onAddExpense={handleAddExpense}
+              />
+            ))
+          )}
+        </div>
       </div>
 
-      {/* 일정편집 모드일 때만 하단 동선 입력창 노출 */}
+      {/* 하단 장소 및 시간 추가 입력 폼 레이아웃 (일정편집 모드가 켜진 경우에만 활성화) */}
       {isEditing && (
         <form
           onSubmit={handleAddItem}
-          className="flex gap-2 shrink-0 border-t border-slate-100 pt-3 animate-in slide-in-from-bottom-2 duration-150 relative z-10"
+          className="flex gap-2 shrink-0 bg-slate-50 p-3 rounded-2xl border border-slate-200 relative"
         >
           <input
             type="text"
@@ -379,51 +317,45 @@ export default function TimelineSection({
             value={newTime}
             onChange={(e) => setNewTime(e.target.value)}
             maxLength={5}
-            className="w-16 h-10 px-2 text-center text-xs focus:outline-none input-custom"
+            className="w-16 h-10 px-2 text-center text-xs font-bold bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
           />
-          <div className="flex-1 relative overflow-visible z-20">
+          <div className="flex-1 relative overflow-visible">
             <input
               type="text"
-              placeholder="장소 검색 (예: 서울시청)"
+              placeholder="장소를 검색해보세요"
               value={newPlace}
               onChange={(e) => {
                 setNewPlace(e.target.value);
                 setSelectedSearchResult(null);
                 handleSearchPlace(e.target.value);
               }}
-              className="w-full h-10 px-3 text-xs focus:outline-none input-custom"
+              className="w-full h-10 px-3 text-xs bg-white border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400"
             />
-
-            {/* ✅ 검색 결과 드롭다운 (위쪽 렌더링) */}
             {showSearchResults && searchResults.length > 0 && (
-              <div className="absolute bottom-full left-0 right-0 mb-2 bg-pure-white border border-slate-200 rounded-lg shadow-md z-50 max-h-48 overflow-y-auto">
+              <div className="absolute bottom-full mb-2 left-0 right-0 bg-white border border-slate-200 rounded-xl shadow-md z-50 max-h-52 overflow-y-auto scrollbar">
                 {searchResults.map((result, idx) => (
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => handleSelectSearchResult(result)}
-                    className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0 text-xs font-medium text-dark transition-colors"
+                    onClick={() => {
+                      setSelectedSearchResult(result);
+                      setNewPlace(result.place_name);
+                      setShowSearchResults(false);
+                      setSearchResults([]);
+                    }}
+                    className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 text-xs font-medium text-slate-700"
                   >
                     📍 {result.place_name}
                   </button>
                 ))}
               </div>
             )}
-
-            {/* ✅ 좌표 선택됨 표시 */}
-            {selectedSearchResult && (
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-primary">
-                ✓ 선택됨
-              </div>
-            )}
           </div>
-
           <button
             type="submit"
-            disabled={isSearching}
-            className="h-10 px-4 bg-primary text-white text-xs font-bold rounded-xl hover:bg-teal-700 shrink-0 transition-colors disabled:bg-gray disabled:cursor-not-allowed"
+            className="h-10 px-4 bg-slate-700 text-white text-xs font-bold rounded-lg hover:bg-slate-800 shrink-0"
           >
-            {isSearching ? "검색중..." : "장소추가"}
+            등록
           </button>
         </form>
       )}

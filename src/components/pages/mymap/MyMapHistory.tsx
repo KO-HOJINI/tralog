@@ -16,10 +16,23 @@ interface ScheduleRow {
 }
 
 const REGION_OPTIONS = [
-  "서울특별시", "부산광역시", "대구광역시", "인천광역시",
-  "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
-  "경기도", "강원특별자치도", "충청북도", "충청남도",
-  "전라북도", "전라남도", "경상북도", "경상남도", "제주특별자치도",
+  "서울특별시",
+  "부산광역시",
+  "대구광역시",
+  "인천광역시",
+  "광주광역시",
+  "대전광역시",
+  "울산광역시",
+  "세종특별자치시",
+  "경기도",
+  "강원특별자치도",
+  "충청북도",
+  "충청남도",
+  "전라북도",
+  "전라남도",
+  "경상북도",
+  "경상남도",
+  "제주특별자치도",
 ];
 
 export default function MyMapHistory({
@@ -54,7 +67,12 @@ export default function MyMapHistory({
 
   // ✅ 일정 삭제 핸들러 (DB 연동)
   const handleDeleteSchedule = async (scheduleId: string, title: string) => {
-    if (!window.confirm(`"${title}" 일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.`)) return;
+    if (
+      !window.confirm(
+        `"${title}" 일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.`,
+      )
+    )
+      return;
 
     setDeletingId(scheduleId);
     try {
@@ -82,7 +100,10 @@ export default function MyMapHistory({
       alert("기록을 추가할 지역을 선택해 주세요.");
       return;
     }
-    localStorage.setItem("tralog_active_schedule_id", `direct-${selectedNewRegion}`);
+    localStorage.setItem(
+      "tralog_active_schedule_id",
+      `direct-${selectedNewRegion}`,
+    );
     onSelectRegion(selectedNewRegion);
   };
 
@@ -118,7 +139,10 @@ export default function MyMapHistory({
                 📍 추억을 기록할 새로운 지역 선택
               </span>
               <button
-                onClick={() => { setIsAddingSection(false); setSelectedNewRegion(""); }}
+                onClick={() => {
+                  setIsAddingSection(false);
+                  setSelectedNewRegion("");
+                }}
                 className="text-slate-400 hover:text-dark text-xs font-medium transition-colors"
               >
                 취소
@@ -132,7 +156,9 @@ export default function MyMapHistory({
               >
                 <option value="">-- 지역을 선택하세요 --</option>
                 {REGION_OPTIONS.map((reg) => (
-                  <option key={reg} value={reg}>{reg}</option>
+                  <option key={reg} value={reg}>
+                    {reg}
+                  </option>
                 ))}
               </select>
               <button
@@ -161,8 +187,10 @@ export default function MyMapHistory({
                   {history.title}
                 </span>
                 <span className="text-xs text-slate-400 font-medium">
-                  {history.region} ({history.start_date.split("T")[0]} ~{" "}
-                  {history.end_date.split("T")[0]})
+                  {history.region}
+                  <br />
+                  {history.start_date.split("T")[0]} ~{" "}
+                  {history.end_date.split("T")[0]}
                 </span>
               </div>
 
@@ -179,13 +207,15 @@ export default function MyMapHistory({
                 >
                   사진 보기
                 </button>
-                {/* ✅ 삭제 버튼 추가 */}
+                {/* 삭제 버튼 */}
                 <button
-                  onClick={() => handleDeleteSchedule(history.id, history.title)}
+                  onClick={() =>
+                    handleDeleteSchedule(history.id, history.title)
+                  }
                   disabled={deletingId === history.id}
                   className="btn btn-custom h-9 px-3 bg-red-50 hover:bg-red-100 text-red-500 text-body-caption font-bold transition-all border border-red-200/60 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {deletingId === history.id ? "삭제 중..." : "🗑️ 삭제"}
+                  {deletingId === history.id ? "삭제 중..." : "삭제"}
                 </button>
               </div>
             </div>

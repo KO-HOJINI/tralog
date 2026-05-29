@@ -1,6 +1,19 @@
+/* ===================================================
+ * index.css - Tralog 전역 스타일 & 유틸리티 클래스 정의
+ *
+ * Tailwind CSS v4 + DaisyUI 플러그인 사용
+ * 커스텀 유틸리티 클래스(@utility)로 반복되는 스타일을 통일함
+ * - 버튼: btn-primary, btn-secondary, btn-dark, btn-danger, btn-ghost
+ * - 박스: box-white, box-muted
+ * - 기타: 그림자, 인풋, 스크롤바 등
+ *
+ * 주의: AI 도움 받아서 @utility 문법 정리함 (Tailwind v4 방식)
+ * =================================================== */
+
 @import "tailwindcss";
 @plugin 'daisyui';
 
+/* ----------- 디자인 토큰 (CSS 변수) ----------- */
 :root {
   --color-primary: #0d9488;
   --color-secondary: #f59e0b;
@@ -8,7 +21,13 @@
   --color-dark: #0f172a;
   --color-gray: #475569;
   --color-pure-white: #ffffff;
+
+  /* 공통으로 쓰는 값들 */
+  --radius-box: 32px;
+  --radius-btn: 20px;
+  --radius-input: 16px;
 }
+
 @theme {
   --color-primary: #0d9488;
   --color-secondary: #f59e0b;
@@ -18,17 +37,165 @@
   --color-pure-white: #ffffff;
 }
 
+
+/* ===================================================
+ * 그림자 유틸리티
+ * =================================================== */
+
+/* 페이지 전체 카드에 쓰는 기본 그림자 */
 @utility shadow-custom {
   box-shadow:
     0 10px 30px -5px rgba(15, 23, 42, 0.03),
     0 4px 12px -2px rgba(15, 23, 42, 0.01);
 }
+
+/* 개별 카드에 쓰는 약간 강한 그림자 */
 @utility shadow-card {
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
 }
 
+
+/* ===================================================
+ * 버튼 유틸리티
+ * 공통 베이스: btn-base
+ * 색상별 변형: btn-primary, btn-secondary, btn-dark, btn-danger, btn-ghost
+ * =================================================== */
+
+/* 모든 버튼의 공통 베이스 (색상 제외) */
+@utility btn-base {
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 14px;
+  &:hover {
+    filter: brightness(0.95);
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: none;
+  }
+}
+
+/* 메인 컬러 버튼 (teal) */
+@utility btn-primary {
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 14px;
+  background-color: var(--color-primary);
+  color: var(--color-pure-white);
+  &:hover {
+    background-color: #0f766e;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 서브 컬러 버튼 (amber) */
+@utility btn-secondary {
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 14px;
+  background-color: var(--color-secondary);
+  color: var(--color-pure-white);
+  &:hover {
+    background-color: #d97706;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 다크 버튼 (네이비) */
+@utility btn-dark {
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 14px;
+  background-color: var(--color-dark);
+  color: var(--color-pure-white);
+  &:hover {
+    background-color: #1e293b;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 위험/삭제 버튼 (red) */
+@utility btn-danger {
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 14px;
+  background-color: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  &:hover {
+    background-color: #fee2e2;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 그레이 버튼 (목록 보기 등에 사용) */
+@utility btn-ghost {
+  border-radius: var(--radius-btn);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-weight: 700;
+  font-size: 14px;
+  background-color: var(--color-gray);
+  color: var(--color-pure-white);
+  &:hover {
+    background-color: #334155;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+/* 예전 btn-custom은 호환성 유지용으로 남겨둠 */
 @utility btn-custom {
-  border-radius: 20px;
+  border-radius: var(--radius-btn);
   border: none;
   cursor: pointer;
   display: inline-flex;
@@ -40,18 +207,52 @@
   }
 }
 
+
+/* ===================================================
+ * 박스(카드) 유틸리티
+ * box-white: 흰 배경 카드
+ * box-muted: 연한 배경 카드
+ * box-custom: 기존 호환성용
+ * =================================================== */
+
+/* 기본 흰 카드 */
+@utility box-white {
+  border-radius: var(--radius-box);
+  background-color: var(--color-pure-white);
+  border: 1px solid #f1f5f9;
+  box-shadow:
+    0 8px 20px -4px rgba(15, 23, 42, 0.04),
+    0 3px 8px -1px rgba(15, 23, 42, 0.02);
+}
+
+/* 연한 배경 카드 (섹션 구분용) */
+@utility box-muted {
+  border-radius: var(--radius-box);
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 4px 12px -2px rgba(15, 23, 42, 0.03),
+    0 2px 4px -1px rgba(15, 23, 42, 0.01);
+}
+
+/* 예전 box-custom은 호환성 유지용으로 남겨둠 */
 @utility box-custom {
-  border-radius: 32px;
+  border-radius: var(--radius-box);
   border: none;
   box-shadow:
     0 8px 20px -4px rgba(15, 23, 42, 0.04),
     0 3px 8px -1px rgba(15, 23, 42, 0.02);
 }
 
+
+/* ===================================================
+ * 인풋 유틸리티
+ * =================================================== */
+
 @utility input-custom {
   background-color: var(--color-pure-white);
   border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border-radius: var(--radius-input);
   color: var(--color-dark);
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px 0px rgba(15, 23, 42, 0.015);
@@ -60,6 +261,11 @@
     box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
   }
 }
+
+
+/* ===================================================
+ * 스크롤바 커스텀
+ * =================================================== */
 
 @utility scrollbar {
   &::-webkit-scrollbar {
@@ -77,19 +283,26 @@
   }
 }
 
+
+/* ===================================================
+ * 기타 유틸리티
+ * =================================================== */
+
+/* 텍스트에 그림자 넣어서 사진 위에서 잘 보이게 */
 @utility text-shadow-glow {
   text-shadow:
     0 2px 4px rgba(0, 0, 0, 0.7),
     0 0 2px rgba(0, 0, 0, 0.9);
 }
 
+/* 화면 높이가 짧을 때 숨기는 용도 */
 @media (max-height: 720px) {
   .hide-on-short-screen {
     display: none !important;
   }
 }
 
-/* Dashboard */
+/* flex 세로 full 레이아웃 - 대시보드 레이아웃에서 자주 씀 */
 @utility flex-col-full {
   display: flex;
   flex-direction: column;
@@ -98,10 +311,15 @@
   overflow: hidden;
 }
 
-/* MapOverview */
+
+/* ===================================================
+ * 지도 관련 카드 테마 (MapOverview 전용)
+ * =================================================== */
+
+/* 지도 카드 배경 그라데이션 */
 @utility card-map-theme {
   background: linear-gradient(to bottom, #bce3de, #a3d5cf);
-  border-radius: 32px;
+  border-radius: var(--radius-box);
   padding: 1.25rem;
   box-shadow: var(--shadow-custom);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -115,9 +333,11 @@
     transform: scale(1.002);
   }
 }
+
+/* 달성률 카드 배경 그라데이션 (골드 계열) */
 @utility card-achieve-theme {
   background: linear-gradient(to bottom right, #eab308, #eab308, #d97706);
-  border-radius: 32px;
+  border-radius: var(--radius-box);
   padding: 1.25rem;
   box-shadow: var(--shadow-custom);
   cursor: pointer;
