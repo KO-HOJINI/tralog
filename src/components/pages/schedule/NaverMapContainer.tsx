@@ -1,7 +1,24 @@
-// src/components/pages/schedule/NaverMapContainer.tsx
+// ===================================================
+// NaverMapContainer.tsx - 네이버 지도 컴포넌트
+//
+// 네이버 지도 JavaScript API v3 사용
+// .env 파일에 VITE_NAVER_MAP_CLIENT_ID 필요
+//
+// 기능:
+//   - 장소 마커 표시 (일차별 색상 구분)
+//   - 마커 클릭 시 InfoWindow(장소명, 방문 시간) 팝업
+//   - 같은 일차끼리 점선 Polyline 연결
+//
+// AI 도움:
+//   - 네이버 지도 타입 선언 (declare global)
+//   - useCallback + useRef로 마커/폴리라인 관리 패턴
+//   - Polyline 일차별 분리 렌더링 방식
+// ===================================================
+
 import { useEffect, useRef, useCallback } from "react";
 import { NAVER_MAP_CLIENT_ID } from "../../../config/api";
 
+// 네이버 지도 SDK 타입 선언 (직접 타입 패키지 없어서 수동으로)
 declare global {
   interface Window {
     naver: {
@@ -12,11 +29,7 @@ declare global {
         InfoWindow: new (options: object) => NaverInfoWindow;
         Polyline: new (options: object) => NaverPolyline;
         Event: {
-          addListener: (
-            target: object,
-            event: string,
-            handler: () => void,
-          ) => void;
+          addListener: (target: object, event: string, handler: () => void) => void;
         };
         MapTypeId: { NORMAL: string };
       };
@@ -24,23 +37,14 @@ declare global {
   }
 }
 
-interface NaverMap {
-  setCenter: (latlng: NaverLatLng) => void;
-}
-interface NaverLatLng {
-  lat(): number;
-  lng(): number;
-}
-interface NaverMarker {
-  setMap: (map: NaverMap | null) => void;
-}
+interface NaverMap { setCenter: (latlng: NaverLatLng) => void; }
+interface NaverLatLng { lat(): number; lng(): number; }
+interface NaverMarker { setMap: (map: NaverMap | null) => void; }
 interface NaverInfoWindow {
   open: (map: NaverMap, marker: NaverMarker) => void;
   close: () => void;
 }
-interface NaverPolyline {
-  setMap: (map: NaverMap | null) => void;
-}
+interface NaverPolyline { setMap: (map: NaverMap | null) => void; }
 
 export interface PlaceMarker {
   id: string;
@@ -57,14 +61,10 @@ interface NaverMapContainerProps {
   centerLng?: number;
 }
 
+// 일차별 마커 색상 (최대 7개 일차 지원)
 const DAY_COLORS = [
-  "#0d9488",
-  "#f59e0b",
-  "#6366f1",
-  "#ec4899",
-  "#10b981",
-  "#8b5cf6",
-  "#ef4444",
+  "#0d9488", "#f59e0b", "#6366f1", "#ec4899",
+  "#10b981", "#8b5cf6", "#ef4444",
 ];
 
 export default function NaverMapContainer({
@@ -75,15 +75,16 @@ export default function NaverMapContainer({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<NaverMap | null>(null);
   const markersRef = useRef<NaverMarker[]>([]);
-  const polylinesRef = useRef<NaverPolyline[]>([]); // ✅ 여러 개의 선을 관리하도록 배열로 변경
+  const polylinesRef = useRef<NaverPolyline[]>([]); // 날짜별 선 여러 개
   const infoWindowRef = useRef<NaverInfoWindow | null>(null);
   const scriptLoadedRef = useRef(false);
 
+  // 마커 + 폴리라인 렌더링 (AI 도움: useCallback으로 최적화)
   const renderMarkersAndLines = useCallback(() => {
     const naver = window.naver;
     if (!naver || !mapInstanceRef.current) return;
 
-    // 초기화
+    // 기존 마커/선 전부 제거
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
     polylinesRef.current.forEach((p) => p.setMap(null));
@@ -93,10 +94,10 @@ export default function NaverMapContainer({
     const validPlaces = places.filter((p) => p.lat && p.lng);
     if (validPlaces.length === 0) return;
 
+    // 일차 → 시간순 정렬
     const sortedPlaces = [...validPlaces].sort((a, b) => {
       const dayDiff = a.day_number - b.day_number;
-      if (dayDiff !== 0) return dayDiff;
-      return a.visit_time.localeCompare(b.visit_time);
+      return dayDiff !== 0 ? dayDiff : a.visit_time.localeCompare(b.visit_time);
     });
 
     const dayCounts = new Map<number, number>();
@@ -107,24 +108,23 @@ export default function NaverMapContainer({
       const color = DAY_COLORS[(place.day_number - 1) % DAY_COLORS.length];
       const dayIndex = (dayCounts.get(place.day_number) ?? 0) + 1;
       dayCounts.set(place.day_number, dayIndex);
-      const markerIcon = {
-        content: `
-          <div style="
-            display:flex; align-items:center; justify-content:center;
-            width:26px; height:26px; border-radius:50%;
-            background:${color}; color:white;
-            font-size:12px; font-weight:bold;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            cursor:pointer;
-          ">${dayIndex}</div>`,
-        anchor: new naver.maps.LatLng(13, 13),
-      };
 
       const marker = new naver.maps.Marker({
         position,
         map: mapInstanceRef.current!,
-        icon: markerIcon,
+        icon: {
+          content: `
+            <div style="
+              display:flex; align-items:center; justify-content:center;
+              width:26px; height:26px; border-radius:50%;
+              background:${color}; color:white;
+              font-size:12px; font-weight:bold;
+              border: 2px solid white;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+              cursor:pointer;
+            ">${dayIndex}</div>`,
+          anchor: new naver.maps.LatLng(13, 13),
+        },
         title: place.place_name,
       });
 
@@ -142,6 +142,7 @@ export default function NaverMapContainer({
         disableAnchor: true,
       });
 
+      // 마커 클릭 시 이전 인포창 닫고 새 인포창 열기
       naver.maps.Event.addListener(marker, "click", () => {
         if (infoWindowRef.current) infoWindowRef.current.close();
         infoWindow.open(mapInstanceRef.current!, marker);
@@ -151,32 +152,26 @@ export default function NaverMapContainer({
       markersRef.current.push(marker);
     });
 
-    // 2. 날짜별로 분리해서 선(Polyline) 렌더링 (이전 날짜와 이어지지 않음)
-    const uniqueDays = Array.from(
-      new Set(sortedPlaces.map((p) => p.day_number)),
-    );
-
+    // 2. 일차별 Polyline 연결 (다른 날끼리는 이어지지 않음)
+    const uniqueDays = Array.from(new Set(sortedPlaces.map((p) => p.day_number)));
     uniqueDays.forEach((day) => {
       const dayPlaces = sortedPlaces.filter((p) => p.day_number === day);
-      if (dayPlaces.length > 1) {
-        const polylinePath = dayPlaces.map(
-          (p) => new naver.maps.LatLng(p.lat!, p.lng!),
-        );
-        const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
+      if (dayPlaces.length < 2) return;
 
-        const polyline = new naver.maps.Polyline({
-          map: mapInstanceRef.current!,
-          path: polylinePath,
-          strokeColor: color,
-          strokeWeight: 3,
-          strokeOpacity: 0.8,
-          strokeStyle: "shortdash",
-        });
-        polylinesRef.current.push(polyline);
-      }
+      const color = DAY_COLORS[(day - 1) % DAY_COLORS.length];
+      const polyline = new naver.maps.Polyline({
+        map: mapInstanceRef.current!,
+        path: dayPlaces.map((p) => new naver.maps.LatLng(p.lat!, p.lng!)),
+        strokeColor: color,
+        strokeWeight: 3,
+        strokeOpacity: 0.8,
+        strokeStyle: "shortdash",
+      });
+      polylinesRef.current.push(polyline);
     });
   }, [places]);
 
+  // 지도 초기화 + 스크립트 로드
   useEffect(() => {
     const initMap = () => {
       if (!mapRef.current || mapInstanceRef.current) return;
@@ -187,11 +182,10 @@ export default function NaverMapContainer({
       });
       renderMarkersAndLines();
     };
-    if (window.naver?.maps) {
-      initMap();
-      return;
-    }
+
+    if (window.naver?.maps) { initMap(); return; }
     if (scriptLoadedRef.current) return;
+
     scriptLoadedRef.current = true;
     if (!NAVER_MAP_CLIENT_ID) return;
 
@@ -202,6 +196,7 @@ export default function NaverMapContainer({
     document.head.appendChild(script);
   }, [centerLat, centerLng, renderMarkersAndLines]);
 
+  // places가 바뀌면 마커 다시 그림
   useEffect(() => {
     if (mapInstanceRef.current && window.naver?.maps) {
       renderMarkersAndLines();
@@ -211,15 +206,13 @@ export default function NaverMapContainer({
   return (
     <div className="w-full h-full rounded-2xl overflow-hidden relative">
       <div ref={mapRef} className="w-full h-full" />
+
+      {/* API 키 없을 때 안내 오버레이 */}
       {!NAVER_MAP_CLIENT_ID && (
         <div className="absolute inset-0 bg-slate-100/50 flex flex-col items-center justify-center rounded-2xl">
-          <div className="bg-white px-5 py-4 rounded-xl shadow-sm text-center border border-slate-200">
-            <span className="text-sm font-bold text-slate-700">
-              지도를 불러올 수 없습니다 🗺️
-            </span>
-            <p className="text-xs text-slate-500 mt-1">
-              .env 파일에 API 키를 설정해주세요.
-            </p>
+          <div className="box-white px-5 py-4 text-center border border-slate-200 shadow-card">
+            <span className="text-sm font-bold text-slate-700">지도를 불러올 수 없습니다 🗺️</span>
+            <p className="text-xs text-slate-500 mt-1">.env 파일에 API 키를 설정해주세요.</p>
           </div>
         </div>
       )}

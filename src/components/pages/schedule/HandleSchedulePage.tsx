@@ -1,4 +1,20 @@
-// src/components/pages/schedule/HandleSchedulePage.tsx
+// ===================================================
+// HandleSchedulePage.tsx - 일정 편집 메인 페이지
+//
+// 백엔드 API:
+//   GET /api/schedules/:id  → 일정 메타 + places + expenses
+//   PUT /api/schedules/:id  → 일정 제목/기간 수정
+//
+// 피그마 디자인 반영:
+//   - 상단: 제목(좌) + 알약 탭 메뉴(우) 레이아웃
+//   - 좌: 네이버 지도 (box-white)
+//   - 우: 탭별 콘텐츠 패널 (box-white)
+//   - 편집 모드: 인라인 제목/날짜 수정 폼
+//
+// AI 도움:
+//   - useCallback으로 fetchScheduleData 메모이제이션
+//   - PlaceMarker 타입 정의 + mapPlaces 상태 관리
+// ===================================================
 
 import { useState, useEffect, useCallback } from "react";
 import NavBar from "../../Navbar";
@@ -45,6 +61,7 @@ export default function HandleSchedulePage({
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
+  // prop으로 못 받으면 localStorage에서 꺼냄
   const [scheduleId] = useState<string>(
     () =>
       scheduleIdProp ||
@@ -55,17 +72,20 @@ export default function HandleSchedulePage({
   const [activeTab, setActiveTab] = useState<string>("timeline");
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
+  // 편집 모드 인풋 상태
   const [editTitle, setEditTitle] = useState("");
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
 
   const [scheduleMeta, setScheduleMeta] = useState<ScheduleMeta>({
-    title: "일정 로딩 중...",
+    title: "로딩 중...",
     period: "",
     region: "",
   });
+
   const [mapPlaces, setMapPlaces] = useState<PlaceMarker[]>([]);
 
+  // 일정 데이터 불러오기
   const fetchScheduleData = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`);
@@ -83,6 +103,7 @@ export default function HandleSchedulePage({
         end_date: end,
       });
 
+      // 지도 마커용 장소 목록
       const markers: PlaceMarker[] = (data.places || []).map((p: ApiPlace) => ({
         id: p.id,
         place_name: p.place_name,
@@ -93,21 +114,22 @@ export default function HandleSchedulePage({
       }));
       setMapPlaces(markers);
     } catch (err) {
-      console.error("일정 데이터 로딩 중 에러 발생:", err);
+      console.error("일정 데이터 로딩 오류:", err);
     }
   }, [scheduleId]);
 
   useEffect(() => {
-    const initPage = async () => {
+    const init = async () => {
       if (!currentUser) {
         onNavigate("login");
         return;
       }
       await fetchScheduleData();
     };
-    void initPage();
+    void init();
   }, [currentUser, onNavigate, fetchScheduleData]);
 
+  // 편집 모드 on/off
   const toggleEditMode = (mode: boolean) => {
     if (mode) {
       setEditTitle(scheduleMeta.title);
@@ -117,10 +139,7 @@ export default function HandleSchedulePage({
     setIsEditing(mode);
   };
 
-  const handlePlaceAdded = useCallback((place: PlaceMarker) => {
-    setMapPlaces((prev) => [...prev, place]);
-  }, []);
-
+  // 일정 메타 정보 저장
   const handleUpdateMeta = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
@@ -132,28 +151,37 @@ export default function HandleSchedulePage({
           end_date: editEndDate,
         }),
       });
+
       if (res.ok) {
         setScheduleMeta((prev) => ({
           ...prev,
           title: editTitle,
           start_date: editStartDate,
           end_date: editEndDate,
-          period: `${editStartDate} ~ ${editEndDate}`,
+          period:
+            editStartDate && editEndDate
+              ? `${editStartDate} ~ ${editEndDate}`
+              : "",
         }));
         setIsEditing(false);
       } else {
         alert("일정 정보 수정에 실패했습니다.");
       }
     } catch (err) {
-      console.error(err);
+      console.error("일정 수정 오류:", err);
       alert("서버 통신 중 오류가 발생했습니다.");
     }
   };
 
+  // 타임라인에서 장소 추가 시 지도에도 마커 추가
+  const handlePlaceAdded = useCallback((place: PlaceMarker) => {
+    setMapPlaces((prev) => [...prev, place]);
+  }, []);
+
   if (!currentUser) return null;
 
   return (
-    <div className="h-screen bg-slate-50 flex flex-col font-sans antialiased text-dark overflow-hidden">
+    <div className="h-screen bg-background flex flex-col font-sans antialiased text-dark overflow-hidden">
       <NavBar
         userName={currentUser.name}
         onNavigate={onNavigate}
@@ -163,28 +191,29 @@ export default function HandleSchedulePage({
         }}
       />
 
-      <main className="flex-1 h-0 w-[90%] max-w-7xl mx-auto py-6 flex flex-col gap-5 items-stretch overflow-hidden">
-        {/* ✅ 피그마 디자인: 배경을 없애고 텍스트와 우측 박스만 배치 */}
-        <div className="flex items-end justify-between shrink-0 mb-1 pl-2">
-          {/* 왼쪽: 제목 및 날짜 정보 */}
-          <div className="flex flex-col gap-1.5">
+      <main className="flex-1 h-0 w-[70%] max-w-7xl mx-auto py-6 flex flex-col gap-5 overflow-hidden">
+        {/* 상단: 일정 제목(좌) + 탭 메뉴(우) */}
+        <div className="flex justify-between shrink-0 pl-1">
+          {/* 좌측: 일정 제목 + 기간 */}
+          <div className="w-1/2 flex flex-col gap-1.5">
             {isEditing ? (
-              <div className="flex gap-2 items-center bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+              /* 편집 모드: 인라인 제목/날짜 수정 폼 */
+              <div className="w-[90%] flex gap-2 items-center box-white p-2.5 border border-slate-200 shadow-card">
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="text-xl font-black text-dark border border-slate-300 rounded-lg px-3 py-1 bg-slate-50 focus:outline-none focus:border-primary"
                   placeholder="여행 제목 입력"
+                  className="w-[35%] text-xl font-black text-dark input-custom px-3 py-1 focus:outline-none"
                 />
-                <div className="flex items-center gap-1 bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
+                <div className="w-[40%] flex items-center input-custom px-5 py-2.5">
                   <input
                     type="date"
                     value={editStartDate}
                     onChange={(e) => setEditStartDate(e.target.value)}
                     className="text-xs font-bold text-slate-600 bg-transparent focus:outline-none"
                   />
-                  <span className="text-slate-400">~</span>
+                  <span className="text-slate-400 text-xs">~</span>
                   <input
                     type="date"
                     value={editEndDate}
@@ -194,48 +223,54 @@ export default function HandleSchedulePage({
                 </div>
                 <button
                   onClick={handleUpdateMeta}
-                  className="px-4 py-1.5 bg-[#0d9488] text-white text-xs font-bold rounded-lg shadow-sm hover:bg-teal-700 ml-1"
+                  className="btn-primary px-4 py-1.5 text-xs"
                 >
                   확인
                 </button>
                 <button
                   onClick={() => toggleEditMode(false)}
-                  className="px-4 py-1.5 bg-slate-200 text-dark text-xs font-bold rounded-lg shadow-sm hover:bg-slate-300"
+                  className="btn-ghost px-4 py-1.5 text-xs"
                 >
                   취소
                 </button>
               </div>
             ) : (
+              /* 일반 모드: 제목 + 기간 텍스트 */
               <>
                 <h1 className="text-[26px] font-black tracking-tight text-dark m-0 leading-none">
                   {scheduleMeta.title}
                 </h1>
                 {scheduleMeta.period && (
-                  <div className="flex items-center gap-1 mt-1 opacity-90">
-                    <span className="text-sm font-bold text-slate-800 tracking-wide">
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <span className="text-sm font-bold text-slate-600 tracking-wide">
                       {scheduleMeta.period}
                     </span>
-                    <span className="text-[10px] grayscale ml-1">✏️</span>
+                    {/* 편집 힌트 아이콘 */}
+                    <span className="text-[10px] grayscale opacity-60 ml-0.5">
+                      ✏️
+                    </span>
                   </div>
                 )}
               </>
             )}
           </div>
 
-          {/* 오른쪽: 하얀색 알약 모양 탭 메뉴 및 컨트롤 버튼 */}
-          <ScheduleHeader
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            isEditing={isEditing}
-            onToggleEdit={() => toggleEditMode(!isEditing)}
-            onNavigate={onNavigate}
-          />
+          {/* 우측: 알약 탭 메뉴 */}
+          <div className="w-1/2  flex flex-col gap-1.5 shrink-0">
+            <ScheduleHeader
+              activeTab={activeTab}
+              setActiveTab={setActiveTab}
+              isEditing={isEditing}
+              onToggleEdit={() => toggleEditMode(!isEditing)}
+              onNavigate={onNavigate}
+            />
+          </div>
         </div>
 
-        {/* 하단 메인 콘텐츠 (지도 & 세부 섹션) */}
-        <div className="flex-1 h-0 flex flex-row gap-6 items-stretch overflow-hidden">
-          {/* 좌측 지도 */}
-          <div className="w-1/2 flex flex-col shrink-0 h-full bg-white rounded-4xl shadow-sm border border-slate-200 p-2 overflow-hidden">
+        {/* 하단 메인 콘텐츠 */}
+        <div className="flex-1 h-0 flex flex-row gap-5 items-stretch overflow-hidden">
+          {/* 좌측: 네이버 지도 */}
+          <div className="w-1/2 shrink-0 h-full box-white border border-slate-100 shadow-card p-2 overflow-hidden">
             <NaverMapContainer
               places={mapPlaces}
               centerLat={getRegionCenter(scheduleMeta.region).lat}
@@ -243,8 +278,8 @@ export default function HandleSchedulePage({
             />
           </div>
 
-          {/* 우측 탭별 상세 내용 */}
-          <div className="w-1/2 flex flex-col h-full bg-white rounded-4xl shadow-sm border border-slate-200 overflow-hidden">
+          {/* 우측: 탭별 콘텐츠 */}
+          <div className="w-1/2 h-full box-white border border-slate-100 shadow-card overflow-hidden">
             {activeTab === "timeline" && (
               <TimelineSection
                 userId={currentUser.id}
@@ -259,7 +294,11 @@ export default function HandleSchedulePage({
               <AccountBookSection scheduleId={scheduleId} />
             )}
             {activeTab === "companion" && (
-              <CompanionSection userId={currentUser.id} />
+              <CompanionSection
+                userId={currentUser.id}
+                scheduleTitle={scheduleMeta.title}
+                schedulePeriod={scheduleMeta.period}
+              />
             )}
           </div>
         </div>
@@ -268,9 +307,24 @@ export default function HandleSchedulePage({
   );
 }
 
+// 지역명 → 지도 중심 좌표 변환
 function getRegionCenter(region: string): { lat: number; lng: number } {
   const centers: Record<string, { lat: number; lng: number }> = {
     서울특별시: { lat: 37.5665, lng: 126.978 },
+    부산광역시: { lat: 35.1796, lng: 129.0756 },
+    대구광역시: { lat: 35.8714, lng: 128.6014 },
+    인천광역시: { lat: 37.4563, lng: 126.7052 },
+    광주광역시: { lat: 35.1595, lng: 126.8526 },
+    대전광역시: { lat: 36.3504, lng: 127.3845 },
+    울산광역시: { lat: 35.5384, lng: 129.3114 },
+    경기도: { lat: 37.2752, lng: 127.0095 },
+    강원특별자치도: { lat: 37.8228, lng: 128.1555 },
+    충청북도: { lat: 36.6357, lng: 127.4917 },
+    충청남도: { lat: 36.6588, lng: 126.6728 },
+    전북특별자치도: { lat: 35.7175, lng: 127.153 },
+    전라남도: { lat: 34.8679, lng: 126.991 },
+    경상북도: { lat: 36.4919, lng: 128.8889 },
+    경상남도: { lat: 35.4606, lng: 128.2132 },
     제주특별자치도: { lat: 33.4996, lng: 126.5312 },
   };
   return centers[region] ?? { lat: 37.5665, lng: 126.978 };

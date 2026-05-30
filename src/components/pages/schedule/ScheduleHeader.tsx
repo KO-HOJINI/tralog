@@ -1,4 +1,11 @@
-// src/components/pages/schedule/ScheduleHeader.tsx
+// ===================================================
+// ScheduleHeader.tsx - 알약 모양 탭 메뉴 + 편집 버튼
+//
+// 피그마 디자인:
+//   - 흰 배경 알약 모양 컨테이너 (rounded-full)
+//   - 활성 탭: dark(slate-700) 배경
+//   - 우측: primary(teal) 편집/저장 버튼
+// ===================================================
 
 interface ScheduleHeaderProps {
   activeTab: string;
@@ -14,60 +21,45 @@ export default function ScheduleHeader({
   isEditing,
   onToggleEdit,
 }: ScheduleHeaderProps) {
+
+  // 탭 변경 + 편집 모드 자동 종료
+  const handleTabChange = (tab: string) => {
+    if (tab !== "timeline" && isEditing) onToggleEdit();
+    setActiveTab(tab);
+  };
+
+  // 탭별 스타일 계산
+  const tabClass = (tab: string) =>
+    `px-4 py-1.5 text-xs font-bold rounded-full transition-all ${
+      activeTab === tab
+        ? "bg-slate-700 text-white shadow-sm"
+        : "bg-transparent text-slate-500 hover:bg-slate-100"
+    }`;
+
   return (
-    // ✅ 피그마 디자인: 길쭉한 하얀색 알약 모양의 배경 박스
-    <div className="flex items-center justify-between bg-white rounded-full shadow-sm px-2.5 py-2 w-[550px] border border-slate-100 select-none">
-      
-      {/* 왼쪽: 3개의 탭 메뉴 (피그마의 다크 그레이 색상 적용) */}
-      <div className="flex gap-1.5">
-        <button
-          onClick={() => setActiveTab("timeline")}
-          className={`px-5 py-1.5 text-xs font-bold rounded-full transition-all ${
-            activeTab === "timeline"
-              ? "bg-[#4b5563] text-white shadow-sm"
-              : "bg-transparent text-slate-500 hover:bg-slate-100"
-          }`}
-        >
+    <div className="flex items-center w-full justify-between box-white px-2.5 py-2 border border-slate-100 shadow-card select-none" style={{ borderRadius: "999px", minWidth: "520px" }}>
+
+      {/* 좌측 탭 3개 */}
+      <div className="flex gap-1">
+        <button onClick={() => handleTabChange("timeline")} className={tabClass("timeline")}>
           타임라인
         </button>
-        <button
-          onClick={() => {
-            setActiveTab("companion");
-            if (isEditing) onToggleEdit();
-          }}
-          className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${
-            activeTab === "companion"
-              ? "bg-[#4b5563] text-white shadow-sm"
-              : "bg-transparent text-slate-500 hover:bg-slate-100"
-          }`}
-        >
+        <button onClick={() => handleTabChange("companion")} className={tabClass("companion")}>
           👥 일행 추가
         </button>
-        <button
-          onClick={() => {
-            setActiveTab("account");
-            if (isEditing) onToggleEdit();
-          }}
-          className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all flex items-center gap-1.5 ${
-            activeTab === "account"
-              ? "bg-[#4b5563] text-white shadow-sm"
-              : "bg-transparent text-slate-500 hover:bg-slate-100"
-          }`}
-        >
+        <button onClick={() => handleTabChange("account")} className={tabClass("account")}>
           💳 가계부
         </button>
       </div>
 
-      {/* 오른쪽: 청록색 일정 편집 버튼 */}
+      {/* 우측: 일정 편집 / 저장 버튼 (타임라인 탭에서만 활성화) */}
       <button
         disabled={activeTab !== "timeline"}
         onClick={onToggleEdit}
         className={`px-5 py-1.5 text-xs font-bold rounded-full transition-all shadow-sm ${
           activeTab !== "timeline"
             ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-            : isEditing
-              ? "bg-[#0d9488] text-white hover:bg-teal-700"
-              : "bg-[#0d9488] text-white hover:bg-teal-700"
+            : "btn-primary"
         }`}
       >
         {isEditing ? "✔️ 저장하기" : "일정 편집"}

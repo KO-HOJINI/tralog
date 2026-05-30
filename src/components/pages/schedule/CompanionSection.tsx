@@ -1,3 +1,15 @@
+// ===================================================
+// CompanionSection.tsx - 여행 동반자 관리 섹션
+//
+// 현재 localStorage 기반으로 동작함 (백엔드 미연동)
+// 피그마 디자인 반영:
+//   - 우측에 일정 제목 + 기간 표시
+//   - 인풋 + 추가 버튼 심플 구성
+//   - 멤버 목록: 이름 + 아이디 + 편집가능 뱃지
+//
+// TODO: 나중에 백엔드 API로 교체 예정
+// ===================================================
+
 import { useState } from "react";
 
 interface Companion {
@@ -5,7 +17,6 @@ interface Companion {
   name: string;
 }
 
-// 1. 기존 any를 대체할 시스템 중앙 유저 레코드 타입 명시
 interface UserRecord {
   id: string;
   password?: string;
@@ -16,29 +27,32 @@ interface UserRecord {
 
 interface CompanionSectionProps {
   userId: string;
+  scheduleTitle?: string;
+  schedulePeriod?: string;
 }
 
-export default function CompanionSection({ userId }: CompanionSectionProps) {
+export default function CompanionSection({
+  userId,
+  scheduleTitle,
+  schedulePeriod,
+}: CompanionSectionProps) {
   const [searchId, setSearchId] = useState("");
   const [message, setMessage] = useState("");
 
+  // localStorage에서 초기 동반자 목록 불러옴
   const [companions, setCompanions] = useState<Companion[]>(() => {
     const stored = localStorage.getItem(`tralog_companions_${userId}`);
     if (stored) return JSON.parse(stored);
-
     const defaultData = [{ id: "jaehyun7", name: "김재현" }];
-    localStorage.setItem(
-      `tralog_companions_${userId}`,
-      JSON.stringify(defaultData),
-    );
+    localStorage.setItem(`tralog_companions_${userId}`, JSON.stringify(defaultData));
     return defaultData;
   });
 
+  // 동반자 추가
   const handleAddCompanion = (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
     const targetId = searchId.trim();
-
     if (!targetId) return;
 
     if (targetId === userId) {
@@ -47,121 +61,109 @@ export default function CompanionSection({ userId }: CompanionSectionProps) {
     }
 
     if (companions.some((c) => c.id === targetId)) {
-      setMessage("⚠️ 이미 추가되어 있는 일행입니다.");
+      setMessage("⚠️ 이미 추가된 일행입니다.");
       return;
     }
 
-    // 2. any 대신 UserRecord[] 제네릭을 부여하여 타입 안전성 확보
     const existingUsers = JSON.parse(
       localStorage.getItem("tralog_users_list") || "[]",
     ) as UserRecord[];
 
-    // 3. (user: UserRecord) 형태로 매칭 검증 진행 (any 에러 지점 해결)
-    const foundUser = existingUsers.find(
-      (user: UserRecord) => user.id === targetId,
-    );
+    const foundUser = existingUsers.find((user: UserRecord) => user.id === targetId);
 
     if (foundUser) {
-      const updated = [
-        ...companions,
-        { id: foundUser.id, name: foundUser.name || foundUser.id },
-      ];
+      const updated = [...companions, { id: foundUser.id, name: foundUser.name || foundUser.id }];
       setCompanions(updated);
-      localStorage.setItem(
-        `tralog_companions_${userId}`,
-        JSON.stringify(updated),
-      );
-
+      localStorage.setItem(`tralog_companions_${userId}`, JSON.stringify(updated));
       setSearchId("");
-      setMessage("✅ 일행이 성공적으로 추가되었습니다.");
+      setMessage("✅ 일행이 추가되었습니다.");
     } else {
-      setMessage("❌ 시스템에 존재하지 않는 아이디입니다.");
+      setMessage("❌ 존재하지 않는 아이디입니다.");
     }
   };
 
+  // 동반자 제거
   const handleRemoveCompanion = (id: string) => {
     const updated = companions.filter((c) => c.id !== id);
     setCompanions(updated);
-    localStorage.setItem(
-      `tralog_companions_${userId}`,
-      JSON.stringify(updated),
-    );
+    localStorage.setItem(`tralog_companions_${userId}`, JSON.stringify(updated));
   };
 
   return (
-    <div className="box-custom bg-pure-white shadow-card border border-slate-100 p-6 h-full flex flex-col gap-4 overflow-hidden">
-      <div className="select-none">
-        <h2 className="text-base font-bold text-dark mb-1">
-          여행 동반자 초대하기
-        </h2>
-        <p className="text-xs text-gray leading-relaxed font-medium">
-          함께 여행할 멤버의 아이디를 입력하여 일정 관리 권한을 위임하세요.
-        </p>
-      </div>
+    <div className="p-6 h-full flex flex-col gap-5 overflow-hidden bg-white">
 
-      <form
-        onSubmit={handleAddCompanion}
-        className="flex flex-col gap-1 shrink-0"
-      >
-        <div className="flex gap-2">
+      {/* 헤더: 일정 제목 + 기간 (피그마 우측 패널 상단) */}
+      {scheduleTitle && (
+        <div className="pb-4 border-b border-slate-100 shrink-0 select-none">
+          <h2 className="font-black text-dark m-0 mb-1">{scheduleTitle}</h2>
+          {schedulePeriod && (
+            <span className="text-xs font-bold text-slate-500">{schedulePeriod}</span>
+          )}
+        </div>
+      )}
+
+      {/* 동반자 추가 인풋 */}
+      <div className="shrink-0">
+        <p className="text-xs font-bold text-dark mb-2 select-none">일행의 ID를 입력하세요</p>
+        <form onSubmit={handleAddCompanion} className="flex gap-2">
           <input
             type="text"
-            placeholder="동반자의 ID를 입력하세요"
+            placeholder="아이디를 입력하세요"
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
             className="flex-1 h-11 px-4 text-xs focus:outline-none input-custom"
           />
-          <button
-            type="submit"
-            className="h-11 px-4 bg-primary text-white text-xs font-bold rounded-xl shrink-0 hover:bg-teal-700 transition-colors"
-          >
-            일행 추가
+          <button type="submit" className="btn-primary h-11 px-5 text-xs shrink-0">
+            추가
           </button>
-        </div>
+        </form>
         {message && (
-          <p
-            className={`text-[11px] font-bold px-1 mt-1 transition-all ${
-              message.startsWith("✅") ? "text-primary" : "text-red-500"
-            }`}
-          >
+          <p className={`text-[11px] font-bold px-1 mt-1.5 ${
+            message.startsWith("✅") ? "text-primary" : "text-red-500"
+          }`}>
             {message}
           </p>
         )}
-      </form>
+      </div>
 
-      <div className="flex-1 flex flex-col gap-2 mt-2 overflow-hidden">
-        <p className="text-xs font-bold text-gray select-none">
-          참여 중인 동행 멤버 ({companions.length}명)
+      {/* 멤버 목록 */}
+      <div className="flex-1 flex flex-col gap-2 overflow-hidden">
+        <p className="text-xs font-bold text-gray select-none shrink-0">
+          참여 중인 멤버 ({companions.length}명)
         </p>
 
-        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2">
-          {companions.map((comp) => (
-            <div
-              key={comp.id}
-              className="flex justify-between items-center p-3.5 rounded-xl border border-slate-100 bg-slate-50/60"
-            >
-              <div className="flex items-center gap-2 select-none">
-                <span className="text-sm">👤</span>
-                <span className="text-xs font-bold text-dark">{comp.name}</span>
-                <span className="text-[10px] text-gray font-mono">
-                  ({comp.id})
-                </span>
-              </div>
-
-              <div className="flex items-center gap-2.5">
-                <span className="text-[10px] font-bold text-primary bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/30">
-                  편집 가능
-                </span>
-                <button
-                  onClick={() => handleRemoveCompanion(comp.id)}
-                  className="w-4 h-4 rounded-full text-slate-400 hover:text-red-500 font-bold text-[10px] flex items-center justify-center transition-colors cursor-pointer"
-                  title="멤버 제외"
-                >
-                  ✕
-                </button>
-              </div>
+        <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 scrollbar">
+          {companions.length === 0 ? (
+            <div className="py-8 text-center text-xs text-slate-400">
+              아직 초대된 일행이 없습니다.
             </div>
-          ))}
+          ) : (
+            companions.map((comp) => (
+              <div
+                key={comp.id}
+                className="box-white flex justify-between items-center p-3.5 border border-slate-100 hover:border-slate-200 transition-all"
+              >
+                <div className="flex items-center gap-2 select-none">
+                  <span className="text-sm">👤</span>
+                  <span className="text-xs font-bold text-dark">{comp.name}</span>
+                  <span className="text-[10px] text-gray font-mono">({comp.id})</span>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[10px] font-bold text-primary bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200/50">
+                    편집 가능
+                  </span>
+                  <button
+                    onClick={() => handleRemoveCompanion(comp.id)}
+                    className="w-5 h-5 rounded-full text-slate-400 hover:text-red-500 font-bold text-[10px] flex items-center justify-center transition-colors"
+                    title="멤버 제외"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
