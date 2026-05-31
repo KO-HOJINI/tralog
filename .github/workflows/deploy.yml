@@ -24,15 +24,17 @@ jobs:
           node-version: 20
 
       - name: Install
+        working-directory: ./Tralog # 👈 중요: 프론트엔드 폴더로 이동해서 패키지 설치
         run: npm install
 
       - name: Build
+        working-directory: ./Tralog # 👈 중요: 프론트엔드 폴더로 이동해서 빌드 실행
         run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./dist
+          path: ./Tralog/dist # 👈 중요: 빌드된 결과물(dist)의 위치를 프론트엔드 폴더 내부로 지정
 
   deploy:
     needs: build
