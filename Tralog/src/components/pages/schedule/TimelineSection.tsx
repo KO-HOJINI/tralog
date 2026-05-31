@@ -89,14 +89,17 @@ export default function TimelineSection({
   const [newPlace, setNewPlace] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(null);
+  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
+    null,
+  );
 
   // 여행 총 일수 계산 (AI 도움)
   let totalDays = 1;
   if (startDate && endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const diff =
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     totalDays = Math.max(diff, 1);
   }
 
@@ -115,14 +118,16 @@ export default function TimelineSection({
         if (!res.ok) throw new Error("일정 로드 실패");
         const data = await res.json();
 
-        const mapped: TimelineItem[] = (data.places || []).map((p: ApiPlaceData) => ({
-          id: p.id,
-          time: p.visit_time,
-          place: p.place_name,
-          day_number: p.day_number,
-          memo: p.memo,
-          expenses: [], // 초기엔 빈 배열, 카드에서 직접 추가됨
-        }));
+        const mapped: TimelineItem[] = (data.places || []).map(
+          (p: ApiPlaceData) => ({
+            id: p.id,
+            time: p.visit_time,
+            place: p.place_name,
+            day_number: p.day_number,
+            memo: p.memo,
+            expenses: [], // 초기엔 빈 배열, 카드에서 직접 추가됨
+          }),
+        );
 
         if (isMounted) setAllItems(mapped);
       } catch (err) {
@@ -133,7 +138,9 @@ export default function TimelineSection({
     };
 
     void fetchPlaces();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [scheduleId]);
 
   // 장소 검색 (네이버 API)
@@ -151,10 +158,12 @@ export default function TimelineSection({
       const data = await res.json();
 
       // HTML 태그 제거 (네이버 검색 결과에 <b> 태그 포함됨)
-      const cleaned: SearchResultItem[] = (data.results || []).map((r: NaverSearchResult) => ({
-        ...r,
-        place_name: r.place_name.replace(/<[^>]*>?/gm, ""),
-      }));
+      const cleaned: SearchResultItem[] = (data.results || []).map(
+        (r: NaverSearchResult) => ({
+          ...r,
+          place_name: r.place_name.replace(/<[^>]*>?/gm, ""),
+        }),
+      );
       setSearchResults(cleaned);
       setShowSearchResults(cleaned.length > 0);
     } catch (err) {
@@ -165,8 +174,10 @@ export default function TimelineSection({
   // 장소 추가
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTime.trim() || !newPlace.trim()) return alert("시간과 장소를 모두 입력해주세요.");
-    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime)) return alert("시간 형식: 09:30");
+    if (!newTime.trim() || !newPlace.trim())
+      return alert("시간과 장소를 모두 입력해주세요.");
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime))
+      return alert("시간 형식: 09:30");
 
     let target = selectedResult;
     if (!target && searchResults.length > 0) target = searchResults[0];
@@ -220,7 +231,9 @@ export default function TimelineSection({
   // 장소 삭제
   const handleDeleteItem = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
+        method: "DELETE",
+      });
       if (res.ok) setAllItems((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.error("장소 삭제 실패:", err);
@@ -247,7 +260,11 @@ export default function TimelineSection({
 
   // 비용 추가 (가계부 API 호출)
   // placeId를 받아서 allItems의 해당 카드 expenses에도 추가
-  const handleAddExpense = async (placeId: string, detail: string, amount: number) => {
+  const handleAddExpense = async (
+    placeId: string,
+    detail: string,
+    amount: number,
+  ) => {
     try {
       await fetch(`${API_BASE_URL}/api/expenses`, {
         method: "POST",
@@ -260,7 +277,17 @@ export default function TimelineSection({
           amount,
         }),
       });
-      // PlaceItemCard 내부 localExpenses에도 반영은 카드에서 처리함
+      // 서버 등록 후 로컬 state에도 반영
+      setAllItems((prev) =>
+        prev.map((item) =>
+          item.id === placeId
+            ? {
+                ...item,
+                expenses: [...(item.expenses || []), { detail, amount }],
+              }
+            : item,
+        ),
+      );
     } catch (err) {
       console.error("가계부 추가 실패:", err);
     }
@@ -273,7 +300,6 @@ export default function TimelineSection({
 
   return (
     <div className="p-5 h-full flex flex-col gap-4 overflow-hidden">
-
       {/* 일차 탭 */}
       <div className="flex gap-2 shrink-0 select-none overflow-x-auto pb-1">
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (

@@ -194,7 +194,7 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
                   <div
                     key={`${imgSrc.slice(-20)}-${index}`}
                     onClick={() => setSelectedIndex(isSelected ? null : index)}
-                    className={`aspect-square rounded-[24px] overflow-hidden relative border-2 cursor-pointer transition-all ${
+                    className={`aspect-square rounded-3xl overflow-hidden relative border-2 cursor-pointer transition-all ${
                       isSelected
                         ? "border-primary scale-[0.98] shadow-md"
                         : isCover
@@ -251,7 +251,7 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className={`px-5 py-2 text-body-caption font-bold whitespace-nowrap h-10 transition-colors rounded-[var(--radius-btn)] ${
+              className={`px-5 py-2 text-body-caption font-bold whitespace-nowrap h-10 transition-colors rounded-(--radius-btn) ${
                 isUploading ? "btn-ghost cursor-not-allowed" : "btn-primary"
               }`}
             >
