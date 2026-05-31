@@ -14,7 +14,7 @@ interface NavBarProps {
 export default function NavBar({ userName, onNavigate, onLogout }: NavBarProps) {
   return (
     <div className="w-full pt-6 sticky top-0 z-50">
-      <header className="w-[80%] mx-auto h-18 box-white px-10 flex items-center justify-between shadow-custom">
+      <header className="w-[80%] mx-auto h-18 box-white px-10 flex items-center justify-between">
 
         {/* 로고 클릭하면 대시보드로 이동 */}
         <span

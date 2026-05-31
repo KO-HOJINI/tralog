@@ -108,15 +108,15 @@ export default function PlaceItemCard({
 
       <div className="flex-1 flex flex-col gap-1.5 min-w-0">
         {/* 카드 본체 */}
-        <div className="box-white p-4 flex flex-col w-full shadow-sm">
+        <div className="box-white p-4 flex flex-col w-full">
           {/* 시간 */}
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
-            <span className="text-[12px]">🕒</span>
-            <span className="text-xs font-bold font-mono">{displayTime}</span>
+            <span className="text-[11px]">🕒</span>
+            <span className="text-xs text-number-accent">{displayTime}</span>
           </div>
 
           {/* 장소명 */}
-          <h3 className="text-base font-black text-slate-800 m-0 leading-tight">
+          <h3>
             {place}
           </h3>
 
@@ -128,7 +128,7 @@ export default function PlaceItemCard({
                 <div className="flex justify-between items-center bg-slate-600 text-white rounded-full px-3 py-1.5 group/memo">
                   <div className="flex items-center gap-1.5 text-[11px] font-medium">
                     <span>📝</span>
-                    <span>{memo}</span>
+                    <span className="text-body-caption text-white">{memo}</span>
                   </div>
                   {isEditing && (
                     <button
@@ -152,7 +152,7 @@ export default function PlaceItemCard({
                       {exp.category}
                     </span>
                     <span>💵</span>
-                    <span className="font-mono">{exp.amount.toLocaleString()}원</span>
+                    <span className="text-body-caption text-xs">{exp.amount.toLocaleString()}원</span>
                   </div>
                   {isEditing && (
                     <button

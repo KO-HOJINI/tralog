@@ -54,10 +54,10 @@ export default function ScheduleHeader({
 
   // 💡 수정됨: whitespace-nowrap과 shrink-0을 추가하여 글씨 찌그러짐 방지, px 사이즈 약간 축소
   const tabClass = (tab: string) =>
-    `px-4 py-2 text-[13px] font-bold rounded-full transition-all whitespace-nowrap shrink-0 ${
+    `h-9 px-4 text-body-caption ${
       activeTab === tab
-        ? "bg-[#4f5b70] text-white shadow-sm"
-        : "bg-transparent text-[#4f5b70] hover:bg-slate-50"
+        ? "btn-ghost"
+        : "btn-white"
     }`;
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,9 +119,9 @@ export default function ScheduleHeader({
 
   return (
     <>
-      <div className="flex items-center justify-between box-white p-3 w-full select-none overflow-x-auto scrollbar-hide">
+      <div className="flex items-center justify-between box-white p-3 px-5 w-full select-none overflow-x-auto scrollbar-hide">
         {/* 좌측 탭 3개 */}
-        <div className="flex gap-1 shrink-0">
+        <div className="flex gap-3 shrink-0 ">
           <button
             onClick={() => handleTabChange("timeline")}
             className={tabClass("timeline")}
@@ -143,11 +143,11 @@ export default function ScheduleHeader({
         </div>
 
         {/* 우측 사진 추가, 편집 */}
-        <div className="flex items-center gap-3 shrink-0 ml-2">
+        <div className="flex gap-3 shrink-0">
           {/* 사진 추가 버튼 */}
           <button
             onClick={handleOpenModal}
-            className="px-4 py-2 text-[13px] font-bold rounded-full transition-all border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 shrink-0"
+            className="btn-secondary h-9 px-4 text-body-caption"
           >
             사진 추가
           </button>
@@ -156,7 +156,7 @@ export default function ScheduleHeader({
           <button
             disabled={activeTab !== "timeline"}
             onClick={onToggleEdit}
-            className={`px-5 py-2 text-[13px] font-bold rounded-full shadow-sm transition-all shrink-0 ${
+            className={`btn-primary h-9 px-4 text-body-caption ${
               activeTab !== "timeline"
                 ? "bg-slate-200 text-slate-400 cursor-not-allowed"
                 : "btn-primary"
@@ -187,7 +187,7 @@ export default function ScheduleHeader({
             </div>
 
             <p className="text-xs text-slate-500 font-medium -mt-1">
-              사진은 나만의 지도 페이지에서도 확인할 수 있어요.
+              사진은 나만의 지도 페이지에서 확인할 수 있어요.
             </p>
 
             <div className="flex flex-col gap-1.5">

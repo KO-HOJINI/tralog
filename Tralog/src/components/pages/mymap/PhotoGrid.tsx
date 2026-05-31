@@ -155,7 +155,7 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
       <div className="flex-1 box-white p-6 shadow-card flex flex-col min-h-0 overflow-hidden">
 
         {/* 컨트롤 바: 장수 표시 + 삭제/대표사진 버튼 */}
-        <div className="bg-primary box-custom p-4 mb-5 flex items-center justify-between shrink-0">
+        <div className="bg-primary box-white p-4 mb-5 flex items-center justify-between shrink-0">
           <span className="text-body-main font-bold text-pure-white">
             {regionName} ({currentRecord.images.length}장)
           </span>
@@ -194,9 +194,9 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
                   <div
                     key={`${imgSrc.slice(-20)}-${index}`}
                     onClick={() => setSelectedIndex(isSelected ? null : index)}
-                    className={`aspect-square rounded-3xl overflow-hidden relative border-2 cursor-pointer transition-all ${
+                    className={`box-white aspect-square overflow-hidden relative border-2 cursor-pointer transition-all ${
                       isSelected
-                        ? "border-primary scale-[0.98] shadow-md"
+                        ? "border-primary scale-[0.98]"
                         : isCover
                           ? "border-secondary"
                           : "border-slate-100 hover:border-slate-200"
@@ -209,11 +209,11 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
                     />
                     {/* 선택 / 대표 뱃지 */}
                     <div
-                      className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center border text-[11px] font-bold transition-all ${
+                      className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center border text-[10px] font-bold transition-all ${
                         isSelected
                           ? "bg-primary text-pure-white border-primary"
                           : isCover
-                            ? "bg-secondary text-pure-white border-secondary shadow-sm"
+                            ? "bg-secondary text-pure-white border-secondary"
                             : "bg-pure-white/90 text-transparent border-slate-300"
                       }`}
                     >

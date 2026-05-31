@@ -5,8 +5,7 @@
 //   GET  /api/schedules/active/:userId  → 진행 중 일정 목록
 //   POST /api/schedules                 → 새 일정 생성
 //
-// D-Day 계산 로직 (오늘 날짜 기준으로 남은 일수)
-// AI 도움: D-Day 날짜 계산 + 반응형 카드 레이아웃 구성
+// D-Day 계산 로직 및 종료된 일정 필터링 적용
 // ===================================================
 
 import { useState, useEffect } from "react";
@@ -23,13 +22,14 @@ interface TravelSchedule {
   bgImage?: string;
 }
 
-// DB에서 오는 원본 형식 (snake_case)
+// DB에서 오는 원본 형식 (bgImage 포함)
 interface DBSchedule {
   id: string;
   title: string;
   region: string;
   start_date: string;
   end_date: string;
+  bgImage?: string;
 }
 
 interface ScheduleListProps {
@@ -37,7 +37,10 @@ interface ScheduleListProps {
   onNavigate: (page: string, scheduleId?: string) => void;
 }
 
-export default function ScheduleList({ userId, onNavigate }: ScheduleListProps) {
+export default function ScheduleList({
+  userId,
+  onNavigate,
+}: ScheduleListProps) {
   const [schedules, setSchedules] = useState<TravelSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
@@ -77,17 +80,15 @@ export default function ScheduleList({ userId, onNavigate }: ScheduleListProps) 
     }
   };
 
-  // 타임존 버그 방지용 헬퍼
-// new Date().toISOString()은 UTC 기준이라 한국(UTC+9)에서 자정 전후로 하루 오차 남
-// → 로컬 날짜를 직접 조합해서 "YYYY-MM-DD" 반환
-const getLocalDateString = (date: Date = new Date()): string => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-};
+  // 로컬 날짜를 직접 조합해서 "YYYY-MM-DD" 반환 (타임존 버그 방지)
+  const getLocalDateString = (date: Date = new Date()): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  };
 
-// 일정 목록 불러오기 + D-Day 계산해서 UI용 형식으로 변환
+  // 일정 목록 불러오기 + D-Day 계산 + 종료된 일정 숨기기
   useEffect(() => {
     if (!userId) return;
 
@@ -97,24 +98,32 @@ const getLocalDateString = (date: Date = new Date()): string => {
         return res.json();
       })
       .then((data: DBSchedule[]) => {
-        const formattedSchedules = data.map((item) => {
-          // D-Day 계산
-          // ⚠️ 타임존 버그 방지: new Date("2026-06-01T00:00:00Z")는 KST로 2026-05-31이 됨
-          // → "YYYY-MM-DD" 문자열에서 직접 연/월/일 파싱해서 로컬 자정 Date 생성
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
-          const rawStart = item.start_date.split("T")[0]; // "2026-06-01"
+        // 💡 종료된 일정 필터링 (endDate가 오늘보다 과거면 목록에서 제외)
+        const activeSchedules = data.filter((item) => {
+          const rawEnd = item.end_date.split("T")[0];
+          const [ey, em, ed] = rawEnd.split("-").map(Number);
+          const endDate = new Date(ey, em - 1, ed);
+          return endDate >= today;
+        });
+
+        const formattedSchedules = activeSchedules.map((item) => {
+          // D-Day 계산
+          const rawStart = item.start_date.split("T")[0];
           const [sy, sm, sd] = rawStart.split("-").map(Number);
-          const start = new Date(sy, sm - 1, sd); // 로컬 자정 기준
+          const start = new Date(sy, sm - 1, sd);
 
           const diffDays = Math.ceil(
             (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
           );
           const dDayString =
-            diffDays > 0 ? `D-${diffDays}` :
-            diffDays === 0 ? "D-Day" :
-            `D+${Math.abs(diffDays)}`;
+            diffDays > 0
+              ? `D-${diffDays}`
+              : diffDays === 0
+                ? "D-Day"
+                : `D+${Math.abs(diffDays)}`;
 
           return {
             id: item.id,
@@ -123,6 +132,7 @@ const getLocalDateString = (date: Date = new Date()): string => {
             startDate: item.start_date.split("T")[0],
             endDate: item.end_date.split("T")[0],
             dDay: dDayString,
+            bgImage: item.bgImage, // 💡 백엔드에서 받은 지역 대표사진 매핑
           };
         });
         setSchedules(formattedSchedules);
@@ -133,7 +143,6 @@ const getLocalDateString = (date: Date = new Date()): string => {
 
   return (
     <div className="flex-col-full gap-5">
-
       {/* 헤더: 제목 + 새 일정 추가 버튼 */}
       <div className="flex justify-between items-center px-1 shrink-0">
         <div className="flex flex-col gap-0.5">
@@ -157,7 +166,9 @@ const getLocalDateString = (date: Date = new Date()): string => {
       <div className="flex-1 h-0 overflow-y-auto pt-2 pb-4 px-2 scrollbar">
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
-            <span className="text-sm text-gray animate-pulse">일정을 불러오는 중...</span>
+            <span className="text-sm text-gray animate-pulse">
+              일정을 불러오는 중...
+            </span>
           </div>
         ) : (
           <div className="flex flex-wrap gap-5">
@@ -167,7 +178,9 @@ const getLocalDateString = (date: Date = new Date()): string => {
                 <div
                   key={schedule.id}
                   className={`shrink-0 transition-all duration-300 ${
-                    isFirst ? "w-full h-80" : "w-full 2xl:w-[calc(50%-10px)] h-64"
+                    isFirst
+                      ? "w-full h-80"
+                      : "w-full 2xl:w-[calc(50%-10px)] h-64"
                   }`}
                 >
                   <ScheduleCard schedule={schedule} onNavigate={onNavigate} />
@@ -178,7 +191,9 @@ const getLocalDateString = (date: Date = new Date()): string => {
             {/* 새 일정 추가 카드 (빈 슬롯) */}
             <div
               className={`box-muted shrink-0 transition-all duration-300 border-2 border-dashed border-slate-200 hover:border-slate-300 overflow-hidden ${
-                schedules.length === 0 ? "w-full h-80" : "w-full 2xl:w-[calc(50%-10px)] h-64"
+                schedules.length === 0
+                  ? "w-full h-80"
+                  : "w-full 2xl:w-[calc(50%-10px)] h-64"
               }`}
             >
               <button

@@ -17,6 +17,7 @@ interface ScheduleRow {
   start_date: string;
   end_date: string;
   status?: string;
+  photo_count?: number;
 }
 
 const REGION_OPTIONS = [
@@ -56,7 +57,7 @@ export default function MyMapHistory({
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    let isMounted = true; // 언마운트 후 setState 호출 방지용
+    let isMounted = true;
 
     const loadHistory = async () => {
       const session = localStorage.getItem("tralog_current_user");
@@ -83,17 +84,19 @@ export default function MyMapHistory({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const expiredActive = activeData.filter((item) => {
+        const activeWithPhotosOrPast = activeData.filter((item) => {
           const endDate = parseLocalDate(item.end_date);
-          return endDate < today;
+          const isPast = endDate < today;
+          const hasPhoto = item.photo_count && item.photo_count > 0;
+          return isPast || hasPhoto;
         });
 
         const historyIds = new Set(historyData.map((h) => h.id));
-        const mergedExpired = expiredActive.filter(
+        const mergedActive = activeWithPhotosOrPast.filter(
           (item) => !historyIds.has(item.id),
         );
 
-        const combined = [...historyData, ...mergedExpired].sort((a, b) => {
+        const combined = [...historyData, ...mergedActive].sort((a, b) => {
           return (
             parseLocalDate(b.end_date).getTime() -
             parseLocalDate(a.end_date).getTime()
@@ -110,7 +113,6 @@ export default function MyMapHistory({
       }
     };
 
-    // 💡 에러 해결: 브라우저 페인트 완료 후 안전하게 상태를 업데이트 하도록 setTimeout 적용
     const delayFetch = setTimeout(() => {
       void loadHistory();
     }, 0);
@@ -180,15 +182,13 @@ export default function MyMapHistory({
             onClick={() => setIsAddingSection(true)}
             className="box-muted shrink-0 h-20 border-2 border-dashed border-slate-200 hover:border-slate-300 transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 text-slate-400 hover:text-slate-600 group"
           >
-            <span className="text-md font-bold p-1 bg-white rounded-full shadow-xs group-hover:scale-110 transition-transform flex items-center justify-center w-7 h-7 border border-slate-100 text-slate-400">
-              +
-            </span>
+            <span className="text-body-caption font-bold select-none tracking-tight">+</span>
             <span className="text-body-caption font-bold select-none tracking-tight">
               일정 없이 방문했던 지역 사진 직접 추가하기
             </span>
           </div>
         ) : (
-          <div className="bg-slate-50 border-2 border-dashed border-primary/40 box-custom p-4 shrink-0 flex flex-col gap-3 animate-in fade-in-50 duration-200">
+          <div className="bg-slate-50 border-2 border-dashed border-primary/40 box-white p-4 shrink-0 flex flex-col gap-3 animate-in fade-in-50 duration-200">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-primary select-none">
                 📍 추억을 기록할 새로운 지역 선택
@@ -239,30 +239,39 @@ export default function MyMapHistory({
             const endDate = parseLocalDate(history.end_date);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
+
             const isPast = endDate < today;
 
             return (
               <div
                 key={history.id}
-                className="box-white p-5 flex items-center justify-between shadow-card hover:border-slate-200 transition-all shrink-0"
+                className="box-white px-5 p-3 flex items-center justify-between shadow-card hover:border-slate-200 transition-all shrink-0"
               >
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-body-main font-bold text-dark">
                       {history.title}
                     </span>
-                    {isPast && (
+                    {isPast ? (
                       <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
                         지난 일정
                       </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        진행 중
+                      </span>
                     )}
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">
-                    {history.region}
-                    {"  ·  "}
-                    {history.start_date.split("T")[0]} ~{" "}
-                    {history.end_date.split("T")[0]}
-                  </span>
+
+                  <div className="flex flex-col gap-0.5 mt-0.5">
+                    <span className="text-xs text-slate-500 font-medium">
+                      {history.region}
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      {history.start_date.split("T")[0]} ~{" "}
+                      {history.end_date.split("T")[0]}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
@@ -270,7 +279,7 @@ export default function MyMapHistory({
                     onClick={() => handleViewSchedule(history.id)}
                     className="btn-ghost h-9 px-4 text-body-caption"
                   >
-                    지난 일정 보기
+                    일정 보기
                   </button>
                   <button
                     onClick={() => onSelectRegion(history.region)}

@@ -1,23 +1,12 @@
-// ===================================================
-// TimelineSection.tsx - 타임라인 일정 섹션
-//
-// 백엔드 API:
-//   GET    /api/schedules/:id         → 전체 일정 (places 포함)
-//   POST   /api/places                → 장소 추가
-//   PUT    /api/places/:id            → 메모/시간 수정
-//   DELETE /api/places/:id            → 장소 삭제
-//   POST   /api/expenses              → 가계부 등록 (카테고리 포함)
-//   GET    /api/places/search?query=  → 네이버 장소 검색
-//
-// 변경 사항:
-//   - onAddExpense에 category 파라미터 추가 (PlaceItemCard와 동기화)
-//   - 시간 수정(onUpdateTime) 핸들러 추가
-//   - 날짜 총일수 계산 타임존 버그 수정 (AI 도움)
-// ===================================================
-
 import { useState, useEffect } from "react";
 import PlaceItemCard from "./PlaceItemCard";
 import { API_BASE_URL } from "../../../config/api";
+
+interface TimelineExpense {
+  detail: string;
+  amount: number;
+  category: string;
+}
 
 interface TimelineItem {
   id: string;
@@ -25,7 +14,9 @@ interface TimelineItem {
   place: string;
   day_number: number;
   memo?: string;
-  expenses?: { detail: string; amount: number; category: string }[];
+  expenses?: TimelineExpense[];
+  lat?: number;
+  lng?: number;
 }
 
 interface ApiPlaceData {
@@ -34,6 +25,8 @@ interface ApiPlaceData {
   place_name: string;
   day_number: number;
   memo?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface SearchResultItem {
@@ -81,25 +74,24 @@ export default function TimelineSection({
   const [newPlace, setNewPlace] = useState("");
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
-  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(null);
+  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
+    null,
+  );
 
-  // 총 일수 계산 - 타임존 버그 수정: "YYYY-MM-DD" 문자열 직접 파싱
   let totalDays = 1;
   if (startDate && endDate) {
-    const [sy, sm, sd] = startDate.split("-").map(Number);
-    const [ey, em, ed] = endDate.split("-").map(Number);
-    const start = new Date(sy, sm - 1, sd);
-    const end = new Date(ey, em - 1, ed);
-    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const diff =
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     totalDays = Math.max(diff, 1);
   }
 
-  // 날짜 범위 축소 시 현재 일차 자동 보정
   const currentDay = day > totalDays ? totalDays : day;
 
-  // 장소 목록 불러오기
   useEffect(() => {
     let isMounted = true;
+
     const fetchPlaces = async () => {
       if (!scheduleId) return;
       setIsLoading(true);
@@ -108,14 +100,18 @@ export default function TimelineSection({
         if (!res.ok) throw new Error("일정 로드 실패");
         const data = await res.json();
 
-        const mapped: TimelineItem[] = (data.places || []).map((p: ApiPlaceData) => ({
-          id: p.id,
-          time: p.visit_time,
-          place: p.place_name,
-          day_number: p.day_number,
-          memo: p.memo,
-          expenses: [],
-        }));
+        const mapped: TimelineItem[] = (data.places || []).map(
+          (p: ApiPlaceData) => ({
+            id: p.id,
+            time: p.visit_time,
+            place: p.place_name,
+            day_number: p.day_number,
+            memo: p.memo,
+            expenses: [],
+            lat: p.lat ? Number(p.lat) : undefined,
+            lng: p.lng ? Number(p.lng) : undefined,
+          }),
+        );
 
         if (isMounted) setAllItems(mapped);
       } catch (err) {
@@ -124,11 +120,13 @@ export default function TimelineSection({
         if (isMounted) setIsLoading(false);
       }
     };
+
     void fetchPlaces();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [scheduleId]);
 
-  // 네이버 장소 검색
   const handleSearchPlace = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -141,11 +139,13 @@ export default function TimelineSection({
       );
       if (!res.ok) return;
       const data = await res.json();
-      // 네이버 검색 결과의 HTML 강조 태그(<b>) 제거
-      const cleaned: SearchResultItem[] = (data.results || []).map((r: NaverSearchResult) => ({
-        ...r,
-        place_name: r.place_name.replace(/<[^>]*>?/gm, ""),
-      }));
+
+      const cleaned: SearchResultItem[] = (data.results || []).map(
+        (r: NaverSearchResult) => ({
+          ...r,
+          place_name: r.place_name.replace(/<[^>]*>?/gm, ""),
+        }),
+      );
       setSearchResults(cleaned);
       setShowSearchResults(cleaned.length > 0);
     } catch (err) {
@@ -153,11 +153,12 @@ export default function TimelineSection({
     }
   };
 
-  // 장소 추가
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTime.trim() || !newPlace.trim()) return alert("시간과 장소를 모두 입력해주세요.");
-    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime)) return alert("시간 형식: 09:30");
+    if (!newTime.trim() || !newPlace.trim())
+      return alert("시간과 장소를 모두 입력해주세요.");
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime))
+      return alert("시간 형식: 09:30");
 
     let target = selectedResult;
     if (!target && searchResults.length > 0) target = searchResults[0];
@@ -170,6 +171,8 @@ export default function TimelineSection({
       place: target.place_name,
       day_number: currentDay,
       expenses: [],
+      lat: target.y,
+      lng: target.x,
     };
 
     try {
@@ -208,17 +211,17 @@ export default function TimelineSection({
     }
   };
 
-  // 장소 삭제
   const handleDeleteItem = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
+        method: "DELETE",
+      });
       if (res.ok) setAllItems((prev) => prev.filter((item) => item.id !== id));
     } catch (err) {
       console.error("장소 삭제 실패:", err);
     }
   };
 
-  // 메모 수정
   const handleUpdateMemo = async (id: string, memo: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
@@ -236,25 +239,6 @@ export default function TimelineSection({
     }
   };
 
-  // 시간 수정 (PlaceItemCard에서 🕒 시간 버튼으로 호출)
-  const handleUpdateTime = async (id: string, newTime: string) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ visit_time: newTime }),
-      });
-      if (res.ok) {
-        setAllItems((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, time: newTime } : item)),
-        );
-      }
-    } catch (err) {
-      console.error("시간 수정 실패:", err);
-    }
-  };
-
-  // 가계부 비용 추가 (카테고리 파라미터 추가)
   const handleAddExpense = async (
     placeId: string,
     detail: string,
@@ -268,18 +252,21 @@ export default function TimelineSection({
         body: JSON.stringify({
           id: `acc-${Date.now()}`,
           schedule_id: scheduleId,
-          category, // 카테고리 전달
+          category,
           detail,
           amount,
         }),
       });
-      // 서버 등록 후 로컬 상태에도 반영 → 카드에 즉시 표시
+
       setAllItems((prev) =>
         prev.map((item) =>
           item.id === placeId
             ? {
                 ...item,
-                expenses: [...(item.expenses || []), { detail, amount, category }],
+                expenses: [
+                  ...(item.expenses || []),
+                  { detail, amount, category },
+                ],
               }
             : item,
         ),
@@ -289,23 +276,40 @@ export default function TimelineSection({
     }
   };
 
-  // 현재 일차 필터 + 시간순 정렬
+  // 💡 수정됨: 네이버 지도 파라미터 규칙에 맞게 쉼표(,,) 추가 및 포맷 최적화
+  const handleOpenDirections = (start: TimelineItem, end: TimelineItem) => {
+    const getRoutingParam = (item: TimelineItem) => {
+      const name = encodeURIComponent(item.place);
+      
+      // 네이버 지도는 [경도,위도,이름,장소ID,주소여부] 5가지를 요구합니다.
+      // 뒤에 빈 쉼표(,,)를 붙여주어야 인식 오류가 발생하지 않습니다.
+      if (item.lng && item.lat && item.lng > 120 && item.lng < 135) {
+        return `${item.lng},${item.lat},${name},,`; 
+      }
+      return `-,-,${name},,`;
+    };
+
+    const startParam = getRoutingParam(start);
+    const endParam = getRoutingParam(end);
+    
+    // 대중교통(-/transit) 기본 탭으로 길찾기 오픈
+    const url = `https://map.naver.com/p/directions/${startParam}/${endParam}/-/transit`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   const filteredItems = allItems
     .filter((item) => item.day_number === currentDay)
     .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
     <div className="p-5 h-full flex flex-col gap-4 overflow-hidden">
-      {/* 일차 탭 */}
       <div className="flex gap-2 shrink-0 select-none overflow-x-auto pb-1">
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
           <button
             key={d}
             onClick={() => setDay(d)}
             className={`px-4 py-1.5 text-xs font-bold rounded-full transition-all whitespace-nowrap border ${
-              currentDay === d
-                ? "bg-slate-700 text-white border-slate-700 shadow-sm"
-                : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+              currentDay === d ? "btn-ghost" : "btn-white"
             }`}
           >
             {d}일차
@@ -313,11 +317,10 @@ export default function TimelineSection({
         ))}
       </div>
 
-      {/* 타임라인 목록 */}
       <div className="flex-1 overflow-y-auto px-2 relative py-2 scrollbar">
         <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-slate-200 rounded-full" />
 
-        <div className="flex flex-col gap-4 relative z-10">
+        <div className="flex flex-col gap-1 relative z-10">
           {isLoading ? (
             <div className="text-center text-xs text-slate-400 py-10 animate-pulse">
               일정을 불러오는 중입니다...
@@ -327,27 +330,40 @@ export default function TimelineSection({
               {currentDay}일차에 등록된 장소가 없어요. 아래에서 추가해보세요!
             </div>
           ) : (
-            filteredItems.map((item, index) => (
-              <PlaceItemCard
-                key={item.id}
-                id={item.id}
-                time={item.time}
-                place={item.place}
-                index={index + 1}
-                isEditing={isEditing}
-                memo={item.memo}
-                expenses={item.expenses || []}
-                onDelete={handleDeleteItem}
-                onUpdateMemo={handleUpdateMemo}
-                onUpdateTime={handleUpdateTime}
-                onAddExpense={handleAddExpense}
-              />
-            ))
+            filteredItems.map((item, index) => {
+              const nextItem = filteredItems[index + 1];
+              return (
+                <div key={item.id} className="flex flex-col">
+                  <PlaceItemCard
+                    id={item.id}
+                    time={item.time}
+                    place={item.place}
+                    index={index + 1}
+                    isEditing={isEditing}
+                    memo={item.memo}
+                    expenses={item.expenses || []}
+                    onDelete={handleDeleteItem}
+                    onUpdateMemo={handleUpdateMemo}
+                    onAddExpense={handleAddExpense}
+                  />
+
+                  {nextItem && (
+                    <div className="relative flex justify-start items-center pl-10 py-1 z-20 mt-1 mb-1">
+                      <button
+                        onClick={() => handleOpenDirections(item, nextItem)}
+                        className="btn-secondary flex items-center gap-2 px-2.5 py-1.5"
+                      >
+                        <span className="text-body-caption text-white font-bold">길찾기</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>
 
-      {/* 장소 추가 폼 (편집 모드에서만 표시) */}
       {isEditing && (
         <form
           onSubmit={handleAddItem}
@@ -361,6 +377,7 @@ export default function TimelineSection({
             maxLength={5}
             className="w-16 h-10 px-2 text-center text-xs font-bold input-custom focus:outline-none"
           />
+
           <div className="flex-1 relative">
             <input
               type="text"
@@ -373,7 +390,6 @@ export default function TimelineSection({
               }}
               className="w-full h-10 px-3 text-xs input-custom focus:outline-none"
             />
-            {/* 검색 결과 드롭다운 */}
             {showSearchResults && searchResults.length > 0 && (
               <div className="absolute bottom-full mb-2 left-0 right-0 box-white border border-slate-200 shadow-card z-50 max-h-48 overflow-y-auto scrollbar">
                 {searchResults.map((result, idx) => (
@@ -393,7 +409,11 @@ export default function TimelineSection({
               </div>
             )}
           </div>
-          <button type="submit" className="btn-primary h-10 px-4 text-xs shrink-0">
+
+          <button
+            type="submit"
+            className="btn-primary h-10 px-4 text-xs shrink-0"
+          >
             등록
           </button>
         </form>
