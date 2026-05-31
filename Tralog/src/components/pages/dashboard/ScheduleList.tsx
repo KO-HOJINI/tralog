@@ -55,8 +55,8 @@ export default function ScheduleList({ userId, onNavigate }: ScheduleListProps) 
           user_id: userId,
           title: "새 일정",
           region: "서울특별시",
-          start_date: new Date().toISOString().slice(0, 10),
-          end_date: new Date().toISOString().slice(0, 10),
+          start_date: getLocalDateString(),
+          end_date: getLocalDateString(),
           status: "planning",
         }),
       });
@@ -77,7 +77,17 @@ export default function ScheduleList({ userId, onNavigate }: ScheduleListProps) 
     }
   };
 
-  // 일정 목록 불러오기 + D-Day 계산해서 UI용 형식으로 변환
+  // 타임존 버그 방지용 헬퍼
+// new Date().toISOString()은 UTC 기준이라 한국(UTC+9)에서 자정 전후로 하루 오차 남
+// → 로컬 날짜를 직접 조합해서 "YYYY-MM-DD" 반환
+const getLocalDateString = (date: Date = new Date()): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
+// 일정 목록 불러오기 + D-Day 계산해서 UI용 형식으로 변환
   useEffect(() => {
     if (!userId) return;
 
@@ -88,11 +98,15 @@ export default function ScheduleList({ userId, onNavigate }: ScheduleListProps) 
       })
       .then((data: DBSchedule[]) => {
         const formattedSchedules = data.map((item) => {
-          // D-Day 계산 (AI 도움 받은 부분)
+          // D-Day 계산
+          // ⚠️ 타임존 버그 방지: new Date("2026-06-01T00:00:00Z")는 KST로 2026-05-31이 됨
+          // → "YYYY-MM-DD" 문자열에서 직접 연/월/일 파싱해서 로컬 자정 Date 생성
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          const start = new Date(item.start_date);
-          start.setHours(0, 0, 0, 0);
+
+          const rawStart = item.start_date.split("T")[0]; // "2026-06-01"
+          const [sy, sm, sd] = rawStart.split("-").map(Number);
+          const start = new Date(sy, sm - 1, sd); // 로컬 자정 기준
 
           const diffDays = Math.ceil(
             (start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),

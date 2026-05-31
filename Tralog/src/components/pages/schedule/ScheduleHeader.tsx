@@ -1,11 +1,9 @@
 // ===================================================
-// ScheduleHeader.tsx - 알약 모양 탭 메뉴 + 편집 버튼
-//
-// 피그마 디자인:
-//   - 흰 배경 알약 모양 컨테이너 (rounded-full)
-//   - 활성 탭: dark(slate-700) 배경
-//   - 우측: primary(teal) 편집/저장 버튼
+// ScheduleHeader.tsx - 탭 메뉴 + 편집 버튼 + 사진 추가 버튼
 // ===================================================
+
+import { useState, useRef } from "react";
+import { API_BASE_URL } from "../../../config/api";
 
 interface ScheduleHeaderProps {
   activeTab: string;
@@ -13,57 +11,248 @@ interface ScheduleHeaderProps {
   isEditing: boolean;
   onToggleEdit: () => void;
   onNavigate: (page: string) => void;
+  scheduleRegion?: string;
 }
+
+const REGION_OPTIONS = [
+  "서울특별시",
+  "부산광역시",
+  "대구광역시",
+  "인천광역시",
+  "광주광역시",
+  "대전광역시",
+  "울산광역시",
+  "세종특별자치시",
+  "경기도",
+  "강원특별자치도",
+  "충청북도",
+  "충청남도",
+  "전라북도",
+  "전라남도",
+  "경상북도",
+  "경상남도",
+  "제주특별자치도",
+];
 
 export default function ScheduleHeader({
   activeTab,
   setActiveTab,
   isEditing,
   onToggleEdit,
+  scheduleRegion = "",
 }: ScheduleHeaderProps) {
+  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState(scheduleRegion);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 탭 변경 + 편집 모드 자동 종료
   const handleTabChange = (tab: string) => {
     if (tab !== "timeline" && isEditing) onToggleEdit();
     setActiveTab(tab);
   };
 
-  // 탭별 스타일 계산
+  // 💡 수정됨: whitespace-nowrap과 shrink-0을 추가하여 글씨 찌그러짐 방지, px 사이즈 약간 축소
   const tabClass = (tab: string) =>
-    `px-4 py-1.5 text-xs font-bold rounded-full transition-all ${
+    `px-4 py-2 text-[13px] font-bold rounded-full transition-all whitespace-nowrap shrink-0 ${
       activeTab === tab
-        ? "bg-slate-700 text-white shadow-sm"
-        : "bg-transparent text-slate-500 hover:bg-slate-100"
+        ? "bg-[#4f5b70] text-white shadow-sm"
+        : "bg-transparent text-[#4f5b70] hover:bg-slate-50"
     }`;
 
-  return (
-    <div className="flex items-center w-full justify-between box-white px-2.5 py-2 border border-slate-100 shadow-card select-none" style={{ borderRadius: "999px", minWidth: "520px" }}>
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-      {/* 좌측 탭 3개 */}
-      <div className="flex gap-1">
-        <button onClick={() => handleTabChange("timeline")} className={tabClass("timeline")}>
-          타임라인
-        </button>
-        <button onClick={() => handleTabChange("companion")} className={tabClass("companion")}>
-          👥 일행 추가
-        </button>
-        <button onClick={() => handleTabChange("account")} className={tabClass("account")}>
-          💳 가계부
-        </button>
+    if (!selectedRegion) {
+      alert("먼저 지역을 선택해주세요.");
+      return;
+    }
+
+    setUploadedFileName(file.name);
+    setIsUploading(true);
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      const scheduleId =
+        localStorage.getItem("tralog_active_schedule_id") ||
+        `direct-${selectedRegion}`;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/map/upload`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            schedule_id: scheduleId,
+            region: selectedRegion,
+            image_data: base64String,
+          }),
+        });
+
+        if (response.ok) {
+          alert(
+            `📸 ${selectedRegion}에 사진이 업로드되었습니다!\n나만의 지도에서 확인하세요.`,
+          );
+          setUploadedFileName("선택된 파일 없음");
+          setShowPhotoModal(false);
+        } else {
+          const err = await response.json().catch(() => ({}));
+          alert(`업로드 실패: ${err.message || "서버 오류"}`);
+        }
+      } catch (error) {
+        alert("서버 연결에 실패했습니다.");
+        console.error("사진 업로드 에러:", error);
+      } finally {
+        setIsUploading(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleOpenModal = () => {
+    setSelectedRegion(scheduleRegion || "");
+    setUploadedFileName("선택된 파일 없음");
+    setShowPhotoModal(true);
+  };
+
+  return (
+    <>
+      <div className="flex items-center justify-between box-white p-3 w-full select-none overflow-x-auto scrollbar-hide">
+        {/* 좌측 탭 3개 */}
+        <div className="flex gap-1 shrink-0">
+          <button
+            onClick={() => handleTabChange("timeline")}
+            className={tabClass("timeline")}
+          >
+            타임라인
+          </button>
+          <button
+            onClick={() => handleTabChange("companion")}
+            className={tabClass("companion")}
+          >
+            일행 추가
+          </button>
+          <button
+            onClick={() => handleTabChange("account")}
+            className={tabClass("account")}
+          >
+            가계부
+          </button>
+        </div>
+
+        {/* 우측 사진 추가, 편집 */}
+        <div className="flex items-center gap-3 shrink-0 ml-2">
+          {/* 사진 추가 버튼 */}
+          <button
+            onClick={handleOpenModal}
+            className="px-4 py-2 text-[13px] font-bold rounded-full transition-all border border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100 shrink-0"
+          >
+            사진 추가
+          </button>
+
+          {/* 일정 편집 / 저장 버튼 */}
+          <button
+            disabled={activeTab !== "timeline"}
+            onClick={onToggleEdit}
+            className={`px-5 py-2 text-[13px] font-bold rounded-full shadow-sm transition-all shrink-0 ${
+              activeTab !== "timeline"
+                ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                : "btn-primary"
+            }`}
+          >
+            {isEditing ? "저장" : "편집"}
+          </button>
+        </div>
       </div>
 
-      {/* 우측: 일정 편집 / 저장 버튼 (타임라인 탭에서만 활성화) */}
-      <button
-        disabled={activeTab !== "timeline"}
-        onClick={onToggleEdit}
-        className={`px-5 py-1.5 text-xs font-bold rounded-full transition-all shadow-sm ${
-          activeTab !== "timeline"
-            ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-            : "btn-primary"
-        }`}
-      >
-        {isEditing ? "✔️ 저장하기" : "일정 편집"}
-      </button>
-    </div>
+      {/* 사진 업로드 모달 */}
+      {showPhotoModal && (
+        <div
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowPhotoModal(false);
+          }}
+        >
+          <div className="box-white p-6 w-105 flex flex-col gap-4 shadow-card border border-slate-100">
+            <div className="flex justify-between items-center">
+              <h2 className="m-0">📸 여행 사진 추가</h2>
+              <button
+                onClick={() => setShowPhotoModal(false)}
+                className="text-slate-400 hover:text-dark text-xl font-bold transition-colors leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-500 font-medium -mt-1">
+              사진은 나만의 지도 페이지에서도 확인할 수 있어요.
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-dark">지역 선택</label>
+              <select
+                value={selectedRegion}
+                onChange={(e) => setSelectedRegion(e.target.value)}
+                className="w-full h-11 px-3 text-sm input-custom focus:outline-none font-bold"
+              >
+                <option value="">-- 지역을 선택하세요 --</option>
+                {REGION_OPTIONS.map((reg) => (
+                  <option key={reg} value={reg}>
+                    {reg}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-dark">
+                사진 파일
+                {isUploading && (
+                  <span className="text-primary ml-2 font-medium animate-pulse">
+                    (업로드 중...)
+                  </span>
+                )}
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  className="hidden"
+                  disabled={isUploading}
+                />
+                <div className="flex-1 input-custom px-3 py-2 text-xs text-gray/70 truncate flex items-center h-11 select-none bg-slate-50">
+                  {uploadedFileName}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!selectedRegion) {
+                      alert("먼저 지역을 선택해주세요.");
+                      return;
+                    }
+                    fileInputRef.current?.click();
+                  }}
+                  disabled={isUploading}
+                  className={`h-11 px-4 text-xs font-bold shrink-0 rounded-(--radius-btn) whitespace-nowrap ${
+                    isUploading ? "btn-ghost cursor-not-allowed" : "btn-primary"
+                  }`}
+                >
+                  파일 선택
+                </button>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-slate-400 font-medium">
+              💡 나만의 지도 페이지에서 대표사진으로 설정하면 지도에 이미지가
+              표시됩니다.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

@@ -1,14 +1,11 @@
 // ===================================================
-// PlaceItemCard.tsx - 타임라인 장소 카드 컴포넌트
+// PlaceItemCard.tsx - 타임라인 장소 카드
 //
-// 피그마 디자인 반영:
-//   - 카드 헤더: teal(primary) 배경에 번호 + 장소명 + 시간
-//   - 비용 태그: amber(secondary) 배경 인라인 태그로 카드에 표시
-//   - 메모: 다크 박스로 내부 표시
-//
-// 🐛 버그 수정: 비용 추가 후 카드에 안 뜨던 문제
-//   → PlaceItemCard 내부에 localExpenses 상태 추가
-//   → onAddExpense 호출 시 로컬 상태에도 반영
+// 변경 사항:
+//   - 비용 추가 시 카테고리 선택 추가 (가계부와 동일한 카테고리)
+//   - 시간 수정 기능 (🕒 시간 버튼)
+//   - 메모 삭제 기능
+//   - localExpenses로 비용 즉시 UI 반영
 // ===================================================
 
 import { useState } from "react";
@@ -16,6 +13,7 @@ import { useState } from "react";
 interface LocalExpense {
   detail: string;
   amount: number;
+  category: string;
 }
 
 interface PlaceItemCardProps {
@@ -25,11 +23,15 @@ interface PlaceItemCardProps {
   index: number;
   isEditing: boolean;
   memo?: string;
-  expenses?: LocalExpense[]; // 부모에서 초기값 내려받음 (선택)
+  expenses?: LocalExpense[];
   onDelete: (id: string) => void;
   onUpdateMemo: (id: string, memo: string) => void;
-  onAddExpense: (placeId: string, detail: string, amount: number) => void;
+  onAddExpense: (placeId: string, detail: string, amount: number, category: string) => void;
+  onUpdateTime?: (id: string, newTime: string) => void;
 }
+
+// 가계부와 동일한 카테고리
+const EXPENSE_CATEGORIES = ["식비", "숙소", "교통", "기타"] as const;
 
 export default function PlaceItemCard({
   id,
@@ -42,20 +44,30 @@ export default function PlaceItemCard({
   onDelete,
   onUpdateMemo,
   onAddExpense,
+  onUpdateTime,
 }: PlaceItemCardProps) {
   const [showMemoInput, setShowMemoInput] = useState(false);
-  const [memoInput, setMemoInput] = useState(memo || "");
-
   const [showCostInput, setShowCostInput] = useState(false);
-  const [costAmount, setCostAmount] = useState("");
-  const [costDetail, setCostDetail] = useState(place); // 내역 기본값 = 장소명
+  const [showTimeInput, setShowTimeInput] = useState(false);
 
-  // 🐛 Fix: 비용 목록을 카드 내부 상태로 관리 → 추가하면 바로 UI 반영
-  const [localExpenses, setLocalExpenses] = useState<LocalExpense[]>(initialExpenses);
+  const [memoInput, setMemoInput] = useState(memo || "");
+  const [costAmount, setCostAmount] = useState("");
+  const [costCategory, setCostCategory] = useState<string>("식비"); // 카테고리 상태 추가
+  const [timeInput, setTimeInput] = useState(time);
+
+  // 비용 목록 로컬 상태 (추가하면 즉시 카드에 반영)
+  const [localExpenses, setLocalExpenses] = useState<LocalExpense[]>(
+    initialExpenses.map((e) => ({ ...e, category: e.category || "기타" }))
+  );
+  const [displayTime, setDisplayTime] = useState(time);
 
   const handleSaveMemo = () => {
     onUpdateMemo(id, memoInput);
     setShowMemoInput(false);
+  };
+
+  const handleDeleteMemo = () => {
+    onUpdateMemo(id, "");
   };
 
   const handleSaveExpense = () => {
@@ -63,145 +75,180 @@ export default function PlaceItemCard({
     if (isNaN(amount) || amount <= 0) return alert("올바른 금액을 입력해 주세요.");
 
     // 로컬 상태에 추가 → 카드에 즉시 반영
-    setLocalExpenses((prev) => [...prev, { detail: costDetail || place, amount }]);
-    onAddExpense(id, costDetail || place, amount);
+    setLocalExpenses((prev) => [
+      ...prev,
+      { detail: place, amount, category: costCategory },
+    ]);
+    onAddExpense(id, place, amount, costCategory);
 
     setShowCostInput(false);
     setCostAmount("");
-    setCostDetail(place);
+    // 카테고리는 유지 (연속 입력 편의)
   };
 
   const handleDeleteExpense = (idx: number) => {
     setLocalExpenses((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const handleSaveTime = () => {
+    if (!timeInput.trim()) return;
+    setDisplayTime(timeInput);
+    if (onUpdateTime) onUpdateTime(id, timeInput);
+    setShowTimeInput(false);
+  };
+
   return (
-    <div className="relative flex items-start gap-3 w-full group">
-      {/* 타임라인 번호 인디케이터 */}
-      <div className="w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center text-xs font-black shrink-0 relative z-10 border-2 border-white mt-1 shadow-sm">
-        {index}
+    <div className="relative flex items-stretch gap-3 w-full group mb-1">
+      {/* 타임라인 번호 */}
+      <div className="flex flex-col items-center">
+        <div className="w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center text-[11px] font-bold shrink-0 z-10 shadow-sm mt-3">
+          {index}
+        </div>
       </div>
 
-      <div className="flex-1 flex flex-col gap-2 min-w-0">
-        {/* 장소 카드 */}
-        <div className="box-white border border-slate-100 hover:border-slate-200 transition-all w-full overflow-hidden">
-
-          {/* 카드 헤더: teal 배경 (피그마 디자인) */}
-          <div className="bg-primary px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <span className="text-[11px] font-bold text-white/80 font-mono tracking-tight">
-                🕒 {time}
-              </span>
-            </div>
-            {isEditing && (
-              <button
-                onClick={() => onDelete(id)}
-                className="text-white/60 hover:text-white transition-colors text-[10px] font-bold"
-              >
-                ✕ 삭제
-              </button>
-            )}
+      <div className="flex-1 flex flex-col gap-1.5 min-w-0">
+        {/* 카드 본체 */}
+        <div className="box-white p-4 flex flex-col w-full shadow-sm">
+          {/* 시간 */}
+          <div className="flex items-center gap-1.5 text-slate-500 mb-1">
+            <span className="text-[12px]">🕒</span>
+            <span className="text-xs font-bold font-mono">{displayTime}</span>
           </div>
 
-          {/* 카드 본문 */}
-          <div className="p-4">
-            <h3 className="text-sm font-black text-dark m-0 mb-2 tracking-tight">
-              {place}
-            </h3>
+          {/* 장소명 */}
+          <h3 className="text-base font-black text-slate-800 m-0 leading-tight">
+            {place}
+          </h3>
 
-            {/* 비용 태그 목록 (피그마: amber 배경 인라인 태그) */}
-            {localExpenses.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-3">
-                {localExpenses.map((exp, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-1 bg-secondary/15 border border-secondary/30 text-secondary rounded-full px-2.5 py-0.5 text-[11px] font-bold group/exp"
-                  >
-                    <span>💳</span>
-                    <span>{exp.detail}</span>
-                    <span className="font-mono">{exp.amount.toLocaleString()}원</span>
-                    {isEditing && (
-                      <button
-                        onClick={() => handleDeleteExpense(idx)}
-                        className="text-secondary/50 hover:text-red-500 ml-0.5 opacity-0 group-hover/exp:opacity-100 transition-opacity text-[10px]"
-                      >
-                        ✕
-                      </button>
-                    )}
+          {/* 메모 + 비용 태그 영역 */}
+          {(memo || localExpenses.length > 0) && (
+            <div className="flex flex-col gap-1.5 mt-2.5">
+              {/* 메모 태그 */}
+              {memo && !showMemoInput && (
+                <div className="flex justify-between items-center bg-slate-600 text-white rounded-full px-3 py-1.5 group/memo">
+                  <div className="flex items-center gap-1.5 text-[11px] font-medium">
+                    <span>📝</span>
+                    <span>{memo}</span>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* 메모 박스 (다크 배경) */}
-            {memo && !showMemoInput && (
-              <div className="bg-slate-700 text-slate-100 rounded-2xl p-3 text-xs font-medium leading-relaxed flex justify-between items-start gap-2 mt-2">
-                <div className="flex items-start gap-1.5">
-                  <span className="shrink-0">📝</span>
-                  <span className="opacity-90">{memo}</span>
+                  {isEditing && (
+                    <button
+                      onClick={handleDeleteMemo}
+                      className="text-white/60 hover:text-white text-[11px] font-bold px-1 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
-                {isEditing && (
-                  <button
-                    onClick={() => setShowMemoInput(true)}
-                    className="text-[10px] font-bold text-slate-400 hover:text-white transition-colors shrink-0"
-                  >
-                    수정
-                  </button>
-                )}
-              </div>
-            )}
+              )}
 
-            {/* 편집 모드 액션 버튼 */}
-            {isEditing && (
-              <div className="flex gap-3 mt-3 pt-3 border-t border-slate-100">
-                <button
-                  onClick={() => { setShowMemoInput(!showMemoInput); setShowCostInput(false); }}
-                  className="text-[11px] font-bold text-slate-500 hover:text-dark transition-colors"
+              {/* 비용 태그 목록 (카테고리 + 금액) */}
+              {localExpenses.map((exp, idx) => (
+                <div
+                  key={idx}
+                  className="flex justify-between items-center px-1 py-0.5 group/exp"
                 >
-                  📝 메모
-                </button>
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
+                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                      {exp.category}
+                    </span>
+                    <span>💵</span>
+                    <span className="font-mono">{exp.amount.toLocaleString()}원</span>
+                  </div>
+                  {isEditing && (
+                    <button
+                      onClick={() => handleDeleteExpense(idx)}
+                      className="text-slate-300 hover:text-red-500 text-[11px] font-bold px-1 transition-colors opacity-0 group-hover/exp:opacity-100"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 편집 모드 액션 바 */}
+          {isEditing && (
+            <>
+              <div className="h-px bg-slate-100 my-2.5" />
+              <div className="flex justify-between items-center">
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => {
+                      setShowMemoInput(!showMemoInput);
+                      setShowCostInput(false);
+                      setShowTimeInput(false);
+                    }}
+                    className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors font-bold"
+                  >
+                    📝 메모
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowCostInput(!showCostInput);
+                      setShowMemoInput(false);
+                      setShowTimeInput(false);
+                    }}
+                    className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors font-bold"
+                  >
+                    💵 비용
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowTimeInput(!showTimeInput);
+                      setShowMemoInput(false);
+                      setShowCostInput(false);
+                    }}
+                    className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors font-bold"
+                  >
+                    🕒 시간
+                  </button>
+                </div>
                 <button
-                  onClick={() => { setShowCostInput(!showCostInput); setShowMemoInput(false); }}
-                  className="text-[11px] font-bold text-slate-500 hover:text-dark transition-colors"
+                  onClick={() => onDelete(id)}
+                  className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-600 transition-colors font-bold"
                 >
-                  💳 비용
+                  🗑 삭제
                 </button>
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
 
         {/* 메모 입력 폼 */}
         {showMemoInput && isEditing && (
-          <div className="flex gap-2 animate-in slide-in-from-top-1 fade-in duration-200 ml-1">
+          <div className="flex gap-2 animate-in slide-in-from-top-1 fade-in ml-1">
             <input
               type="text"
-              placeholder="이 장소에 대한 메모를 남겨보세요"
+              placeholder="메모 내용"
               value={memoInput}
               onChange={(e) => setMemoInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSaveMemo()}
               autoFocus
-              className="flex-1 h-9 px-3 text-xs input-custom focus:outline-none"
+              className="flex-1 h-9 px-3 text-xs input-custom rounded-full focus:outline-none"
             />
             <button
               onClick={handleSaveMemo}
-              className="btn-dark h-9 px-3 text-xs shrink-0"
+              className="btn-dark h-9 px-4 text-xs shrink-0 rounded-full"
             >
               저장
             </button>
           </div>
         )}
 
-        {/* 비용 입력 폼 */}
+        {/* 비용 입력 폼 (카테고리 선택 추가) */}
         {showCostInput && isEditing && (
-          <div className="flex gap-2 animate-in slide-in-from-top-1 fade-in duration-200 ml-1">
-            <input
-              type="text"
-              placeholder="내역 (기본: 장소명)"
-              value={costDetail}
-              onChange={(e) => setCostDetail(e.target.value)}
-              className="flex-1 h-9 px-3 text-xs input-custom focus:outline-none"
-            />
+          <div className="flex gap-2 animate-in slide-in-from-top-1 fade-in ml-1">
+            {/* 카테고리 선택 드롭다운 */}
+            <select
+              value={costCategory}
+              onChange={(e) => setCostCategory(e.target.value)}
+              className="w-20 h-9 px-2 text-xs font-bold input-custom focus:outline-none rounded-full shrink-0"
+            >
+              {EXPENSE_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
             <input
               type="number"
               placeholder="금액 (원)"
@@ -210,13 +257,31 @@ export default function PlaceItemCard({
               onKeyDown={(e) => e.key === "Enter" && handleSaveExpense()}
               min={0}
               autoFocus
-              className="w-28 h-9 px-3 text-xs input-custom focus:outline-none font-mono"
+              className="flex-1 h-9 px-3 text-xs font-mono input-custom rounded-full focus:outline-none"
             />
             <button
               onClick={handleSaveExpense}
-              className="btn-primary h-9 px-3 text-xs shrink-0"
+              className="btn-primary h-9 px-4 text-xs shrink-0 rounded-full"
             >
               등록
+            </button>
+          </div>
+        )}
+
+        {/* 시간 수정 폼 */}
+        {showTimeInput && isEditing && (
+          <div className="flex gap-2 animate-in slide-in-from-top-1 fade-in ml-1">
+            <input
+              type="time"
+              value={timeInput}
+              onChange={(e) => setTimeInput(e.target.value)}
+              className="flex-1 h-9 px-3 text-xs font-mono input-custom rounded-full focus:outline-none"
+            />
+            <button
+              onClick={handleSaveTime}
+              className="btn-dark h-9 px-4 text-xs shrink-0 rounded-full"
+            >
+              저장
             </button>
           </div>
         )}

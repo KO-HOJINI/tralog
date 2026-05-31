@@ -29,7 +29,11 @@ declare global {
         InfoWindow: new (options: object) => NaverInfoWindow;
         Polyline: new (options: object) => NaverPolyline;
         Event: {
-          addListener: (target: object, event: string, handler: () => void) => void;
+          addListener: (
+            target: object,
+            event: string,
+            handler: () => void,
+          ) => void;
         };
         MapTypeId: { NORMAL: string };
       };
@@ -37,14 +41,23 @@ declare global {
   }
 }
 
-interface NaverMap { setCenter: (latlng: NaverLatLng) => void; }
-interface NaverLatLng { lat(): number; lng(): number; }
-interface NaverMarker { setMap: (map: NaverMap | null) => void; }
+interface NaverMap {
+  setCenter: (latlng: NaverLatLng) => void;
+}
+interface NaverLatLng {
+  lat(): number;
+  lng(): number;
+}
+interface NaverMarker {
+  setMap: (map: NaverMap | null) => void;
+}
 interface NaverInfoWindow {
   open: (map: NaverMap, marker: NaverMarker) => void;
   close: () => void;
 }
-interface NaverPolyline { setMap: (map: NaverMap | null) => void; }
+interface NaverPolyline {
+  setMap: (map: NaverMap | null) => void;
+}
 
 export interface PlaceMarker {
   id: string;
@@ -63,8 +76,13 @@ interface NaverMapContainerProps {
 
 // 일차별 마커 색상 (최대 7개 일차 지원)
 const DAY_COLORS = [
-  "#0d9488", "#f59e0b", "#6366f1", "#ec4899",
-  "#10b981", "#8b5cf6", "#ef4444",
+  "#0d9488",
+  "#f59e0b",
+  "#6366f1",
+  "#ec4899",
+  "#10b981",
+  "#8b5cf6",
+  "#ef4444",
 ];
 
 export default function NaverMapContainer({
@@ -153,7 +171,9 @@ export default function NaverMapContainer({
     });
 
     // 2. 일차별 Polyline 연결 (다른 날끼리는 이어지지 않음)
-    const uniqueDays = Array.from(new Set(sortedPlaces.map((p) => p.day_number)));
+    const uniqueDays = Array.from(
+      new Set(sortedPlaces.map((p) => p.day_number)),
+    );
     uniqueDays.forEach((day) => {
       const dayPlaces = sortedPlaces.filter((p) => p.day_number === day);
       if (dayPlaces.length < 2) return;
@@ -183,7 +203,10 @@ export default function NaverMapContainer({
       renderMarkersAndLines();
     };
 
-    if (window.naver?.maps) { initMap(); return; }
+    if (window.naver?.maps) {
+      initMap();
+      return;
+    }
     if (scriptLoadedRef.current) return;
 
     scriptLoadedRef.current = true;
@@ -204,15 +227,19 @@ export default function NaverMapContainer({
   }, [renderMarkersAndLines]);
 
   return (
-    <div className="w-full h-full rounded-2xl overflow-hidden relative">
+    <div className="box-white w-full h-full overflow-hidden relative">
       <div ref={mapRef} className="w-full h-full" />
 
       {/* API 키 없을 때 안내 오버레이 */}
       {!NAVER_MAP_CLIENT_ID && (
         <div className="absolute inset-0 bg-slate-100/50 flex flex-col items-center justify-center rounded-2xl">
           <div className="box-white px-5 py-4 text-center border border-slate-200 shadow-card">
-            <span className="text-sm font-bold text-slate-700">지도를 불러올 수 없습니다 🗺️</span>
-            <p className="text-xs text-slate-500 mt-1">.env 파일에 API 키를 설정해주세요.</p>
+            <span className="text-sm font-bold text-slate-700">
+              지도를 불러올 수 없습니다 🗺️
+            </span>
+            <p className="text-xs text-slate-500 mt-1">
+              .env 파일에 API 키를 설정해주세요.
+            </p>
           </div>
         </div>
       )}

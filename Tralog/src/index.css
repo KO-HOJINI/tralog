@@ -13,7 +13,7 @@
 @import "tailwindcss";
 @plugin 'daisyui';
 
-/* ----------- 디자인 토큰 (CSS 변수) ----------- */
+/* ---------------- 디자인  ---------------- */
 :root {
   --color-primary: #0d9488;
   --color-secondary: #f59e0b;
@@ -24,8 +24,8 @@
 
   /* 공통으로 쓰는 값들 */
   --radius-box: 32px;
-  --radius-btn: 20px;
-  --radius-input: 16px;
+  --radius-btn: 24px;
+  --radius-input: 24px;
 }
 
 @theme {

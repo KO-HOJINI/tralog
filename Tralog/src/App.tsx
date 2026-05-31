@@ -1,39 +1,78 @@
 // ===================================================
 // App.tsx - 루트 컴포넌트 (라우팅 담당)
 //
-// React Router 없이 useState로 페이지 전환 구현함
-// 실제 라우터 쓰면 더 좋은데 일단 이렇게 함
-//
-// scheduleId는 일정 편집 페이지로 이동할 때 같이 넘겨줌
-// localStorage에도 저장해서 새로고침 후에도 유지됨
+// React Router 없이 useState로 페이지 전환 구현
+// 💡 History API (pushState, popstate) 연동: 
+//    브라우저 뒤로가기 버튼 지원 및 새로고침 시 페이지 유지
 // ===================================================
 
 import "./App.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import LoginPage from "./components/pages/auth/LoginPage";
 import DashboardPage from "./components/pages/dashboard/DashboardPage";
 import MyMapPage from "./components/pages/mymap/MyMapPage";
 import HandleSchedulePage from "./components/pages/schedule/HandleSchedulePage";
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<string>("login");
+  // 💡 초기 페이지를 URL의 해시(#) 값에서 읽어옴 (새로고침 방지)
+  const [currentPage, setCurrentPage] = useState<string>(() => {
+    const hash = window.location.hash.replace("#", "");
+    return hash || "login";
+  });
 
-  // 활성화된 일정 ID - 변경 시 HandleSchedulePage 재마운트 유도
+  // 활성화된 일정 ID
   const [activeScheduleId, setActiveScheduleId] = useState<string | undefined>(
     () => localStorage.getItem("tralog_active_schedule_id") || undefined,
   );
 
+  // 💡 브라우저 뒤로가기/앞으로가기 이벤트 감지
+  useEffect(() => {
+    // 앱이 처음 켜질 때 현재 상태를 브라우저 히스토리에 덮어씀
+    window.history.replaceState(
+      { page: currentPage, scheduleId: activeScheduleId },
+      "",
+      `#${currentPage}`
+    );
+
+    // 사용자가 브라우저 뒤로가기 버튼을 눌렀을 때 실행되는 함수
+    const handlePopState = (event: PopStateEvent) => {
+      if (event.state && event.state.page) {
+        setCurrentPage(event.state.page); // 이전 페이지로 상태 복구
+        
+        // 이전 페이지에 연결된 일정 ID가 있다면 함께 복구
+        if (event.state.scheduleId) {
+          setActiveScheduleId(event.state.scheduleId);
+          localStorage.setItem("tralog_active_schedule_id", event.state.scheduleId);
+        }
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [currentPage, activeScheduleId]);
+
   const navigateTo = (pageName: string, scheduleId?: string) => {
+    let nextScheduleId = scheduleId;
+
     if (scheduleId) {
-      // 일정 ID가 넘어오면 저장
       localStorage.setItem("tralog_active_schedule_id", scheduleId);
       setActiveScheduleId(scheduleId);
     } else if (pageName === "schedule" || pageName === "handleschedule") {
-      // 일정 편집 페이지로 이동할 때 기존 ID 유지
       const localId = localStorage.getItem("tralog_active_schedule_id");
-      if (localId) setActiveScheduleId(localId);
+      if (localId) {
+        setActiveScheduleId(localId);
+        nextScheduleId = localId;
+      }
     }
+    
     setCurrentPage(pageName);
+
+    // 💡 화면 전환 시 브라우저 방문 기록(History)에 추가 + 주소창 해시 변경
+    window.history.pushState(
+      { page: pageName, scheduleId: nextScheduleId },
+      "",
+      `#${pageName}`
+    );
   };
 
   const renderPage = () => {
@@ -46,7 +85,6 @@ function App() {
         return <MyMapPage onNavigate={navigateTo} />;
       case "schedule":
       case "handleschedule":
-        // key에 ID 넣어서 ID가 바뀌면 컴포넌트 강제 재마운트
         return (
           <HandleSchedulePage
             key={activeScheduleId || "new"}

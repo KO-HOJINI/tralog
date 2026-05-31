@@ -44,7 +44,10 @@ export default function CompanionSection({
     const stored = localStorage.getItem(`tralog_companions_${userId}`);
     if (stored) return JSON.parse(stored);
     const defaultData = [{ id: "jaehyun7", name: "김재현" }];
-    localStorage.setItem(`tralog_companions_${userId}`, JSON.stringify(defaultData));
+    localStorage.setItem(
+      `tralog_companions_${userId}`,
+      JSON.stringify(defaultData),
+    );
     return defaultData;
   });
 
@@ -69,12 +72,20 @@ export default function CompanionSection({
       localStorage.getItem("tralog_users_list") || "[]",
     ) as UserRecord[];
 
-    const foundUser = existingUsers.find((user: UserRecord) => user.id === targetId);
+    const foundUser = existingUsers.find(
+      (user: UserRecord) => user.id === targetId,
+    );
 
     if (foundUser) {
-      const updated = [...companions, { id: foundUser.id, name: foundUser.name || foundUser.id }];
+      const updated = [
+        ...companions,
+        { id: foundUser.id, name: foundUser.name || foundUser.id },
+      ];
       setCompanions(updated);
-      localStorage.setItem(`tralog_companions_${userId}`, JSON.stringify(updated));
+      localStorage.setItem(
+        `tralog_companions_${userId}`,
+        JSON.stringify(updated),
+      );
       setSearchId("");
       setMessage("✅ 일행이 추가되었습니다.");
     } else {
@@ -86,25 +97,31 @@ export default function CompanionSection({
   const handleRemoveCompanion = (id: string) => {
     const updated = companions.filter((c) => c.id !== id);
     setCompanions(updated);
-    localStorage.setItem(`tralog_companions_${userId}`, JSON.stringify(updated));
+    localStorage.setItem(
+      `tralog_companions_${userId}`,
+      JSON.stringify(updated),
+    );
   };
 
   return (
     <div className="p-6 h-full flex flex-col gap-5 overflow-hidden bg-white">
-
       {/* 헤더: 일정 제목 + 기간 (피그마 우측 패널 상단) */}
       {scheduleTitle && (
         <div className="pb-4 border-b border-slate-100 shrink-0 select-none">
           <h2 className="font-black text-dark m-0 mb-1">{scheduleTitle}</h2>
           {schedulePeriod && (
-            <span className="text-xs font-bold text-slate-500">{schedulePeriod}</span>
+            <span className="text-xs font-bold text-slate-500">
+              {schedulePeriod}
+            </span>
           )}
         </div>
       )}
 
       {/* 동반자 추가 인풋 */}
       <div className="shrink-0">
-        <p className="text-xs font-bold text-dark mb-2 select-none">일행의 ID를 입력하세요</p>
+        <p className="text-xs font-bold text-dark mb-2 select-none">
+          일행의 ID를 입력하세요
+        </p>
         <form onSubmit={handleAddCompanion} className="flex gap-2">
           <input
             type="text"
@@ -113,14 +130,19 @@ export default function CompanionSection({
             onChange={(e) => setSearchId(e.target.value)}
             className="flex-1 h-11 px-4 text-xs focus:outline-none input-custom"
           />
-          <button type="submit" className="btn-primary h-11 px-5 text-xs shrink-0">
+          <button
+            type="submit"
+            className="btn-primary h-11 px-5 text-xs shrink-0"
+          >
             추가
           </button>
         </form>
         {message && (
-          <p className={`text-[11px] font-bold px-1 mt-1.5 ${
-            message.startsWith("✅") ? "text-primary" : "text-red-500"
-          }`}>
+          <p
+            className={`text-[11px] font-bold px-1 mt-1.5 ${
+              message.startsWith("✅") ? "text-primary" : "text-red-500"
+            }`}
+          >
             {message}
           </p>
         )}
@@ -145,8 +167,12 @@ export default function CompanionSection({
               >
                 <div className="flex items-center gap-2 select-none">
                   <span className="text-sm">👤</span>
-                  <span className="text-xs font-bold text-dark">{comp.name}</span>
-                  <span className="text-[10px] text-gray font-mono">({comp.id})</span>
+                  <span className="text-xs font-bold text-dark">
+                    {comp.name}
+                  </span>
+                  <span className="text-[10px] text-gray font-mono">
+                    ({comp.id})
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2.5">

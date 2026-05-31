@@ -6,12 +6,12 @@
 //   POST   /api/expenses         → 지출 내역 추가
 //   DELETE /api/expenses/:id     → 지출 내역 삭제
 //
-// 피그마 디자인 반영:
-//   - 일차별 그룹핑 + 날짜 구분선
-//   - 총 비용 하단 표시
-//   - category 없이 깔끔한 리스트 형태
+// 가계부 일차별 그룹핑 버그 수정:
+//   문제: DB에서 day_number가 null로 오는 경우 모두 "여행 준비"로 묶임
+//   → day_number 없는 항목도 "미지정"으로 별도 표시
+//   → 그룹 순서 정렬: 숫자 일차 → 미지정 순
 //
-// AI 도움: reduce로 일차별 그룹핑 처리
+// AI 도움: reduce 패턴 + 정렬 로직
 // ===================================================
 
 import { useState, useEffect } from "react";
@@ -22,7 +22,7 @@ interface AccountItem {
   category: string;
   detail: string;
   amount: number;
-  day_number?: number; // 일차 정보 (그룹핑용)
+  day_number?: number;
 }
 
 interface ApiExpenseData {
@@ -35,7 +35,7 @@ interface ApiExpenseData {
 
 interface AccountBookSectionProps {
   scheduleId: string;
-  companionCount?: number; // 일행 수 (피그마에서 우측 상단에 표시)
+  companionCount?: number;
 }
 
 const CATEGORIES = ["식비", "숙소", "교통", "기타"] as const;
@@ -47,7 +47,6 @@ export default function AccountBookSection({
   const [expenses, setExpenses] = useState<AccountItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 입력 폼 상태
   const [detail, setDetail] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("식비");
@@ -68,7 +67,7 @@ export default function AccountBookSection({
           category: e.category,
           detail: e.detail,
           amount: e.amount,
-          day_number: e.day_number,
+          day_number: e.day_number ?? undefined,
         }));
 
         if (isMounted) setExpenses(mapped);
@@ -84,16 +83,25 @@ export default function AccountBookSection({
 
   const totalAmount = expenses.reduce((sum, item) => sum + item.amount, 0);
 
-  // 일차별 그룹핑 (AI 도움: reduce 패턴)
-  // day_number 없는 항목은 "여행 준비"로 분류
+  // 일차별 그룹핑 (AI 도움: reduce + 정렬)
+  // day_number가 숫자인 항목 → "N일차"
+  // day_number가 없는 항목 → "미지정"
   const groupedByDay = expenses.reduce<Record<string, AccountItem[]>>((acc, item) => {
-    const key = item.day_number ? `${item.day_number}일차` : "여행 준비";
+    const key =
+      item.day_number !== undefined && item.day_number !== null
+        ? `${item.day_number}일차`
+        : "미지정";
     if (!acc[key]) acc[key] = [];
     acc[key].push(item);
     return acc;
   }, {});
 
-  const groupKeys = Object.keys(groupedByDay);
+  // 그룹 키 정렬: 1일차, 2일차 ... 숫자 순 → 마지막에 "미지정"
+  const groupKeys = Object.keys(groupedByDay).sort((a, b) => {
+    if (a === "미지정") return 1;
+    if (b === "미지정") return -1;
+    return parseInt(a) - parseInt(b);
+  });
 
   // 지출 추가
   const handleAddExpense = async (e: React.FormEvent) => {
@@ -139,7 +147,6 @@ export default function AccountBookSection({
 
   return (
     <div className="p-6 h-full flex flex-col gap-4 overflow-hidden bg-white">
-
       {/* 헤더 */}
       <div className="flex justify-between items-end pb-3 border-b-2 border-slate-800 shrink-0 select-none">
         <h2 className="text-xl font-black text-slate-800 m-0">여행 가계부</h2>
@@ -162,23 +169,28 @@ export default function AccountBookSection({
           groupKeys.map((groupKey) => (
             <div key={groupKey}>
               {/* 일차 구분 헤더 */}
-              <div className="text-[11px] font-bold text-slate-500 py-2 mt-2 first:mt-0 border-b border-slate-100">
-                {groupKey}
+              <div className="flex items-center gap-2 py-2 mt-3 first:mt-0">
+                <span className="text-[11px] font-bold text-slate-500">{groupKey}</span>
+                <div className="flex-1 h-px bg-slate-100" />
+                {/* 해당 일차 소계 */}
+                <span className="text-[11px] font-bold text-slate-400 font-mono">
+                  {groupedByDay[groupKey]
+                    .reduce((sum, item) => sum + item.amount, 0)
+                    .toLocaleString()}원
+                </span>
               </div>
 
-              {/* 해당 일차 지출 목록 */}
+              {/* 해당 일차 항목 */}
               {groupedByDay[groupKey].map((item) => (
                 <div
                   key={item.id}
-                  className="flex justify-between items-center py-3.5 border-b border-slate-50 group hover:bg-slate-50/50 transition-colors px-1 rounded-lg"
+                  className="flex justify-between items-center py-3 border-b border-slate-50 group hover:bg-slate-50/50 transition-colors px-1 rounded-lg"
                 >
                   <div className="flex gap-3 items-center">
                     <span className="text-[10px] font-bold text-slate-400 w-8 shrink-0">
                       {item.category}
                     </span>
-                    <span className="text-sm font-bold text-slate-700">
-                      {item.detail}
-                    </span>
+                    <span className="text-sm font-bold text-slate-700">{item.detail}</span>
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     <span className="text-sm font-mono font-bold text-slate-800">
@@ -198,7 +210,7 @@ export default function AccountBookSection({
         )}
       </div>
 
-      {/* 총 비용 (피그마: 하단 구분선 + 합계) */}
+      {/* 총 비용 합계 */}
       {!isLoading && expenses.length > 0 && (
         <div className="flex justify-between items-center pt-3 border-t-2 border-slate-800 shrink-0 select-none">
           <span className="text-xs font-bold text-slate-500">총 비용</span>
@@ -237,7 +249,7 @@ export default function AccountBookSection({
           min={0}
           className="w-24 h-10 px-3 text-xs input-custom focus:outline-none font-mono"
         />
-        <button type="submit" className="btn-dark h-10 px-4 text-xs shrink-0">
+        <button type="submit" className="btn-primary h-10 px-4 text-xs shrink-0">
           기록
         </button>
       </form>
