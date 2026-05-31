@@ -1,4 +1,4 @@
-name: Deploy React App
+name: Tralog
 
 on:
   push:
