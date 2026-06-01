@@ -332,10 +332,9 @@
 
   &:hover {
     border-color: var(--color-primary);
-    transform: scale(1.004);
+    transform: scale(1.002);
   }
 
-  /* 💡 하단 배너 span에 대한 호버 스타일을 CSS 내부로 격리 */
   & .box-white {
     transition: all 0.2s ease;
   }
@@ -365,6 +364,6 @@
 
   &:hover {
     border-color: var(--color-secondary);
-    transform: scale(1.004);
+    transform: scale(1.002);
   }
 }
