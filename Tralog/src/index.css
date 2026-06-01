@@ -312,11 +312,11 @@
  * 지도 관련 카드 테마 (MapOverview 전용)
  * =================================================== */
 
-/* 지도 카드 배경 그라데이션 - 최적화 버전 */
+/* 지도 카드 */
 @utility card-map-theme {
   background: linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%);
   border-radius: var(--radius-box);
-  padding: 1.25rem;
+  padding: 0; /* 내부 마진 격리 */
   box-shadow: var(--shadow-custom);
   border: 1px solid rgba(255, 255, 255, 0.6);
   cursor: pointer;
@@ -324,16 +324,34 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: var(--color-primary);
+    transform: scale(1.004);
+  }
+
+  /* 💡 하단 배너 span에 대한 호버 스타일을 CSS 내부로 격리 */
+  & .box-white {
+    transition: all 0.2s ease;
+  }
+  &:hover .box-white {
+    background-color: var(--color-gray);
+    color: var(--color-pure-white);
+  }
 }
 
-
-/* 달성률 카드 배경 그라데이션 (골드 계열) */
+/* 달성률 카드 */
 @utility card-achieve-theme {
-  background: linear-gradient(to bottom right, #eab308, #eab308, #d97706);
+  background: linear-gradient(to bottom right, #fef08a, #fcd34d, #f59e0b);
   border-radius: var(--radius-box);
   padding: 1.25rem;
   box-shadow: var(--shadow-custom);
+  border: 1px solid transparent;
   cursor: pointer;
   display: flex;
   flex-direction: column;
@@ -341,8 +359,12 @@
   gap: 1rem;
   color: var(--color-dark);
   position: relative;
-  transition: all 0.3s ease;
+  width: 100%;
+  height: fit-content;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
   &:hover {
-    transform: scale(1.002);
+    border-color: var(--color-primary);
+    transform: scale(1.004);
   }
 }

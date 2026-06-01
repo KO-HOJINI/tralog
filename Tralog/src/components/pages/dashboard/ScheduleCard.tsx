@@ -55,20 +55,18 @@ export default function ScheduleCard({
       onClick={handleClick}
       className="box-white hover:border-primary/40 hover:scale-[1.004] transition-all duration-300 cursor-pointer flex flex-col overflow-hidden relative group w-full h-full min-h-36"
     >
-      {/* 배경 이미지 + 그라데이션 오버레이 영역 */}
+      {/* 배경 이미지 영역 */}
       <div
         className="flex-1 h-0 w-full relative p-5 flex flex-col justify-end overflow-hidden border-b border-slate-200/40 rounded-t-4xl transition-all duration-300"
         style={{
           // 💡 마이맵에서 선택한 대표사진(bgSrc)이 존재하면 보여주고, 없으면 UI 기조에 맞는 은은한 민트 그라데이션 적용
           backgroundImage: bgSrc
             ? `url(${bgSrc})`
-            : "linear-gradient(to bottom, #f0fdfa, #ccfbf1)",
+            : "linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%)",
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}
       >
-        {/* 아래쪽 어둡게 처리 오버레이 → 대표 사진이 등록되어도 흰색 타이틀 글씨의 시인성을 완벽하게 보장 */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/15 to-transparent group-hover:from-black/80 transition-all duration-300" />
 
         {/* D-Day 뱃지 */}
         <div className="absolute top-4 right-4 box-white rounded-full px-3.5 py-1 shadow-card z-20">
