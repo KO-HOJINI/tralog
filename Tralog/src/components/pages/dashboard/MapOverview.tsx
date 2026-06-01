@@ -49,7 +49,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
       >
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
           {/* 지도 컴포넌트 컨테이너 */}
-          <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.02]">
+          <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">
             <InteractiveMap
               selectedRegion={null}
               onSelectRegion={() => {}}
