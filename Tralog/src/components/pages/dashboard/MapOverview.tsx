@@ -41,11 +41,11 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
   const remainingCount = TOTAL_REGIONS - visitedCount;
 
   return (
-    <div className="flex flex-col gap-5 w-full h-full">
+    <div className="flex flex-col gap-5 w-full h-full pl-1">
       {/* 지도 카드 - 클릭하면 나만의 지도 페이지로 이동 */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="card-map-theme  flex-1 h-0 w-full relative group overflow-hidden p-0"
+        className="card-map-theme  flex-1 h-0 w-full relative group overflow-hidden p-0 hover:border-primary/40 hover:scale-[1.004]"
       >
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
           {/* 지도 컴포넌트 컨테이너 */}
@@ -59,7 +59,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           </div>
 
           {/* 💡 하단 배너 */}
-          <span className="absolute bottom-4 text-[11px] font-extrabold text-slate-600 tracking-tight bg-white/80 px-4 py-2 rounded-full border border-slate-200/50 shadow-xs backdrop-blur-sm group-hover:bg-[#4f5b70] group-hover:text-pure-white group-hover:border-[#4f5b70] transition-all duration-300">
+          <span className="box-white text-body-caption font-bold absolute bottom-4 px-4 py-2 group-hover:bg-gray group-hover:text-pure-white">
             🗺️ 지도를 눌러 추억 기록하기
           </span>
         </div>
@@ -67,7 +67,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
 
       <div
         onClick={() => onNavigate("mymap")}
-        className="box-ghost h-fit w-full card-achieve-theme cursor-pointer hover:scale-[1.01] transition-transform"
+        className=" h-fit w-full card-achieve-theme cursor-pointer hover:border-secondary/40 hover:scale-[1.004] transition-transform"
       >
         <div className="flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start shrink-0">

@@ -1,5 +1,5 @@
 // ===================================================
-// HandleSchedulePage.tsx - 일정 편집 메인 페이지
+// HandleSchedulePage.tsx - 일정 편집 메인 페이지 (날짜 오차 버그 수정본)
 // ===================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -67,7 +67,7 @@ export default function HandleSchedulePage({
   });
   const [mapPlaces, setMapPlaces] = useState<PlaceMarker[]>([]);
 
-  // 💡 데이터 마운팅 유효 검증을 위한 내부 클로저 플래그 파라미터 전달 가능하도록 수정
+  // 💡 데이터 마운팅 유효 검증 및 날짜 파싱 문자열 기반 가공 (타임존 간섭 방지)
   const fetchScheduleData = useCallback(
     async (isMounted: boolean) => {
       try {
@@ -75,8 +75,24 @@ export default function HandleSchedulePage({
         if (!res.ok) return;
         const data = await res.json();
         const meta = data.meta;
-        const start = meta.start_date?.slice(0, 10) ?? "";
-        const end = meta.end_date?.slice(0, 10) ?? "";
+
+        // 데이터가 ISO 표준 시간 포맷("2026-05-23T15:00:00.000Z")인 경우,
+        // UTC 시차 때문에 하루 전날인 "2026-05-22" 문자열로 잘려 나오는 문제를 방지합니다.
+        const formatLocalDateString = (rawDate: string | undefined) => {
+          if (!rawDate) return "";
+          // 만약 T가 포함된 풀 포맷이라면 한국 자정 시간 기준으로 임시 파싱 후 로컬 가공
+          if (rawDate.includes("T")) {
+            const dateObj = new Date(rawDate);
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+            const d = String(dateObj.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+          }
+          return rawDate.slice(0, 10);
+        };
+
+        const start = formatLocalDateString(meta.start_date);
+        const end = formatLocalDateString(meta.end_date);
 
         if (isMounted) {
           setScheduleMeta({
@@ -114,7 +130,6 @@ export default function HandleSchedulePage({
 
     let isMounted = true;
 
-    // 💡 에러 해결: useEffect 내부에서 즉시 동기 실행되어 발생하는 렌더 트래킹 경고 해결
     const delayFetch = setTimeout(() => {
       void fetchScheduleData(isMounted);
     }, 0);
@@ -127,6 +142,7 @@ export default function HandleSchedulePage({
 
   const handleUpdateMeta = async () => {
     try {
+      // 💡 데이터가 유실되지 않도록 전송 시 "YYYY-MM-DD" 순수 문자열 포맷 보장
       const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },

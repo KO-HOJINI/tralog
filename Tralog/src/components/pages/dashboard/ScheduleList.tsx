@@ -101,18 +101,33 @@ export default function ScheduleList({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 💡 종료된 일정 필터링 (endDate가 오늘보다 과거면 목록에서 제외)
+        // 💡 ISO 표준 포맷(T...) 수신 시 시차 오류 방지용 로컬 문자열 파싱 헬퍼
+        const formatLocalDateString = (rawDate: string | undefined) => {
+          if (!rawDate) return "";
+          if (rawDate.includes("T")) {
+            const dateObj = new Date(rawDate);
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+            const d = String(dateObj.getDate()).padStart(2, "0");
+            return `${y}-${m}-${d}`;
+          }
+          return rawDate.slice(0, 10);
+        };
+
+        // 종료된 일정 필터링 (endDate가 오늘보다 과거면 목록에서 제외)
         const activeSchedules = data.filter((item) => {
-          const rawEnd = item.end_date.split("T")[0];
-          const [ey, em, ed] = rawEnd.split("-").map(Number);
+          const End = formatLocalDateString(item.end_date);
+          const [ey, em, ed] = End.split("-").map(Number);
           const endDate = new Date(ey, em - 1, ed);
           return endDate >= today;
         });
 
         const formattedSchedules = activeSchedules.map((item) => {
           // D-Day 계산
-          const rawStart = item.start_date.split("T")[0];
-          const [sy, sm, sd] = rawStart.split("-").map(Number);
+          const Start = formatLocalDateString(item.start_date);
+          const End = formatLocalDateString(item.end_date);
+
+          const [sy, sm, sd] = Start.split("-").map(Number);
           const start = new Date(sy, sm - 1, sd);
 
           const diffDays = Math.ceil(
@@ -129,10 +144,10 @@ export default function ScheduleList({
             id: item.id,
             title: item.title,
             location: item.region,
-            startDate: item.start_date.split("T")[0],
-            endDate: item.end_date.split("T")[0],
+            startDate: Start,
+            endDate: End,
             dDay: dDayString,
-            bgImage: item.bgImage, // 💡 백엔드에서 받은 지역 대표사진 매핑
+            bgImage: item.bgImage,
           };
         });
         setSchedules(formattedSchedules);
