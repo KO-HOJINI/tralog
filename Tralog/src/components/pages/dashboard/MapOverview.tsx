@@ -41,13 +41,15 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
   const remainingCount = TOTAL_REGIONS - visitedCount;
 
   return (
-    <div className="flex flex-col gap-5 w-full h-full px-1">
+    <div className="flex flex-col gap-5 w-full h-full">
+      {/* 지도 카드 - 클릭하면 나만의 지도 페이지로 이동 */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="box-ghost hover:scale-[1.01] flex-1 h-0 w-full card-map-theme relative group cursor-pointer overflow-hidden flex items-center justify-center p-0"
+        className="card-map-theme flex-1 h-0 w-full relative group overflow-hidden p-0"
       >
-        <div className="w-full h-full bg-white/10 backdrop-blur-xs flex flex-col items-center justify-center relative p-4">
-          <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden">
+        <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
+          {/* 지도 컴포넌트 컨테이너 */}
+          <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.02]">
             <InteractiveMap
               selectedRegion={null}
               onSelectRegion={() => {}}
@@ -56,7 +58,8 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
             />
           </div>
 
-          <span className="text-body-caption box-white absolute bottom-3 bg-white/70 px-3 py-2 backdrop-blur-md group-hover:bg-primary group-hover:text-white transition-all">
+          {/* 💡 하단 배너 */}
+          <span className="absolute bottom-4 text-[11px] font-extrabold text-slate-600 tracking-tight bg-white/80 px-4 py-2 rounded-full border border-slate-200/50 shadow-xs backdrop-blur-sm group-hover:bg-[#4f5b70] group-hover:text-pure-white group-hover:border-[#4f5b70] transition-all duration-300">
             🗺️ 지도를 눌러 추억 기록하기
           </span>
         </div>
@@ -69,24 +72,14 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
         <div className="flex flex-col gap-3 w-full">
           <div className="flex justify-between items-start shrink-0">
             <div className="flex flex-col gap-0.5">
-              <span className="text-body-caption">
-                🗺️ 여행 목표
-              </span>
-              <h2>
-                나만의 지도
-              </h2>
-              <span className="text-body-caption">
-                대한민국 완전 정복
-              </span>
+              <span className="text-body-caption">🗺️ 여행 목표</span>
+              <h2>나만의 지도</h2>
+              <span className="text-body-caption">대한민국 완전 정복</span>
             </div>
 
             <div className="text-right flex flex-col">
-              <span className="text-number-accent">
-                {visitedCount}
-              </span>
-              <span className="text-body-caption">
-                / {TOTAL_REGIONS} 지역
-              </span>
+              <span className="text-number-accent">{visitedCount}</span>
+              <span className="text-body-caption">/ {TOTAL_REGIONS} 지역</span>
             </div>
           </div>
 
@@ -98,12 +91,8 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
               />
             </div>
             <div className="flex justify-between items-center px-0.5">
-              <span className="text-body-caption">
-                달성률
-              </span>
-              <span className="text-body-caption">
-                {achievementRate}%
-              </span>
+              <span className="text-body-caption">달성률</span>
+              <span className="text-body-caption">{achievementRate}%</span>
             </div>
           </div>
         </div>

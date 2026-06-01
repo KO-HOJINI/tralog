@@ -312,22 +312,24 @@
  * 지도 관련 카드 테마 (MapOverview 전용)
  * =================================================== */
 
-/* 지도 카드 배경 그라데이션 */
+/* 지도 카드 배경 그라데이션 - 최적화 버전 */
 @utility card-map-theme {
-  background: linear-gradient(to bottom, #bce3de, #a3d5cf);
+  background: linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%);
   border-radius: var(--radius-box);
   padding: 1.25rem;
   box-shadow: var(--shadow-custom);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: all 0.3s ease;
-  &:hover {
-    transform: scale(1.002);
-  }
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@utility card-map-theme:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -10px rgba(79, 91, 112, 0.15);
+  border-color: rgba(79, 91, 112, 0.15);
 }
 
 /* 달성률 카드 배경 그라데이션 (골드 계열) */
