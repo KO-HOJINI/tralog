@@ -1,193 +1,50 @@
-// ===================================================
-// HandleSchedulePage.tsx - 일정 편집 메인 페이지 (날짜 오차 버그 수정본)
-// ===================================================
-
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import NavBar from "../../Navbar";
-import ScheduleHeader from "./ScheduleHeader";
-import TimelineSection from "./TimelineSection";
-import AccountBookSection from "./AccountBookSection";
+import ScheduleHeader from "./header/ScheduleHeader";
+import TimelineSection from "./timeline/TimelineSection";
+import AccountBookSection from "./account/AccountBookSection";
 import CompanionSection from "./CompanionSection";
-import NaverMapContainer, { type PlaceMarker } from "./NaverMapContainer";
-import { API_BASE_URL } from "../../../config/api";
+import NaverMapContainer from "./NaverMapContainer";
+import { useSchedule } from "./hooks/useSchedule";
 
 interface HandleSchedulePageProps {
   onNavigate: (page: string) => void;
   scheduleId?: string;
 }
 
-interface UserSession {
-  id: string;
-  name: string;
-}
-
-interface ScheduleMeta {
-  title: string;
-  period: string;
-  region: string;
-  start_date?: string;
-  end_date?: string;
-}
-
-interface ApiPlace {
-  id: string;
-  place_name: string;
-  day_number: number;
-  visit_time: string;
-  lat: number;
-  lng: number;
-}
-
 export default function HandleSchedulePage({
   onNavigate,
   scheduleId: scheduleIdProp,
 }: HandleSchedulePageProps) {
-  const [currentUser] = useState<UserSession | null>(() => {
+  // 현재 사용자 세션
+  const [currentUser] = useState(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
-  const [scheduleId] = useState<string>(
+  const [scheduleId] = useState(
     () =>
       scheduleIdProp ||
       localStorage.getItem("tralog_active_schedule_id") ||
       "s-1",
   );
+
+  // 어떤 탭을 보여줄지 결정
   const [activeTab, setActiveTab] = useState<string>("timeline");
-  const [isEditing, setIsEditing] = useState<boolean>(false);
 
-  const [editTitle, setEditTitle] = useState("");
-  const [editStartDate, setEditStartDate] = useState("");
-  const [editEndDate, setEditEndDate] = useState("");
-
-  const [scheduleMeta, setScheduleMeta] = useState<ScheduleMeta>({
-    title: "로딩 중...",
-    period: "",
-    region: "",
-  });
-  const [mapPlaces, setMapPlaces] = useState<PlaceMarker[]>([]);
-
-  // 💡 데이터 마운팅 유효 검증 및 날짜 파싱 문자열 기반 가공 (타임존 간섭 방지)
-  const fetchScheduleData = useCallback(
-    async (isMounted: boolean) => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`);
-        if (!res.ok) return;
-        const data = await res.json();
-        const meta = data.meta;
-
-        // 데이터가 ISO 표준 시간 포맷("2026-05-23T15:00:00.000Z")인 경우,
-        // UTC 시차 때문에 하루 전날인 "2026-05-22" 문자열로 잘려 나오는 문제를 방지합니다.
-        const formatLocalDateString = (rawDate: string | undefined) => {
-          if (!rawDate) return "";
-          // 만약 T가 포함된 풀 포맷이라면 한국 자정 시간 기준으로 임시 파싱 후 로컬 가공
-          if (rawDate.includes("T")) {
-            const dateObj = new Date(rawDate);
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-            const d = String(dateObj.getDate()).padStart(2, "0");
-            return `${y}-${m}-${d}`;
-          }
-          return rawDate.slice(0, 10);
-        };
-
-        const start = formatLocalDateString(meta.start_date);
-        const end = formatLocalDateString(meta.end_date);
-
-        if (isMounted) {
-          setScheduleMeta({
-            title: meta.title,
-            period: start && end ? `${start} ~ ${end}` : "",
-            region: meta.region,
-            start_date: start,
-            end_date: end,
-          });
-
-          const markers: PlaceMarker[] = (data.places || []).map(
-            (p: ApiPlace) => ({
-              id: p.id,
-              place_name: p.place_name,
-              day_number: p.day_number,
-              visit_time: p.visit_time,
-              lat: p.lat,
-              lng: p.lng,
-            }),
-          );
-          setMapPlaces(markers);
-        }
-      } catch (err) {
-        console.error("일정 로딩 오류:", err);
-      }
-    },
-    [scheduleId],
-  );
-
-  useEffect(() => {
-    if (!currentUser) {
-      onNavigate("login");
-      return;
-    }
-
-    let isMounted = true;
-
-    const delayFetch = setTimeout(() => {
-      void fetchScheduleData(isMounted);
-    }, 0);
-
-    return () => {
-      isMounted = false;
-      clearTimeout(delayFetch);
-    };
-  }, [currentUser, onNavigate, fetchScheduleData]);
-
-  const handleUpdateMeta = async () => {
-    try {
-      // 💡 데이터가 유실되지 않도록 전송 시 "YYYY-MM-DD" 순수 문자열 포맷 보장
-      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editTitle,
-          start_date: editStartDate,
-          end_date: editEndDate,
-        }),
-      });
-
-      if (res.ok) {
-        setScheduleMeta((prev) => ({
-          ...prev,
-          title: editTitle,
-          start_date: editStartDate,
-          end_date: editEndDate,
-          period:
-            editStartDate && editEndDate
-              ? `${editStartDate} ~ ${editEndDate}`
-              : "",
-        }));
-        setIsEditing(false);
-      } else {
-        alert("수정에 실패했습니다.");
-      }
-    } catch (err) {
-      console.error("일정 수정 오류:", err);
-      alert("오류가 발생했습니다.");
-    }
-  };
-
-  const handleToggleEdit = () => {
-    if (isEditing) {
-      handleUpdateMeta();
-    } else {
-      setEditTitle(scheduleMeta.title);
-      setEditStartDate(scheduleMeta.start_date || "");
-      setEditEndDate(scheduleMeta.end_date || "");
-      setIsEditing(true);
-    }
-  };
-
-  const handlePlaceAdded = useCallback((place: PlaceMarker) => {
-    setMapPlaces((prev) => [...prev, place]);
-  }, []);
+  const {
+    scheduleMeta,
+    mapPlaces,
+    isEditing,
+    editTitle,
+    setEditTitle,
+    editStartDate,
+    setEditStartDate,
+    editEndDate,
+    setEditEndDate,
+    handleToggleEdit,
+    handlePlaceAdded,
+  } = useSchedule(scheduleId, currentUser, onNavigate);
 
   if (!currentUser) return null;
 
@@ -203,6 +60,7 @@ export default function HandleSchedulePage({
       />
 
       <main className="flex-1 h-0 w-[70%] max-w-300 mx-auto py-6 flex flex-col overflow-hidden">
+        {/* 상단 타이틀 및 헤더 영역 */}
         <div className="flex w-full gap-5 items-end shrink-0 pb-5">
           <div className="flex-1 flex flex-col gap-2.5 items-start pl-1">
             {isEditing ? (
@@ -258,15 +116,24 @@ export default function HandleSchedulePage({
           </div>
         </div>
 
+        {/* 하단 메인 콘텐츠 (지도 + 활성화된 탭 섹션) */}
         <div className="flex-1 h-0 flex w-full gap-5 items-stretch overflow-hidden">
+          {/* 좌측 네이버 지도 구획 */}
           <div className="flex-1 shrink-0 h-full box-white p-2 overflow-hidden">
-            <NaverMapContainer
-              places={mapPlaces}
-              centerLat={getRegionCenter(scheduleMeta.region).lat}
-              centerLng={getRegionCenter(scheduleMeta.region).lng}
-            />
+            {scheduleMeta.region ? (
+              <NaverMapContainer
+                places={mapPlaces}
+                centerLat={getRegionCenter(scheduleMeta.region).lat}
+                centerLng={getRegionCenter(scheduleMeta.region).lng}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-xs text-slate-400 animate-pulse">
+                지도를 매핑하고 있습니다...
+              </div>
+            )}
           </div>
 
+          {/* 우측 서브 섹션 구획 */}
           <div className="flex-1 h-full box-white overflow-hidden flex flex-col">
             {activeTab === "timeline" && (
               <TimelineSection
@@ -275,6 +142,7 @@ export default function HandleSchedulePage({
                 isEditing={isEditing}
                 startDate={scheduleMeta.start_date}
                 endDate={scheduleMeta.end_date}
+                region={scheduleMeta.region}
                 onPlaceAdded={handlePlaceAdded}
               />
             )}
@@ -284,6 +152,7 @@ export default function HandleSchedulePage({
             {activeTab === "companion" && (
               <CompanionSection
                 userId={currentUser.id}
+                scheduleId={scheduleId}
                 scheduleTitle={scheduleMeta.title}
                 schedulePeriod={scheduleMeta.period}
               />
@@ -304,14 +173,18 @@ function getRegionCenter(region: string): { lat: number; lng: number } {
     광주광역시: { lat: 35.1595, lng: 126.8526 },
     대전광역시: { lat: 36.3504, lng: 127.3845 },
     울산광역시: { lat: 35.5384, lng: 129.3114 },
+    세종특별자치시: { lat: 36.4801, lng: 127.289 },
     경기도: { lat: 37.2752, lng: 127.0095 },
-    강원특별자치도: { lat: 37.8228, lng: 128.1555 },
+    강원도: { lat: 37.751853, lng: 128.876057 },
+    강원특별자치도: { lat: 37.751853, lng: 128.876057 },
     충청북도: { lat: 36.6357, lng: 127.4917 },
-    충청남도: { lat: 36.6588, lng: 126.6728 },
-    전북특별자치도: { lat: 35.7175, lng: 127.153 },
-    전라남도: { lat: 34.8679, lng: 126.991 },
-    경상북도: { lat: 36.4919, lng: 128.8889 },
-    경상남도: { lat: 35.4606, lng: 128.2132 },
+    충청남도: { lat: 36.4599, lng: 127.126 },
+    전라북도: { lat: 35.8242, lng: 127.148 },
+    전북특별자치도: { lat: 35.8242, lng: 127.148 },
+    전라남도: { lat: 34.7604, lng: 127.6622 },
+    경상북도: { lat: 35.856171, lng: 129.224748 },
+    경상남도: { lat: 34.8544, lng: 128.4331 },
+    제주도: { lat: 33.4996, lng: 126.5312 },
     제주특별자치도: { lat: 33.4996, lng: 126.5312 },
   };
   return centers[region] ?? { lat: 37.5665, lng: 126.978 };

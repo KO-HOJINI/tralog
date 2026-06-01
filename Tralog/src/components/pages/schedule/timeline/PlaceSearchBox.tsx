@@ -1,0 +1,180 @@
+// PlaceSearchBox.tsx
+import { useState } from "react";
+import { API_BASE_URL } from "../../../../config/api";
+import type { TimelineItem } from "./TimelineSection";
+
+interface SearchResultItem {
+  place_name: string;
+  y: number;
+  x: number;
+  address: string;
+}
+
+interface NaverSearchResult {
+  place_name: string;
+  x: number;
+  y: number;
+  address: string;
+  roadAddress: string;
+}
+
+interface PlaceSearchBoxProps {
+  scheduleId: string;
+  currentDay: number;
+  region?: string;
+  onSuccess: (newItem: TimelineItem) => void;
+}
+
+export default function PlaceSearchBox({
+  scheduleId,
+  currentDay,
+  region,
+  onSuccess,
+}: PlaceSearchBoxProps) {
+  const [newTime, setNewTime] = useState("");
+  const [newPlace, setNewPlace] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
+    null,
+  );
+
+  const handleSearchPlace = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    const enhancedQuery = region ? `${region} ${query}` : query;
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/places/search?query=${encodeURIComponent(enhancedQuery)}`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+
+      const cleaned: SearchResultItem[] = (data.results || []).map(
+        (r: NaverSearchResult) => ({
+          place_name: r.place_name.replace(/<[^>]*>?/gm, ""),
+          x: r.x,
+          y: r.y,
+          address: r.address,
+        }),
+      );
+      setSearchResults(cleaned);
+      setShowSearchResults(cleaned.length > 0);
+    } catch (err) {
+      console.error("장소 검색 실패:", err);
+    }
+  };
+
+  const handleAddItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTime.trim() || !newPlace.trim())
+      return alert("시간과 장소를 모두 입력해주세요.");
+    if (!/^([01]\d|2[0-3]):([0-5]\d)$/.test(newTime))
+      return alert("시간 형식: 09:30");
+
+    let target = selectedResult;
+    if (!target && searchResults.length > 0) target = searchResults[0];
+    if (!target) return alert("검색 결과가 없습니다.");
+
+    const newId = `p-${Date.now()}`;
+    const newItem: TimelineItem = {
+      id: newId,
+      time: newTime,
+      place: target.place_name,
+      day_number: currentDay,
+      expenses: [],
+      lat: target.y,
+      lng: target.x,
+    };
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/places`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: newId,
+          schedule_id: scheduleId,
+          day_number: currentDay,
+          visit_time: newTime,
+          place_name: target.place_name,
+          lat: target.y,
+          lng: target.x,
+        }),
+      });
+
+      if (res.ok) {
+        onSuccess(newItem);
+        setNewTime("");
+        setNewPlace("");
+        setSelectedResult(null);
+        setSearchResults([]);
+      }
+    } catch (err) {
+      console.error("장소 추가 실패:", err);
+    }
+  };
+
+  return (
+    <form
+      onSubmit={handleAddItem}
+      className="flex gap-2 shrink-0 bg-slate-50 p-3 rounded-4xl border border-slate-200 relative mt-2"
+    >
+      <input
+        type="text"
+        placeholder="09:00"
+        value={newTime}
+        onChange={(e) => setNewTime(e.target.value)}
+        maxLength={5}
+        className="w-16 h-10 px-2 text-center text-xs font-bold input-custom focus:outline-none"
+      />
+
+      <div className="flex-1 relative">
+        <input
+          type="text"
+          placeholder="장소를 검색해보세요"
+          value={newPlace}
+          onChange={(e) => {
+            setNewPlace(e.target.value);
+            setSelectedResult(null);
+            handleSearchPlace(e.target.value);
+          }}
+          className="w-full h-10 px-3 text-xs input-custom focus:outline-none"
+        />
+        {showSearchResults && searchResults.length > 0 && (
+          <div className="absolute bottom-full mb-2 left-0 right-0 box-white border border-slate-200 shadow-card z-50 max-h-60 overflow-y-auto overscroll-contain scrollbar">
+            {searchResults.map((result, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => {
+                  setSelectedResult(result);
+                  setNewPlace(result.place_name);
+                  setShowSearchResults(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors flex flex-col gap-0.5"
+              >
+                <span className="text-xs font-bold text-slate-700">
+                  📍 {result.place_name}
+                </span>
+                {result.address && (
+                  <span className="text-[10px] text-slate-400 pl-4">
+                    {result.address}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button type="submit" className="btn-primary h-10 px-4 text-xs shrink-0">
+        등록
+      </button>
+    </form>
+  );
+}

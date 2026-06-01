@@ -144,8 +144,10 @@ app.get("/api/schedules/:scheduleId", (req, res) => {
   const placesQuery =
     "SELECT * FROM schedule_places WHERE schedule_id = ? ORDER BY day_number, visit_time";
   const expensesQuery = "SELECT * FROM schedule_expenses WHERE schedule_id = ?";
+
   const companionsQuery = `
-    SELECT sc.user_id as id, u.name FROM schedule_companions sc
+    SELECT sc.user_id as id, u.name, sc.role 
+    FROM schedule_companions sc
     JOIN users u ON sc.user_id = u.id
     WHERE sc.schedule_id = ?
   `;
@@ -157,14 +159,12 @@ app.get("/api/schedules/:scheduleId", (req, res) => {
     db.query(placesQuery, [scheduleId], (err, sPlaces) => {
       db.query(expensesQuery, [scheduleId], (err, sExpenses) => {
         db.query(companionsQuery, [scheduleId], (err, sCompanions) => {
-          res
-            .status(200)
-            .json({
-              meta: sMeta[0],
-              places: sPlaces,
-              expenses: sExpenses,
-              companions: sCompanions,
-            });
+          res.status(200).json({
+            meta: sMeta[0],
+            places: sPlaces,
+            expenses: sExpenses,
+            companions: sCompanions,
+          });
         });
       });
     });
@@ -250,30 +250,32 @@ app.delete("/api/schedules/:scheduleId", (req, res) => {
 /** ==========================================
  * 3. 세부 항목 편집 (장소/가계부/동행인) API
  * ========================================== */
-// 네이버 장소 검색 API (중복 제거 및 최신 API로 통합)
+
+// 네이버 장소 검색 API (네이버 Developers 지역 검색 API 연동)
 app.get("/api/places/search", (req, res) => {
   const query = req.query.query;
   if (!query) return res.status(400).json({ error: "검색어가 필요합니다." });
 
   const clientId =
-    process.env.NAVER_MAP_API_KEY_ID || process.env.VITE_NAVER_MAP_CLIENT_ID;
+    process.env.NAVER_SEARCH_CLIENT_ID || process.env.VITE_NAVER_MAP_CLIENT_ID;
   const clientSecret =
-    process.env.NAVER_MAP_API_KEY || process.env.VITE_NAVER_MAP_CLIENT_SECRET;
+    process.env.NAVER_SEARCH_CLIENT_SECRET ||
+    process.env.VITE_NAVER_MAP_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
     return res
       .status(500)
-      .json({ error: "네이버 지도 API 키가 설정되지 않았습니다." });
+      .json({ error: "네이버 API 키가 설정되지 않았습니다." });
   }
 
   const options = {
-    hostname: "map.ncloud-maps.com",
-    path: `/map-search/v1/search?query=${encodeURIComponent(query)}&count=10`,
+    hostname: "openapi.naver.com",
+    // 💡 변경: display=5 에서 display=15 로 늘려서 결과 리스트가 풍성하게 나오도록 수정
+    path: `/v1/search/local.json?query=${encodeURIComponent(query)}&display=15`,
     method: "GET",
     headers: {
-      "x-ncp-apigw-api-key-id": clientId,
-      "x-ncp-apigw-api-key": clientSecret,
-      Accept: "application/json",
+      "X-Naver-Client-Id": clientId,
+      "X-Naver-Client-Secret": clientSecret,
     },
   };
 
@@ -284,28 +286,39 @@ app.get("/api/places/search", (req, res) => {
       response.on("end", () => {
         try {
           const result = JSON.parse(data);
-          if (result.errorMessage)
+
+          if (result.errorCode) {
+            console.error("네이버 검색 API 에러:", result);
             return res
-              .status(400)
+              .status(response.statusCode)
               .json({ error: result.errorMessage, results: [] });
+          }
 
           const items = result.items || [];
-          const places = items.map((item) => ({
-            place_name: item.title || query,
-            y: parseFloat(item.mapy),
-            x: parseFloat(item.mapx),
-            address: item.address || "",
-            roadAddress: item.roadAddress || "",
-          }));
+          const places = items.map((item) => {
+            let x = parseFloat(item.mapx);
+            let y = parseFloat(item.mapy);
+            if (x > 1000) x = x / 10000000;
+            if (y > 1000) y = y / 10000000;
+
+            return {
+              place_name: item.title.replace(/<[^>]*>?/gm, ""),
+              y: y,
+              x: x,
+              address: item.address || "",
+              roadAddress: item.roadAddress || "",
+            };
+          });
+
           res.json({ results: places });
         } catch (err) {
-          res.status(500).json({ error: "파싱 오류", results: [] });
+          res.status(500).json({ error: "데이터 파싱 오류", results: [] });
         }
       });
     })
-    .on("error", () =>
-      res.status(500).json({ error: "API 호출 실패", results: [] }),
-    )
+    .on("error", (err) => {
+      res.status(500).json({ error: "네이버 API 호출 통신 실패", results: [] });
+    })
     .end();
 });
 
@@ -377,7 +390,7 @@ app.delete("/api/expenses/:id", (req, res) => {
 });
 
 app.post("/api/companions", (req, res) => {
-  const { schedule_id, target_id } = req.body;
+  const { schedule_id, target_id, role } = req.body;
   db.query("SELECT name FROM users WHERE id = ?", [target_id], (err, users) => {
     if (err) return res.status(500).json({ error: err.message });
     if (users.length === 0)
@@ -386,13 +399,16 @@ app.post("/api/companions", (req, res) => {
         .json({ message: "⚠️ 등록되지 않은 아이디입니다." });
 
     const query =
-      "INSERT INTO schedule_companions (schedule_id, user_id) VALUES (?, ?)";
-    db.query(query, [schedule_id, target_id], (err) => {
+      "INSERT INTO schedule_companions (schedule_id, user_id, role) VALUES (?, ?, ?)";
+    db.query(query, [schedule_id, target_id, role || "read"], (err) => {
       if (err)
         return res
           .status(400)
           .json({ message: "⚠️ 이미 추가된 일행이거나 연동 오류입니다." });
-      res.status(201).json({ name: users[0].name });
+
+      res
+        .status(201)
+        .json({ id: target_id, name: users[0].name, role: role || "read" });
     });
   });
 });
