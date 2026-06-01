@@ -325,12 +325,13 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -10px rgba(79, 91, 112, 0.15);
+    border-color: rgba(79, 91, 112, 0.15);
+  }
 }
-@utility card-map-theme:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 24px -10px rgba(79, 91, 112, 0.15);
-  border-color: rgba(79, 91, 112, 0.15);
-}
+
 
 /* 달성률 카드 배경 그라데이션 (골드 계열) */
 @utility card-achieve-theme {

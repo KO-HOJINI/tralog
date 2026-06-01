@@ -45,7 +45,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
       {/* 지도 카드 - 클릭하면 나만의 지도 페이지로 이동 */}
       <div
         onClick={() => onNavigate("mymap")}
-        className="card-map-theme flex-1 h-0 w-full relative group overflow-hidden p-0"
+        className="card-map-theme  flex-1 h-0 w-full relative group overflow-hidden p-0"
       >
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
           {/* 지도 컴포넌트 컨테이너 */}
