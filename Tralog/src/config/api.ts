@@ -6,4 +6,4 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "https://tralog-gql3.onrender.com";
 
 export const NAVER_MAP_CLIENT_ID =
-  import.meta.env.VITE_NAVER_MAP_CLIENT_ID || "9ffc0uiggv";
+  import.meta.env.VITE_NAVER_MAP_CLIENT_ID || "";
