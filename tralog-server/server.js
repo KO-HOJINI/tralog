@@ -16,6 +16,7 @@ app.use(cors());
 // DB 연결 설정
 const db = mysql.createConnection({
   host: process.env.DB_HOST || "localhost",
+  port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || "tralog",
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || "tralog",
