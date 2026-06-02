@@ -1,14 +1,10 @@
 // ===================================================
-// LoginForm.tsx - 로그인 폼
-//
-// 백엔드 API: POST /api/login
-// fetch로 서버에 id, password 보내고 응답 받음
-// 로그인 성공 시 유저 정보를 localStorage에 저장함
-//
-// AI 도움: 에러 필드 매핑 로직 (field: "id" | "password")
+// LoginForm.tsx - 로그인 폼 (실제 라이브 서버 주소 연동 완료)
 // ===================================================
 
 import { useState } from "react";
+// 💡 수정: 상단에 정의된 실제 Render 클라우드 서버 베이스 주소를 import 합니다.
+import { API_BASE_URL } from "../../../config/api"; 
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -26,7 +22,6 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
     setIdError("");
     setPasswordError("");
 
-    // 빈 값 체크
     let isValid = true;
     if (!id.trim()) {
       setIdError("아이디를 입력해 주세요.");
@@ -38,10 +33,9 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
     }
     if (!isValid) return;
 
-    // 백엔드 로그인 API 요청
-    // AI 도움: try/catch 구조 + 서버 에러 필드 분기 처리
     try {
-      const response = await fetch("http://localhost:5000/api/login", {
+      // 💡 수정됨: 하드코딩된 localhost 주소를 제거하고 백틱(`)과 API_BASE_URL 변수로 연동했습니다.
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, password }),
@@ -50,14 +44,12 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
       const data = await response.json();
 
       if (response.ok) {
-        // 세션 유지용으로 localStorage에 유저 정보 저장
         localStorage.setItem(
           "tralog_current_user",
           JSON.stringify({ id: data.id, name: data.name }),
         );
         onLoginSuccess();
       } else {
-        // 서버에서 어떤 필드가 틀렸는지 알려줌
         if (data.field === "id") {
           setIdError(data.message);
         } else if (data.field === "password") {
@@ -74,7 +66,6 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
 
   return (
     <form onSubmit={handleLoginSubmit} className="flex flex-col gap-6 animate-fadeIn">
-
       {/* 아이디 입력 */}
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">

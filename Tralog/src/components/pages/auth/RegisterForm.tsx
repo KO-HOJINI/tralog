@@ -1,13 +1,10 @@
 // ===================================================
-// RegisterForm.tsx - 회원가입 폼
-//
-// 백엔드 API: POST /api/register
-// 유효성 검사 후 서버로 전송, 아이디 중복 에러도 처리
-//
-// AI 도움: 폼 유효성 검사 구조 + 에러 상태 관리 패턴
+// RegisterForm.tsx - 회원가입 폼 (실제 라이브 서버 주소 연동 완료)
 // ===================================================
 
 import { useState } from "react";
+// 💡 수정: 회원가입 폼도 동일하게 실제 Render 클라우드 서버 베이스 주소를 import 합니다.
+import { API_BASE_URL } from "../../../config/api";
 
 interface RegisterFormProps {
   onRegisterSuccess: () => void;
@@ -24,7 +21,6 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     email: "",
   });
 
-  // 각 필드별 에러 메시지 관리
   const [errors, setErrors] = useState({
     id: "",
     password: "",
@@ -37,7 +33,6 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 빈 값 + 비밀번호 일치 검사
     const newErrors = { id: "", password: "", confirmPassword: "", name: "", birth: "", email: "" };
     let isValid = true;
 
@@ -59,9 +54,9 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     setErrors(newErrors);
     if (!isValid) return;
 
-    // 백엔드 회원가입 API 요청
     try {
-      const response = await fetch("http://localhost:5000/api/register", {
+      // 💡 수정됨: 하드코딩된 가짜 주소를 제거하고 API_BASE_URL 기반 주소로 호출 대상을 변경했습니다.
+      const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -79,7 +74,6 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         alert("회원가입이 완료되었습니다!");
         onRegisterSuccess();
       } else {
-        // 아이디 중복 같은 서버 에러 처리
         setErrors((prev) => ({ ...prev, id: data.message || "오류가 발생했습니다." }));
       }
     } catch (error) {
@@ -88,7 +82,6 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     }
   };
 
-  // 인풋 하나하나 반복이 많아서 헬퍼로 묶음
   const inputClass = (errorKey: keyof typeof errors) =>
     `w-full h-12 px-4 text-sm focus:outline-none input-custom ${
       errors[errorKey] ? "border-red-500!" : ""
@@ -96,7 +89,6 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
 
   return (
     <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4 w-full h-auto overflow-hidden text-dark">
-
       {/* 아이디 */}
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
@@ -169,7 +161,6 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
           maxLength={6}
           value={formData.birth}
           onChange={(e) => {
-            // 숫자만 입력되도록 처리
             const onlyNums = e.target.value.replace(/[^0-9]/g, "");
             setFormData({ ...formData, birth: onlyNums });
           }}
