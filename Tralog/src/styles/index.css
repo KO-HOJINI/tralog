@@ -7,48 +7,48 @@
 
 @import "tailwindcss";
 @plugin "daisyui" {
-  theme: "light"; 
-  themes: {
-    light: {
-      "primary": "#0d9488",
-      "primary-content": "#ffffff",
-      "secondary": "#f59e0b",
-      "secondary-content": "#ffffff",
-      "neutral": "#0f172a",
-      "neutral-content": "#ffffff",
-      "base-100": "#f8fafc",
-      "base-200": "#f1f5f9",
-      "base-300": "#e2e8f0",
-      "base-content": "#0f172a",
-      "error": "#ef4444",
-      "error-content": "#ffffff"
-    }
-  };
+  theme: "light";
 }
+
+@theme {
+  --color-primary: #0d9488;
+  --color-primary-content: #ffffff;
+  --color-secondary: #f59e0b;
+  --color-secondary-content: #ffffff;
+  --color-neutral: #0f172a;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #f8fafc;
+  --color-base-200: #f1f5f9;
+  --color-base-300: #e2e8f0;
+  --color-base-content: #0f172a;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+}
+
 /* ===================================================
  * 디자인 토큰
  * =================================================== */
 :root {
-  --color-primary:    #0d9488;
-  --color-secondary:  #f59e0b;
+  --color-primary: #0d9488;
+  --color-secondary: #f59e0b;
   --color-background: #f8fafc;
-  --color-dark:       #0f172a;
-  --color-gray:       #475569;
+  --color-dark: #0f172a;
+  --color-gray: #475569;
   --color-pure-white: #ffffff;
 
-  --radius-box:   32px;
-  --radius-btn:   24px;
+  --radius-box: 32px;
+  --radius-btn: 24px;
   --radius-input: 24px;
 
   --shadow-custom: 0 4px 14px rgba(15, 23, 42, 0.06);
 }
 
 @theme {
-  --color-primary:    #0d9488;
-  --color-secondary:  #f59e0b;
+  --color-primary: #0d9488;
+  --color-secondary: #f59e0b;
   --color-background: #f8fafc;
-  --color-dark:       #0f172a;
-  --color-gray:       #475569;
+  --color-dark: #0f172a;
+  --color-gray: #475569;
   --color-pure-white: #ffffff;
 }
 
@@ -85,42 +85,54 @@
   border: none;
   background-color: var(--color-primary);
   color: var(--color-pure-white);
-  &:hover { background-color: #0f766e; }
+  &:hover {
+    background-color: #0f766e;
+  }
 }
 
 @utility btn-secondary {
   border: none;
   background-color: var(--color-secondary);
   color: var(--color-pure-white);
-  &:hover { background-color: #d97706; }
+  &:hover {
+    background-color: #d97706;
+  }
 }
 
 @utility btn-dark {
   border: none;
   background-color: var(--color-dark);
   color: var(--color-pure-white);
-  &:hover { background-color: #1e293b; }
+  &:hover {
+    background-color: #1e293b;
+  }
 }
 
 @utility btn-danger {
   background-color: #fef2f2;
   color: #ef4444;
   border: 1px solid #fecaca;
-  &:hover { background-color: #fee2e2; }
+  &:hover {
+    background-color: #fee2e2;
+  }
 }
 
 @utility btn-ghost {
   border: none;
   background-color: var(--color-gray);
   color: var(--color-pure-white);
-  &:hover { background-color: #334155; }
+  &:hover {
+    background-color: #334155;
+  }
 }
 
 @utility btn-white {
   background-color: var(--color-pure-white);
   color: var(--color-slate-500);
   border: 1px solid var(--color-slate-200);
-  &:hover { background-color: var(--color-slate-50); }
+  &:hover {
+    background-color: var(--color-slate-50);
+  }
 }
 
 /* ===================================================
@@ -188,7 +200,9 @@
  * =================================================== */
 
 @utility scrollbar {
-  &::-webkit-scrollbar { width: 14px; }
+  &::-webkit-scrollbar {
+    width: 14px;
+  }
   &::-webkit-scrollbar-track {
     background: #ffffff;
     border: 1px solid #0f172a;
@@ -224,7 +238,9 @@
 }
 
 @media (max-height: 720px) {
-  .hide-on-short-screen { display: none !important; }
+  .hide-on-short-screen {
+    display: none !important;
+  }
 }
 
 /* ===================================================
@@ -250,7 +266,9 @@
     border-color: var(--color-primary);
     transform: scale(1.002);
   }
-  & .box-white { transition: all 0.2s ease; }
+  & .box-white {
+    transition: all 0.2s ease;
+  }
   &:hover .box-white {
     background-color: var(--color-gray);
     color: var(--color-pure-white);
