@@ -202,7 +202,7 @@ app.post("/api/schedules", (req, res) => {
 // 일정 메타 정보 수정
 app.put("/api/schedules/:scheduleId", (req, res) => {
   const scheduleId = req.params.scheduleId;
-  const { title, start_date, end_date } = req.body;
+  const { title, start_date, end_date, region } = req.body;
 
   const updateFields = [];
   const values = [];
@@ -218,6 +218,10 @@ app.put("/api/schedules/:scheduleId", (req, res) => {
   if (end_date !== undefined) {
     updateFields.push("end_date = ?");
     values.push(end_date);
+  }
+  if (region !== undefined) {
+    updateFields.push("region = ?");
+    values.push(region);
   }
 
   if (updateFields.length === 0)

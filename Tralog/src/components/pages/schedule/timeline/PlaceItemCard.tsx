@@ -148,7 +148,7 @@ export default function PlaceItemCard({
                   className="flex justify-between items-center px-1 py-0.5 group/exp"
                 >
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                    <span className="badge badge-xs bg-slate-100 text-slate-400 border-0">
                       {exp.category}
                     </span>
                     <span>💵</span>

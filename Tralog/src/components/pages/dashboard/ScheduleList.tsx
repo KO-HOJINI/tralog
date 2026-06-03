@@ -10,6 +10,7 @@
 
 import { useState, useEffect } from "react";
 import ScheduleCard from "./ScheduleCard";
+import NewScheduleModal from "./NewScheduleModal";
 import { API_BASE_URL } from "../../../config/api";
 
 interface TravelSchedule {
@@ -44,9 +45,9 @@ export default function ScheduleList({
   const [schedules, setSchedules] = useState<TravelSchedule[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
+  const [showModal, setShowModal] = useState(false);
 
-  // 새 일정 만들고 바로 편집 페이지로 이동
-  const createNewSchedule = async () => {
+  const handleCreateConfirm = async (region: string, title: string) => {
     if (isCreating) return;
     setIsCreating(true);
 
@@ -56,8 +57,8 @@ export default function ScheduleList({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           user_id: userId,
-          title: "새 일정",
-          region: "서울특별시",
+          title,
+          region,
           start_date: getLocalDateString(),
           end_date: getLocalDateString(),
           status: "planning",
@@ -68,6 +69,7 @@ export default function ScheduleList({
 
       const data = await response.json();
       if (data.id) {
+        setShowModal(false);
         onNavigate("schedule", data.id);
       } else {
         throw new Error("새 일정 ID를 받지 못했습니다.");
@@ -80,7 +82,7 @@ export default function ScheduleList({
     }
   };
 
-  // 로컬 날짜를 직접 조합해서 "YYYY-MM-DD" 반환 (타임존 버그 방지)
+  // 로컬 날짜를 직접 조합해서 YYYY-MM-DD 반환
   const getLocalDateString = (date: Date = new Date()): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -101,7 +103,7 @@ export default function ScheduleList({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 💡 ISO 표준 포맷(T...) 수신 시 시차 오류 방지용 로컬 문자열 파싱 헬퍼
+        // ISO 표준 포맷(T...) 수신 시 시차 오류 방지용 로컬 문자열 파싱 헬퍼
         const formatLocalDateString = (rawDate: string | undefined) => {
           if (!rawDate) return "";
           if (rawDate.includes("T")) {
@@ -167,13 +169,10 @@ export default function ScheduleList({
           </p>
         </div>
         <button
-          onClick={createNewSchedule}
-          disabled={isCreating}
+          onClick={() => setShowModal(true)}
           className="btn-primary h-10 px-5 shrink-0"
         >
-          <h3 className="text-white font-bold">
-            {isCreating ? "생성중..." : "+ 새 일정 추가"}
-          </h3>
+          <h3 className="text-white font-bold">+ 새 일정 추가</h3>
         </button>
       </div>
 
@@ -181,9 +180,7 @@ export default function ScheduleList({
       <div className="flex-1 h-0 overflow-y-auto pt-2 pb-4 px-2 scrollbar">
         {isLoading ? (
           <div className="flex items-center justify-center h-40">
-            <span className="text-sm text-gray animate-pulse">
-              일정을 불러오는 중...
-            </span>
+            <span className="loading loading-spinner loading-md text-primary" />
           </div>
         ) : (
           <div className="flex flex-wrap gap-5">
@@ -212,21 +209,25 @@ export default function ScheduleList({
               }`}
             >
               <button
-                onClick={createNewSchedule}
-                disabled={isCreating}
-                className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-slate-600 transition-all group rounded-[inherit] disabled:cursor-not-allowed"
+                onClick={() => setShowModal(true)}
+                className="w-full h-full flex flex-col items-center justify-center gap-3 text-slate-400 hover:text-slate-600 transition-all group rounded-[inherit]"
               >
                 <span className="text-number-accent font-light p-3 bg-white rounded-full shadow-card group-hover:scale-110 transition-transform flex items-center justify-center w-12 h-12 border border-slate-100">
                   +
                 </span>
-                <span className="text-body-main">
-                  {isCreating ? "생성중..." : "새로운 여행 일정 추가하기"}
-                </span>
+                <span className="text-body-main">새로운 여행 일정 추가하기</span>
               </button>
             </div>
           </div>
         )}
       </div>
+
+      <NewScheduleModal
+        isOpen={showModal}
+        isCreating={isCreating}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleCreateConfirm}
+      />
     </div>
   );
 }

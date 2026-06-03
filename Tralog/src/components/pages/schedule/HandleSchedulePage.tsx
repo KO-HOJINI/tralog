@@ -43,6 +43,8 @@ export default function HandleSchedulePage({
     editEndDate,
     setEditEndDate,
     handleToggleEdit,
+    handleChangeRegion,
+    handleDeleteSchedule,
     handlePlaceAdded,
   } = useSchedule(scheduleId, currentUser, onNavigate);
 
@@ -112,6 +114,8 @@ export default function HandleSchedulePage({
               onToggleEdit={handleToggleEdit}
               onNavigate={onNavigate}
               scheduleRegion={scheduleMeta.region}
+              onChangeRegion={handleChangeRegion}
+              onDeleteSchedule={handleDeleteSchedule}
             />
           </div>
         </div>

@@ -77,21 +77,11 @@ export default function PhotoUploadModal({
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="box-white p-6 w-105 flex flex-col gap-4 shadow-card border border-slate-100">
+    <dialog className="modal modal-open">
+      <div className="box-white max-w-md w-full mx-4 p-6 flex flex-col gap-4">
         <div className="flex justify-between items-center">
           <h2 className="m-0">📸 여행 사진 추가</h2>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-dark text-xl font-bold transition-colors leading-none"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="btn btn-sm btn-ghost btn-circle text-slate-400">✕</button>
         </div>
 
         <p className="text-xs text-slate-500 font-medium -mt-1">
@@ -154,6 +144,7 @@ export default function PhotoUploadModal({
           💡 나만의 지도 페이지에서 대표사진으로 설정하면 지도에 이미지가 표시됩니다.
         </p>
       </div>
-    </div>
+      <div className="modal-backdrop" onClick={onClose} />
+    </dialog>
   );
 }

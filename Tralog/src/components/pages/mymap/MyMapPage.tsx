@@ -17,6 +17,7 @@ import NavBar from "../../Navbar";
 import InteractiveMap from "./InteractiveMap";
 import MyMapHistory from "./MyMapHistory";
 import PhotoGrid from "./PhotoGrid";
+import { API_BASE_URL } from "../../../config/api";
 
 interface UserSession {
   id: string;
@@ -49,7 +50,7 @@ export default function MyMapPage({
     if (!currentUser) return;
     try {
       const response = await fetch(
-        `http://localhost:5000/api/map/records/${currentUser.id}`,
+        `${API_BASE_URL}/api/map/records/${currentUser.id}`,
       );
       if (response.ok) {
         const data = await response.json();

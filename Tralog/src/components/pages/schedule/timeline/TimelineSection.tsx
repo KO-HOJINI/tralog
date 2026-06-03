@@ -213,8 +213,8 @@ export default function TimelineSection({
 
           <div className="flex flex-col gap-1 relative z-10">
             {isLoading ? (
-              <div className="text-center text-xs text-slate-400 py-10 animate-pulse">
-                일정을 불러오는 중입니다...
+              <div className="flex justify-center py-10">
+                <span className="loading loading-spinner loading-md text-primary" />
               </div>
             ) : filteredItems.length === 0 ? (
               <div className="text-center text-xs text-slate-400 py-10">

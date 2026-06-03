@@ -82,12 +82,12 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           </div>
 
           <div className="flex flex-col gap-1.5 w-full mt-1">
-            <div className="w-full bg-slate-100 rounded-full h-2.5 p-0.5 shadow-inner">
-              <div
-                className="h-full rounded-full transition-all duration-1000 ease-out bg-gray"
-                style={{ width: `${achievementRate}%` }}
-              />
-            </div>
+            <progress
+              className="progress w-full h-2.5"
+              style={{ accentColor: "var(--color-primary)" }}
+              value={achievementRate}
+              max={100}
+            />
             <div className="flex justify-between items-center px-0.5">
               <span className="text-body-caption">달성률</span>
               <span className="text-body-caption">{achievementRate}%</span>

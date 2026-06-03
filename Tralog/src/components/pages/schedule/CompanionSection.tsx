@@ -86,8 +86,8 @@ export default function CompanionSection({
 
         <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-2 scrollbar">
           {isLoading ? (
-            <div className="py-8 text-center text-xs text-slate-400 animate-pulse">
-              멤버를 불러오는 중...
+            <div className="flex justify-center py-8">
+              <span className="loading loading-spinner loading-md text-primary" />
             </div>
           ) : companions.length === 0 ? (
             <div className="py-8 text-center text-xs text-slate-400">
@@ -107,10 +107,10 @@ export default function CompanionSection({
 
                 <div className="flex items-center gap-2.5">
                   <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    className={`badge badge-sm ${
                       comp.role === "edit"
-                        ? "text-primary bg-teal-50 border-teal-200/50"
-                        : "text-slate-500 bg-slate-50 border-slate-200"
+                        ? "bg-primary/10 text-primary border-primary/20"
+                        : "bg-slate-100 text-slate-500 border-0"
                     }`}
                   >
                     {comp.role === "edit" ? "편집 가능" : "읽기 전용"}

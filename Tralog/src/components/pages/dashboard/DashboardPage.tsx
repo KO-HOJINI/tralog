@@ -2,7 +2,7 @@
 // DashboardPage.tsx - 메인 대시보드 페이지
 //
 // 로그인된 유저의 지도 현황 + 여행 일정 목록을 보여줌
-// localStorage에서 세션 불러옴 (없으면 로그인 페이지로 redirect)
+// localStorage에서 세션 불러옴 (없으면 로그인 페이지로)
 // ===================================================
 
 import { useState, useEffect } from "react";

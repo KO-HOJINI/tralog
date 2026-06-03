@@ -6,7 +6,7 @@
 //    브라우저 뒤로가기 버튼 지원 및 새로고침 시 페이지 유지
 // ===================================================
 
-import "./App.css";
+import "./styles/App.css";
 import { useState, useEffect } from "react";
 import LoginPage from "./components/pages/auth/LoginPage";
 import DashboardPage from "./components/pages/dashboard/DashboardPage";

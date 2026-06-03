@@ -1,18 +1,4 @@
-// ===================================================
-// PhotoGrid.tsx - 지역별 사진 그리드 + 업로드/삭제/대표사진 기능
-//
-// 백엔드 API:
-//   POST   /api/map/upload  → 사진 업로드 (base64)
-//   POST   /api/map/cover   → 대표사진 설정
-//   DELETE /api/map/photo   → 사진 삭제
-//
-// AI 도움:
-//   - FileReader로 파일을 base64로 변환하는 방식
-//   - active schedule ID 없을 때 "direct-{region}" fallback 처리
-//     (서버 side와 prefix 규칙 맞춰야 함)
-// ===================================================
-
-import React, { useState, useRef } from "react";
+import { usePhotoActions } from "./hooks/usePhotoActions";
 import { API_BASE_URL } from "../../../config/api";
 import type { MapRecord } from "./MyMapPage";
 
@@ -24,122 +10,17 @@ interface PhotoGridProps {
 }
 
 export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }: PhotoGridProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedFileName, setUploadedFileName] = useState<string>("선택된 파일 없음");
-  const [isUploading, setIsUploading] = useState<boolean>(false);
-
-  // mapRecords prop에서 매 렌더마다 현재 지역 데이터 계산
-  // (useState 초기값으로 하면 onRefresh 후 갱신이 안 됨)
-  const currentRecord = mapRecords.find((r) => r.region === regionName) ?? {
-    region: regionName,
-    images: [],
-    coverImage: "",
-  };
-
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
-
-  // schedule ID: 일정에서 온 경우 사용, 없으면 direct-{region} 형식
-  const getScheduleId = () =>
-    localStorage.getItem("tralog_active_schedule_id") || `direct-${regionName}`;
-
-  // 파일 선택 → base64 변환 → 서버 업로드
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadedFileName(file.name);
-    setIsUploading(true);
-
-    // AI 도움: FileReader로 base64 변환
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64String = reader.result as string;
-
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/map/upload`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            schedule_id: getScheduleId(),
-            region: regionName,
-            image_data: base64String,
-          }),
-        });
-
-        if (response.ok) {
-          setSelectedIndex(null); // 업로드 후 선택 초기화
-          onRefresh();
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          const errorMsg = errorData.error || errorData.message || "알 수 없는 에러";
-          alert(`❌ 서버 업로드 실패\n상태 코드: ${response.status}\n원인: ${errorMsg}`);
-        }
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "알 수 없는 오류";
-        console.error("업로드 에러:", error);
-        alert(`🚨 서버 연결 실패: ${message}`);
-      } finally {
-        setIsUploading(false);
-        setUploadedFileName("선택된 파일 없음");
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
-    };
-
-    reader.readAsDataURL(file);
-  };
-
-  // 선택된 사진을 대표 사진으로 설정
-  const handleSetCover = async () => {
-    if (selectedIndex === null) return;
-    const selectedSrc = currentRecord.images[selectedIndex];
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/map/cover`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schedule_id: getScheduleId(),
-          region: regionName,
-          image_data: selectedSrc,
-        }),
-      });
-
-      if (response.ok) {
-        alert(`${regionName}의 대표 사진이 지도로 반영되었습니다!`);
-        setSelectedIndex(null);
-        onRefresh();
-      }
-    } catch (error) {
-      console.error("대표 설정 에러:", error);
-    }
-  };
-
-  // 선택된 사진 삭제
-  const handleDeletePhoto = async () => {
-    if (selectedIndex === null) return;
-    if (!window.confirm("선택한 사진을 삭제하시겠습니까?")) return;
-
-    const selectedSrc = currentRecord.images[selectedIndex];
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/map/photo`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          schedule_id: getScheduleId(),
-          region: regionName,
-          image_data: selectedSrc,
-        }),
-      });
-
-      if (response.ok) {
-        setSelectedIndex(null);
-        onRefresh();
-      }
-    } catch (error) {
-      console.error("삭제 에러:", error);
-    }
-  };
+  const {
+    fileInputRef,
+    uploadedFileName,
+    isUploading,
+    selectedIndex,
+    setSelectedIndex,
+    currentRecord,
+    handleFileChange,
+    handleSetCover,
+    handleDeletePhoto,
+  } = usePhotoActions(regionName, mapRecords, onRefresh);
 
   return (
     <div className="flex flex-col gap-4 w-full h-full min-h-0 overflow-hidden">
@@ -207,7 +88,6 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
                       alt={`${regionName} 여행 사진 ${index + 1}`}
                       className="w-full h-full object-cover"
                     />
-                    {/* 선택 / 대표 뱃지 */}
                     <div
                       className={`absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center border text-[10px] font-bold transition-all ${
                         isSelected
@@ -243,7 +123,6 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
               className="hidden"
               disabled={isUploading}
             />
-            {/* 파일명 표시 */}
             <div className="flex-1 input-custom px-4 py-2 text-body-caption flex items-center text-gray/70 truncate bg-slate-50 h-10 select-none">
               {uploadedFileName}
             </div>

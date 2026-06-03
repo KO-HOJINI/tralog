@@ -156,6 +156,42 @@ export function useSchedule(
     }
   };
 
+  const handleChangeRegion = async (newRegion: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ region: newRegion }),
+      });
+      if (res.ok) {
+        setScheduleMeta((prev) => ({ ...prev, region: newRegion }));
+      } else {
+        alert("지역 변경에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("지역 변경 오류:", err);
+      alert("오류가 발생했습니다.");
+    }
+  };
+
+  const handleDeleteSchedule = async () => {
+    if (!window.confirm("일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.")) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        localStorage.removeItem("tralog_active_schedule_id");
+        onNavigate("dashboard");
+      } else {
+        alert("삭제에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error("일정 삭제 오류:", err);
+      alert("오류가 발생했습니다.");
+    }
+  };
+
   const handlePlaceAdded = useCallback((place: PlaceMarker) => {
     setMapPlaces((prev) => [...prev, place]);
   }, []);
@@ -171,6 +207,8 @@ export function useSchedule(
     editEndDate,
     setEditEndDate,
     handleToggleEdit,
+    handleChangeRegion,
+    handleDeleteSchedule,
     handlePlaceAdded,
   };
 }

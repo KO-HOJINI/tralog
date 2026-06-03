@@ -119,7 +119,7 @@ export default function AccountBookSection({
       {/* 헤더 */}
       <div className="flex justify-between items-end pb-3 border-b-2 border-slate-800 shrink-0 select-none">
         <h2 className="text-xl font-black text-slate-800 m-0">여행 가계부</h2>
-        <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+        <span className="badge badge-sm bg-slate-100 text-slate-500 border-0">
           여행 인원 {companionCount}명
         </span>
       </div>
@@ -127,8 +127,8 @@ export default function AccountBookSection({
       {/* 지출 리스트 (일차별 그룹) */}
       <div className="flex-1 overflow-y-auto pr-1 flex flex-col gap-0 scrollbar">
         {isLoading ? (
-          <div className="py-10 text-center text-xs text-slate-400 animate-pulse">
-            내역을 불러오는 중...
+          <div className="flex justify-center py-10">
+            <span className="loading loading-spinner loading-md text-primary" />
           </div>
         ) : expenses.length === 0 ? (
           <div className="py-10 text-center text-xs text-slate-400">

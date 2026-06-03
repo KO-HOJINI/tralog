@@ -1,0 +1,280 @@
+/* ===================================================
+ * index.css - Tralog 전역 스타일 & 유틸리티 클래스
+ *
+ * Tailwind CSS v4 + DaisyUI v5
+ * DaisyUI 테마를 프로젝트 색상으로 통일
+ * ===================================================*/
+
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: [{
+    light: {
+      "primary": "#0d9488",
+      "primary-content": "#ffffff",
+      "secondary": "#f59e0b",
+      "secondary-content": "#ffffff",
+      "neutral": "#0f172a",
+      "neutral-content": "#ffffff",
+      "base-100": "#f8fafc",
+      "base-200": "#f1f5f9",
+      "base-300": "#e2e8f0",
+      "base-content": "#0f172a",
+      "error": "#ef4444",
+      "error-content": "#ffffff"
+    }
+  }]
+}
+
+/* ===================================================
+ * 디자인 토큰
+ * =================================================== */
+:root {
+  --color-primary:    #0d9488;
+  --color-secondary:  #f59e0b;
+  --color-background: #f8fafc;
+  --color-dark:       #0f172a;
+  --color-gray:       #475569;
+  --color-pure-white: #ffffff;
+
+  --radius-box:   32px;
+  --radius-btn:   24px;
+  --radius-input: 24px;
+
+  --shadow-custom: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+@theme {
+  --color-primary:    #0d9488;
+  --color-secondary:  #f59e0b;
+  --color-background: #f8fafc;
+  --color-dark:       #0f172a;
+  --color-gray:       #475569;
+  --color-pure-white: #ffffff;
+}
+
+/* ===================================================
+ * 버튼 공통 베이스 (color 제외한 공통 속성)
+ * =================================================== */
+@layer components {
+  .btn-primary,
+  .btn-secondary,
+  .btn-dark,
+  .btn-danger,
+  .btn-ghost,
+  .btn-white {
+    border-radius: var(--radius-btn);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-weight: 700;
+    font-size: 14px;
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* ===================================================
+ * 버튼 색상 변형 (utilities layer)
+ * =================================================== */
+
+@utility btn-primary {
+  border: none;
+  background-color: var(--color-primary);
+  color: var(--color-pure-white);
+  &:hover { background-color: #0f766e; }
+}
+
+@utility btn-secondary {
+  border: none;
+  background-color: var(--color-secondary);
+  color: var(--color-pure-white);
+  &:hover { background-color: #d97706; }
+}
+
+@utility btn-dark {
+  border: none;
+  background-color: var(--color-dark);
+  color: var(--color-pure-white);
+  &:hover { background-color: #1e293b; }
+}
+
+@utility btn-danger {
+  background-color: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  &:hover { background-color: #fee2e2; }
+}
+
+@utility btn-ghost {
+  border: none;
+  background-color: var(--color-gray);
+  color: var(--color-pure-white);
+  &:hover { background-color: #334155; }
+}
+
+@utility btn-white {
+  background-color: var(--color-pure-white);
+  color: var(--color-slate-500);
+  border: 1px solid var(--color-slate-200);
+  &:hover { background-color: var(--color-slate-50); }
+}
+
+/* ===================================================
+ * 그림자
+ * =================================================== */
+
+@utility shadow-card {
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+}
+
+@utility shadow-custom {
+  box-shadow: var(--shadow-custom);
+}
+
+/* ===================================================
+ * 박스(카드)
+ * =================================================== */
+
+@utility box-white {
+  border-radius: var(--radius-box);
+  background-color: var(--color-pure-white);
+  border: 1px solid #f1f5f9;
+  box-shadow:
+    0 8px 20px -4px rgba(15, 23, 42, 0.04),
+    0 3px 8px -1px rgba(15, 23, 42, 0.02);
+}
+
+@utility box-muted {
+  border-radius: var(--radius-box);
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  box-shadow:
+    0 4px 12px -2px rgba(15, 23, 42, 0.03),
+    0 2px 4px -1px rgba(15, 23, 42, 0.01);
+}
+
+@utility box-ghost {
+  border-radius: var(--radius-box);
+  background-color: var(--color-gray);
+  border: none;
+  box-shadow:
+    0 8px 20px -4px rgba(15, 23, 42, 0.04),
+    0 3px 8px -1px rgba(15, 23, 42, 0.02);
+}
+
+/* ===================================================
+ * 인풋
+ * =================================================== */
+
+@utility input-custom {
+  background-color: var(--color-pure-white);
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-input);
+  color: var(--color-dark);
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px 0px rgba(15, 23, 42, 0.015);
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+  }
+}
+
+/* ===================================================
+ * 스크롤바
+ * =================================================== */
+
+@utility scrollbar {
+  &::-webkit-scrollbar { width: 14px; }
+  &::-webkit-scrollbar-track {
+    background: #ffffff;
+    border: 1px solid #0f172a;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #475569;
+    border: 2px solid #ffffff;
+    border-radius: 10px;
+  }
+}
+
+/* ===================================================
+ * 레이아웃
+ * =================================================== */
+
+@utility flex-col-full {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ===================================================
+ * 기타
+ * =================================================== */
+
+@utility text-shadow-glow {
+  text-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.7),
+    0 0 2px rgba(0, 0, 0, 0.9);
+}
+
+@media (max-height: 720px) {
+  .hide-on-short-screen { display: none !important; }
+}
+
+/* ===================================================
+ * 지도 관련 카드 테마 (MapOverview 전용)
+ * =================================================== */
+
+@utility card-map-theme {
+  background: linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%);
+  border-radius: var(--radius-box);
+  box-shadow: var(--shadow-custom);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    border-color: var(--color-primary);
+    transform: scale(1.002);
+  }
+  & .box-white { transition: all 0.2s ease; }
+  &:hover .box-white {
+    background-color: var(--color-gray);
+    color: var(--color-pure-white);
+  }
+}
+
+@utility card-achieve-theme {
+  background: linear-gradient(to bottom right, #fef08a, #fcd34d, #f59e0b);
+  border-radius: var(--radius-box);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-custom);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1rem;
+  color: var(--color-dark);
+  position: relative;
+  width: 100%;
+  height: fit-content;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  &:hover {
+    border-color: var(--color-secondary);
+    transform: scale(1.002);
+  }
+}
