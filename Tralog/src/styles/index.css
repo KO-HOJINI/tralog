@@ -8,24 +8,28 @@
 
 @import "tailwindcss";
 
-/* DaisyUI 플러그인 - 프로젝트 색상으로 테마를 덮어씁니다 */
+/* DaisyUI 플러그인 */
 @plugin "daisyui" {
-  themes: [{
-    light: {
-      "primary": "#0d9488",
-      "primary-content": "#ffffff",
-      "secondary": "#f59e0b",
-      "secondary-content": "#ffffff",
-      "neutral": "#0f172a",
-      "neutral-content": "#ffffff",
-      "base-100": "#f8fafc",
-      "base-200": "#f1f5f9",
-      "base-300": "#e2e8f0",
-      "base-content": "#0f172a",
-      "error": "#ef4444",
-      "error-content": "#ffffff"
-    }
-  }]
+  themes: light --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  color-scheme: light;
+
+  --color-primary: #0d9488;
+  --color-primary-content: #ffffff;
+  --color-secondary: #f59e0b;
+  --color-secondary-content: #ffffff;
+  --color-neutral: #0f172a;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #f8fafc;
+  --color-base-200: #f1f5f9;
+  --color-base-300: #e2e8f0;
+  --color-base-content: #0f172a;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
 }
 
 /* 프로젝트 디자인 토큰 */
@@ -44,7 +48,7 @@
   --shadow-custom: 0 4px 14px rgba(15, 23, 42, 0.06);
 }
 
-/* Tailwind v4 @theme으로 bg-primary, text-primary 같은 유틸리티를 자동 생성합니다 */
+/* Tailwind */
 @theme {
   --color-primary:    #0d9488;
   --color-secondary:  #f59e0b;
