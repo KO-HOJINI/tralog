@@ -1,10 +1,10 @@
-// ===================================================
 // LoginPage.tsx - 로그인 / 회원가입 전환 페이지
+// framer-motion으로 폼 전환 시 페이드 애니메이션을 구현했습니다.
 //
-// framer-motion으로 폼 전환 애니메이션 처리
-// ResizeObserver로 폼 높이 변화 감지 → 자연스러운 카드 늘어남 구현
-// (이 부분 로직은 AI 도움 받았음)
-// ===================================================
+// ※ AI 도움을 받아 구현한 부분
+// 카드 높이가 폼에 따라 자연스럽게 늘어나는 효과를 만들기 위해
+// ResizeObserver로 폼 높이를 감지하고 framer-motion의 animate로 전달했습니다.
+// ResizeObserver 사용법을 잘 몰라서 AI 도움을 받았습니다.
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,7 +20,9 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
   const [contentHeight, setContentHeight] = useState<number | string>("auto");
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // 폼이 바뀔 때 높이를 측정해서 카드 높이 애니메이션에 전달
+  // ※ AI 도움을 받아 구현했습니다
+  // 폼이 바뀔 때마다 높이를 측정해서 카드 높이 애니메이션에 넘겨줍니다.
+  // ResizeObserver는 DOM 요소의 크기 변화를 실시간으로 감지해주는 Web API입니다.
   useEffect(() => {
     if (!contentRef.current) return;
 
@@ -39,7 +41,7 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
 
   return (
     <div className="min-h-screen bg-teal-50 flex items-center justify-center p-4">
-      {/* 카드 높이가 폼에 맞게 자연스럽게 늘어남 */}
+      {/* 카드 높이 애니메이션 */}
       <motion.div
         animate={{ height: contentHeight }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
@@ -54,7 +56,7 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
             </h1>
           </div>
 
-          {/* 로그인 ↔ 회원가입 폼 전환 */}
+          {/* 로그인 - 회원가입 폼 전환 */}
           <AnimatePresence mode="wait">
             {!isRegister ? (
               <motion.div

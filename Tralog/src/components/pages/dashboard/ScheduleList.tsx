@@ -1,12 +1,7 @@
-// ===================================================
-// ScheduleList.tsx - 여행 일정 목록
-//
-// 백엔드 API:
-//   GET  /api/schedules/active/:userId  → 진행 중 일정 목록
-//   POST /api/schedules                 → 새 일정 생성
-//
-// D-Day 계산 로직 및 종료된 일정 필터링 적용
-// ===================================================
+// ScheduleList.tsx - 대시보드 우측 여행 일정 목록
+// 진행 중인 일정을 불러와서 D-Day 계산 후 카드로 보여줍니다.
+// 종료된 일정(endDate가 오늘보다 과거)은 목록에서 제외합니다.
+// + 새 일정 추가 버튼을 누르면 지역 선택 모달이 뜨고, 확인 시 일정이 생성됩니다.
 
 import { useState, useEffect } from "react";
 import ScheduleCard from "./ScheduleCard";

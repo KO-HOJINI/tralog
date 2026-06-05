@@ -1,17 +1,18 @@
-// TimelineSection.tsx
+// TimelineSection.tsx - 타임라인 섹션
+// 일차별 장소 목록을 보여주고, 편집 모드에서 장소 추가/삭제/메모/비용 입력을 지원합니다.
+// 일차 버튼을 클릭해서 해당 날의 일정만 볼 수 있습니다.
+
 import { useState, useEffect } from "react";
 import PlaceItemCard from "./PlaceItemCard";
-import PlaceSearchBox from "./PlaceSearchBox"; 
+import PlaceSearchBox from "./PlaceSearchBox";
 import { API_BASE_URL } from "../../../../config/api";
 
-// 💡 다른 파일에서 수입해서 쓸 수 있도록 export를 붙여줍니다.
 export interface TimelineExpense {
   detail: string;
   amount: number;
   category: string;
 }
 
-// 💡 다른 파일에서 수입해서 쓸 수 있도록 export를 붙여줍니다.
 export interface TimelineItem {
   id: string;
   time: string;
@@ -64,6 +65,7 @@ export default function TimelineSection({
   const [allItems, setAllItems] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // 시작일과 종료일로 총 여행 일수를 계산합니다
   let totalDays = 1;
   if (startDate && endDate) {
     const start = new Date(startDate);
@@ -74,6 +76,7 @@ export default function TimelineSection({
 
   const currentDay = day > totalDays ? totalDays : day;
 
+  // 컴포넌트가 처음 렌더링될 때 장소 목록을 불러옵니다
   useEffect(() => {
     let isMounted = true;
     const fetchPlaces = async () => {
@@ -107,9 +110,9 @@ export default function TimelineSection({
     return () => { isMounted = false; };
   }, [scheduleId]);
 
+  // 장소가 추가됐을 때 목록에 바로 반영하고 지도에도 알립니다
   const handlePlaceAddedSuccess = (newItem: TimelineItem) => {
     setAllItems((prev) => [...prev, newItem]);
-    
     if (onPlaceAdded) {
       onPlaceAdded({
         id: newItem.id,
@@ -139,9 +142,7 @@ export default function TimelineSection({
         body: JSON.stringify({ memo }),
       });
       if (res.ok) {
-        setAllItems((prev) =>
-          prev.map((item) => (item.id === id ? { ...item, memo } : item))
-        );
+        setAllItems((prev) => prev.map((item) => (item.id === id ? { ...item, memo } : item)));
       }
     } catch (err) {
       console.error("메모 수정 실패:", err);
@@ -174,6 +175,7 @@ export default function TimelineSection({
     }
   };
 
+  // 네이버 지도 길찾기 URL을 만들어서 새 탭으로 엽니다
   const handleOpenDirections = (start: TimelineItem, end: TimelineItem) => {
     const getRoutingParam = (item: TimelineItem) => {
       const name = encodeURIComponent(item.place);
@@ -187,12 +189,14 @@ export default function TimelineSection({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
+  // 현재 선택된 일차의 장소만 시간 순으로 정렬해서 보여줍니다
   const filteredItems = allItems
     .filter((item) => item.day_number === currentDay)
     .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
     <div className="p-5 h-full flex flex-col gap-4 overflow-hidden">
+      {/* 일차 선택 버튼 */}
       <div className="flex gap-2 shrink-0 select-none overflow-x-auto pb-1">
         {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
           <button
@@ -207,8 +211,10 @@ export default function TimelineSection({
         ))}
       </div>
 
+      {/* 장소 목록 (타임라인 형태) */}
       <div className="flex-1 overflow-y-auto scrollbar">
         <div className="relative min-h-full px-2 py-2">
+          {/* 세로 타임라인 선 */}
           <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-slate-200 rounded-full" />
 
           <div className="flex flex-col gap-1 relative z-10">
@@ -238,6 +244,7 @@ export default function TimelineSection({
                       onAddExpense={handleAddExpense}
                     />
 
+                    {/* 다음 장소가 있으면 길찾기 버튼 표시 */}
                     {nextItem && (
                       <div className="relative flex justify-start items-center pl-10 py-1 z-20 mt-1 mb-1">
                         <button
@@ -256,6 +263,7 @@ export default function TimelineSection({
         </div>
       </div>
 
+      {/* 편집 모드에서만 장소 검색/추가 폼을 보여줍니다 */}
       {isEditing && (
         <PlaceSearchBox
           scheduleId={scheduleId}

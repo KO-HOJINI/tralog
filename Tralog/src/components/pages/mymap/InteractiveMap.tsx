@@ -1,16 +1,13 @@
-// ===================================================
 // InteractiveMap.tsx - 한국 지도 SVG 컴포넌트
+// d3-geo 라이브러리를 사용해서 GeoJSON 데이터를 SVG 경로로 변환했습니다.
 //
-// d3-geo 라이브러리로 GeoJSON → SVG 경로 변환
-// 제주도는 본토랑 다른 좌표계라 별도 투영기(inset 방식)로 처리함
+// ※ AI 도움을 받아 구현한 부분들
+// 1. d3의 geoMercator 투영기 설정 방법 (center, scale, translate 값 계산)
+// 2. 제주도는 본토와 좌표 범위가 달라서 별도 투영기(인셋 방식)로 분리했는데,
+//    이 인셋 맵 구현 방식
+// 3. SVG defs의 <pattern>으로 지역 도형에 이미지를 채우는 방법
 //
-// AI 도움:
-//   - d3 geoMercator 투영기 설정 방법 (center, scale, translate)
-//   - 제주도 인셋 맵 구현 방식 (별도 projection 적용)
-//   - SVG defs > pattern으로 지역에 이미지 채우는 방법
-//
-// readOnly prop: true면 클릭 비활성화 + 대시보드 소형 버전용
-// ===================================================
+// readOnly prop이 true면 클릭 비활성화 + 대시보드 소형 버전용으로 사용합니다.
 
 import { geoMercator, geoPath } from "d3-geo";
 import type { FeatureCollection, Feature, Geometry } from "geojson";
@@ -42,20 +39,21 @@ export default function InteractiveMap({
   const width = 500;
   const height = 750;
 
-  // 본토용 투영기 (제주 제외)
+  // ※ AI 도움을 받아 구현했습니다
+  // geoMercator()로 좌표를 SVG 픽셀로 변환하는 투영기를 만듭니다.
+  // center, scale, translate 값은 한반도가 잘 보이도록 AI가 계산해줬습니다.
   const mainProjection = geoMercator()
     .center([128, 36.6])
     .scale(7500)
     .translate([width / 2, height / 2 - 30]);
 
-  // 제주도 전용 투영기 (오른쪽 아래 인셋으로 배치)
-  // AI 도움: 인셋 맵 방식으로 분리 구현
+  // 제주도는 본토와 좌표 범위가 달라서 별도 투영기를 만들어 오른쪽 아래에 배치했습니다.
   const jejuProjection = geoMercator()
     .center([127, 33.3])
     .scale(8500)
     .translate([width - 25, height - 50]);
 
-  // GeoJSON feature의 code → 한국어 지역명 매핑
+  // GeoJSON의 code 값을 한국어 지역명으로 변환합니다
   const getRegionInfo = (feature: Feature<Geometry, ProvinceProperties>) => {
     const code = feature.properties?.code;
     switch (code) {
@@ -89,7 +87,9 @@ export default function InteractiveMap({
         pointerEvents: readOnly ? "none" : "auto",
       }}
     >
-      {/* 대표 이미지를 지역 fill로 쓰기 위한 SVG pattern 정의 */}
+      {/* ※ AI 도움을 받아 구현했습니다
+          SVG의 <defs> 안에 <pattern>을 정의하면 fill로 이미지를 채울 수 있습니다.
+          coverImage가 있는 지역만 패턴을 만들고, 지역 도형의 fill에 url(#pattern-지역명)으로 참조합니다. */}
       <defs>
         {mapRecords.map((record) => {
           if (!record.coverImage) return null;
@@ -120,7 +120,7 @@ export default function InteractiveMap({
           const hasCover = record && record.coverImage;
           const isSelected = !readOnly && selectedRegion === regionKey;
 
-          // 제주는 별도 투영기 사용
+          // 제주도는 별도 투영기, 나머지는 기본 투영기 사용
           const isJeju = feature.properties?.code === "39";
           const activeProjection = isJeju ? jejuProjection : mainProjection;
           const pathGenerator = geoPath().projection(activeProjection);
@@ -129,7 +129,7 @@ export default function InteractiveMap({
           const centroid = pathGenerator.centroid(feature);
           let [labelX, labelY] = centroid || [0, 0];
 
-          // 일부 지역 라벨이 겹쳐서 수동으로 오프셋 조정
+          // 일부 지역의 라벨 위치가 겹쳐서 수동으로 조정했습니다
           if (regionKey === "경기도")       { labelX += 16; labelY += 40; }
           if (regionKey === "인천광역시")   { labelX += 20; labelY += 15; }
           if (regionKey === "충청남도")     { labelX -= 12; }
@@ -175,7 +175,7 @@ export default function InteractiveMap({
         })}
       </g>
 
-      {/* 제주도 인셋 영역 점선 테두리 */}
+      {/* 제주도 인셋 구역을 점선 테두리로 구분합니다 */}
       <rect
         x={width - 165}
         y={height - 110}

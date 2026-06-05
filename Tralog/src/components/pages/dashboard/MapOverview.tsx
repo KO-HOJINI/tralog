@@ -1,3 +1,7 @@
+// MapOverview.tsx - 대시보드 좌측 지도 + 달성률 카드
+// 사용자가 방문한 지역 수와 전체 대비 달성률을 보여줍니다.
+// 지도 or 달성률 카드를 클릭하면 나만의 지도 페이지로 이동합니다.
+
 import { useState, useEffect } from "react";
 import InteractiveMap from "../mymap/InteractiveMap";
 import type { MapRecord } from "../mymap/MyMapPage";
@@ -14,6 +18,7 @@ interface HistorySchedule {
   status: string;
 }
 
+// 대한민국 광역시/도 총 17개
 const TOTAL_REGIONS = 17;
 
 export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
@@ -23,11 +28,13 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
   useEffect(() => {
     if (!userId) return;
 
+    // 지도에 표시할 사진 기록을 불러옵니다
     fetch(`${API_BASE_URL}/api/map/records/${userId}`)
       .then((res) => res.json())
       .then((data: MapRecord[]) => setMapRecords(data))
       .catch((err) => console.error("지도 기록 로드 오류:", err));
 
+    // 방문한 지역 수를 계산합니다 (중복 지역은 하나로 카운트)
     fetch(`${API_BASE_URL}/api/schedules/history/${userId}`)
       .then((res) => res.json())
       .then((data: HistorySchedule[]) => {
@@ -42,13 +49,9 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
 
   return (
     <div className="flex flex-col gap-5 w-full h-full pl-1">
-      {/* 지도 카드 */}
-      <div
-        onClick={() => onNavigate("mymap")}
-        className="card-map-theme flex-1 h-0"
-      >
+      {/* 지도 카드 - 클릭하면 나만의 지도 페이지로 이동 */}
+      <div onClick={() => onNavigate("mymap")} className="card-map-theme flex-1 h-0">
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
-          {/* 지도 컴포넌트 컨테이너 */}
           <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">
             <InteractiveMap
               selectedRegion={null}
@@ -57,8 +60,6 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
               readOnly={true}
             />
           </div>
-
-          {/* 하단 배너 */}
           <span className="box-white text-body-caption font-bold absolute bottom-4 px-4 py-2">
             🗺️ 지도를 눌러 추억 기록하기
           </span>
@@ -74,7 +75,6 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
               <h2>나만의 지도</h2>
               <span className="text-body-caption">대한민국 완전 정복</span>
             </div>
-
             <div className="text-right flex flex-col">
               <span className="text-number-accent">{visitedCount}</span>
               <span className="text-body-caption">/ {TOTAL_REGIONS} 지역</span>
@@ -82,6 +82,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           </div>
 
           <div className="flex flex-col gap-1.5 w-full mt-1">
+            {/* HTML <progress> 요소 사용 - DaisyUI progress 클래스로 스타일을 줬습니다 */}
             <progress
               className="progress w-full h-2.5"
               style={{ accentColor: "var(--color-primary)" }}
@@ -99,17 +100,11 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           <div className="flex gap-1.5 items-center justify-center text-xs">
             {remainingCount > 0 ? (
               <>
-                <span className="text-body-caption font-bold text-secondary">
-                  🔥{remainingCount}개 지역
-                </span>
-                <span className="text-body-caption font-bold text-white">
-                  만 더 가면 완성!
-                </span>
+                <span className="text-body-caption font-bold text-secondary">🔥{remainingCount}개 지역</span>
+                <span className="text-body-caption font-bold text-white">만 더 가면 완성!</span>
               </>
             ) : (
-              <span className="text-body-caption text-white">
-                🎉 대한민국 정복 완료!
-              </span>
+              <span className="text-body-caption text-white">🎉 대한민국 정복 완료!</span>
             )}
           </div>
         </div>

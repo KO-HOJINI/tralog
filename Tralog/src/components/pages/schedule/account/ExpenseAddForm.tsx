@@ -1,3 +1,7 @@
+// ExpenseAddForm.tsx - 지출 추가 입력 폼
+// 가계부 섹션 하단에 고정으로 표시됩니다.
+// 카테고리(식비/숙소/교통/기타), 내역, 금액을 입력하고 기록 버튼을 누르면 추가됩니다.
+
 import { useState } from "react";
 
 interface ExpenseAddFormProps {

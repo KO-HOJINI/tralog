@@ -1,3 +1,7 @@
+// ScheduleHeader.tsx - 일정 편집 페이지 헤더 버튼 영역
+// 일반 모드: 타임라인/일행 추가/가계부 탭 + 사진 추가/편집 버튼
+// 편집 모드: 지역 변경 드롭다운 + 일정 삭제 버튼 + 사진 추가/저장 버튼
+
 import { useState } from "react";
 import PhotoUploadModal from "./PhotoUploadModal";
 

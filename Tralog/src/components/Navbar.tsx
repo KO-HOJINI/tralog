@@ -1,9 +1,6 @@
-// ===================================================
-// Navbar.tsx - 상단 고정 네비게이션 바
-//
-// sticky top-0으로 스크롤해도 항상 상단에 고정됨
-// 80% 너비로 가운데 정렬 (큰 모니터도 커버)
-// ===================================================
+// Navbar.tsx - 상단 고정 내비게이션 바
+// sticky top-0으로 스크롤해도 항상 상단에 고정됩니다.
+// 로고 클릭 시 대시보드로 이동, 우측에 사용자 이름과 로그아웃 버튼을 배치했습니다.
 
 interface NavBarProps {
   userName: string;
@@ -16,7 +13,7 @@ export default function NavBar({ userName, onNavigate, onLogout }: NavBarProps) 
     <div className="w-full pt-6 sticky top-0 z-50">
       <header className="w-[80%] mx-auto h-18 box-white px-10 flex items-center justify-between">
 
-        {/* 로고 클릭하면 대시보드로 이동 */}
+        {/* 로고 - 클릭하면 대시보드로 이동 */}
         <span
           onClick={() => onNavigate("dashboard")}
           className="tracking-tight cursor-pointer select-none"
@@ -24,15 +21,12 @@ export default function NavBar({ userName, onNavigate, onLogout }: NavBarProps) 
           <p className="text-logo">Tralog</p>
         </span>
 
-        {/* 우측: 유저 이름 + 로그아웃 */}
+        {/* 우측: 사용자 이름 + 로그아웃 버튼 */}
         <div className="flex items-center gap-10">
-          {/* 유저 이름 표시 */}
           <div className="flex items-center gap-1.5 select-none">
             <h3>{userName}</h3>
             <p className="text-body-main">여행자님</p>
           </div>
-
-          {/* 로그아웃 텍스트 버튼 */}
           <span
             onClick={onLogout}
             className="tracking-tight cursor-pointer select-none"

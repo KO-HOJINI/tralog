@@ -1,3 +1,7 @@
+// NewScheduleModal.tsx - 새 일정 만들기 모달
+// 대시보드에서 + 새 일정 추가 버튼을 누르면 뜨는 모달입니다.
+// 여행 지역(필수)과 일정 이름(선택)을 입력받고 일정을 생성합니다.
+
 import { useState } from "react";
 
 const REGION_OPTIONS = [

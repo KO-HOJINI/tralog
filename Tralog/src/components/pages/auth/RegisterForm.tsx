@@ -1,9 +1,8 @@
-// ===================================================
-// RegisterForm.tsx - 회원가입 폼 (실제 라이브 서버 주소 연동 완료)
-// ===================================================
+// RegisterForm.tsx - 회원가입 폼
+// 아이디, 비밀번호, 이름, 생년월일, 이메일을 입력받아 서버에 POST 요청을 보냅니다.
+// 비밀번호 확인 일치 여부, 필수 입력 항목 등 클라이언트 측 유효성 검사를 먼저 합니다.
 
 import { useState } from "react";
-// 💡 수정: 회원가입 폼도 동일하게 실제 Render 클라우드 서버 베이스 주소를 import 합니다.
 import { API_BASE_URL } from "../../../config/api";
 
 interface RegisterFormProps {
@@ -55,7 +54,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     if (!isValid) return;
 
     try {
-      // 💡 수정됨: 하드코딩된 가짜 주소를 제거하고 API_BASE_URL 기반 주소로 호출 대상을 변경했습니다.
+      // API_BASE_URL
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

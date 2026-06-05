@@ -1,3 +1,7 @@
+// HandleSchedulePage.tsx - 일정 편집 페이지
+// 좌측에 네이버 지도, 우측에 타임라인/가계부/일행 탭을 보여줍니다.
+// 데이터 관련 로직은 useSchedule 훅으로 분리했습니다.
+
 import { useState } from "react";
 import NavBar from "../../Navbar";
 import ScheduleHeader from "./header/ScheduleHeader";
@@ -16,20 +20,16 @@ export default function HandleSchedulePage({
   onNavigate,
   scheduleId: scheduleIdProp,
 }: HandleSchedulePageProps) {
-  // 현재 사용자 세션
   const [currentUser] = useState(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
+  // props로 받은 ID가 없으면 localStorage에서 가져옵니다
   const [scheduleId] = useState(
-    () =>
-      scheduleIdProp ||
-      localStorage.getItem("tralog_active_schedule_id") ||
-      "s-1",
+    () => scheduleIdProp || localStorage.getItem("tralog_active_schedule_id") || "s-1",
   );
 
-  // 어떤 탭을 보여줄지 결정
   const [activeTab, setActiveTab] = useState<string>("timeline");
 
   const {
@@ -62,7 +62,7 @@ export default function HandleSchedulePage({
       />
 
       <main className="flex-1 h-0 w-[70%] max-w-300 mx-auto py-6 flex flex-col overflow-hidden">
-        {/* 상단 타이틀 및 헤더 영역 */}
+        {/* 상단: 일정 제목/날짜 (편집 모드면 입력 가능) + 헤더 버튼 */}
         <div className="flex w-full gap-5 items-end shrink-0 pb-5">
           <div className="flex-1 flex flex-col gap-2.5 items-start pl-1">
             {isEditing ? (
@@ -96,11 +96,9 @@ export default function HandleSchedulePage({
                   {scheduleMeta.title}
                 </h1>
                 {scheduleMeta.period && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="text-[14px] font-bold text-slate-700 tracking-wide">
-                      {scheduleMeta.period}
-                    </span>
-                  </div>
+                  <span className="text-[14px] font-bold text-slate-700 tracking-wide mt-1">
+                    {scheduleMeta.period}
+                  </span>
                 )}
               </>
             )}
@@ -120,9 +118,8 @@ export default function HandleSchedulePage({
           </div>
         </div>
 
-        {/* 하단 메인 콘텐츠 (지도 + 활성화된 탭 섹션) */}
+        {/* 하단: 좌측 지도 + 우측 탭 섹션 */}
         <div className="flex-1 h-0 flex w-full gap-5 items-stretch overflow-hidden">
-          {/* 좌측 네이버 지도 구획 */}
           <div className="flex-1 shrink-0 h-full box-white p-2 overflow-hidden">
             {scheduleMeta.region ? (
               <NaverMapContainer
@@ -137,7 +134,6 @@ export default function HandleSchedulePage({
             )}
           </div>
 
-          {/* 우측 서브 섹션 구획 */}
           <div className="flex-1 h-full box-white overflow-hidden flex flex-col">
             {activeTab === "timeline" && (
               <TimelineSection
@@ -168,6 +164,7 @@ export default function HandleSchedulePage({
   );
 }
 
+// 지역명으로 지도 중심 좌표를 반환합니다
 function getRegionCenter(region: string): { lat: number; lng: number } {
   const centers: Record<string, { lat: number; lng: number }> = {
     서울특별시: { lat: 37.5665, lng: 126.978 },

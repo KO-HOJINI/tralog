@@ -1,3 +1,8 @@
+// MyMapHistory.tsx - 나만의 지도 우측 히스토리 목록
+// 완료된 여행 기록과 사진이 있는 진행 중 일정을 목록으로 보여줍니다.
+// 일정 없이 방문한 지역을 직접 선택해서 사진을 추가하는 기능도 있습니다.
+// 데이터 로직은 useMapHistory 훅으로 분리했습니다.
+
 import { useMapHistory, parseLocalDate } from "./hooks/useMapHistory";
 
 interface MyMapHistoryProps {

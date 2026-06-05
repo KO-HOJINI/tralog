@@ -1,4 +1,7 @@
-// AccountBookSection.tsx
+// AccountBookSection.tsx - 여행 가계부 섹션
+// 일정에 기록된 지출 내역을 일차별로 그룹화해서 보여줍니다.
+// 하단 입력 폼에서 새 지출을 추가하고, 항목 위에 마우스를 올리면 삭제 버튼이 나타납니다.
+
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../../../../config/api";
 import ExpenseAddForm from "./ExpenseAddForm";

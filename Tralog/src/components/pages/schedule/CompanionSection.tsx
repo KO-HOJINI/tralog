@@ -1,9 +1,13 @@
+// CompanionSection.tsx - 일행 추가 섹션
+// 아이디를 검색해서 일정에 일행을 초대하고 읽기/편집 권한을 설정합니다.
+// 일행 데이터 로직은 useCompanion 훅으로 분리했습니다.
+
 import { useState } from "react";
 import { useCompanion } from "./hooks/useCompanion";
 
 interface CompanionSectionProps {
   userId: string;
-  scheduleId: string; // 부모 컴포넌트에서 받아와야 합니다!
+  scheduleId: string;
   scheduleTitle?: string;
   schedulePeriod?: string;
 }
@@ -17,7 +21,6 @@ export default function CompanionSection({
   const [searchId, setSearchId] = useState("");
   const [selectedRole, setSelectedRole] = useState<"read" | "edit">("read");
 
-  // 분리해둔 훅에서 데이터와 함수를 가져옵니다.
   const { companions, isLoading, message, addCompanion, removeCompanion } = useCompanion(
     scheduleId,
     userId
@@ -26,7 +29,7 @@ export default function CompanionSection({
   const handleAddCompanion = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await addCompanion(searchId, selectedRole);
-    if (success) setSearchId(""); // 성공 시에만 입력창 비우기
+    if (success) setSearchId("");
   };
 
   return (

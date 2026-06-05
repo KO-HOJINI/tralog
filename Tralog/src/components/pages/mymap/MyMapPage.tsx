@@ -1,16 +1,11 @@
-// ===================================================
 // MyMapPage.tsx - 나만의 지도 페이지
+// 좌측에 한국 지도(지역 선택 가능), 우측에 히스토리 목록 또는 사진 상세를 보여줍니다.
 //
-// 좌측: 한국 지도 (지역 선택 가능)
-// 우측: 지역 미선택 → 히스토리 목록 / 선택 → 사진 그리드
-//
-// 백엔드 API: GET /api/map/records/:userId
-//
-// AI 도움:
-//   - useCallback으로 fetchMapRecords 함수 메모이제이션
-//   - setTimeout(..., 0) 으로 브라우저 렌더 페인트 후 비동기 실행 유도
-//     (바로 fetch하면 컴포넌트 렌더 중 상태 업데이트 충돌 가능성 있음)
-// ===================================================
+// ※ AI 도움을 받아 구현한 부분
+// useCallback으로 fetchMapRecords를 메모이제이션하는 방법,
+// 그리고 setTimeout(..., 0)으로 렌더링 충돌을 방지하는 방법을 AI 도움으로 작성했습니다.
+// (바로 fetch를 호출하면 컴포넌트 렌더 중 상태 업데이트가 겹칠 수 있다고 해서
+//  렌더링이 끝난 직후에 실행되도록 setTimeout을 사용했습니다)
 
 import { useState, useEffect, useCallback } from "react";
 import NavBar from "../../Navbar";
@@ -24,18 +19,14 @@ interface UserSession {
   name: string;
 }
 
-// 지도 기록 타입 (외부에서도 import해서 씀)
+// 지도 기록 타입 - 다른 파일에서도 사용합니다
 export interface MapRecord {
   region: string;
   images: string[];
   coverImage?: string;
 }
 
-export default function MyMapPage({
-  onNavigate,
-}: {
-  onNavigate: (page: string) => void;
-}) {
+export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [currentUser] = useState<UserSession | null>(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
@@ -45,13 +36,12 @@ export default function MyMapPage({
   const [mapRecords, setMapRecords] = useState<MapRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // AI 도움: useCallback으로 감싸서 불필요한 재생성 방지
+  // ※ AI 도움을 받아 구현했습니다
+  // useCallback으로 감싸서 currentUser가 바뀔 때만 함수를 새로 만듭니다.
   const fetchMapRecords = useCallback(async () => {
     if (!currentUser) return;
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/map/records/${currentUser.id}`,
-      );
+      const response = await fetch(`${API_BASE_URL}/api/map/records/${currentUser.id}`);
       if (response.ok) {
         const data = await response.json();
         setMapRecords(data);
@@ -69,12 +59,10 @@ export default function MyMapPage({
       return;
     }
 
-    // AI 도움: setTimeout으로 렌더링 충돌 방지
-    const delayFetch = setTimeout(() => {
-      fetchMapRecords();
-    }, 0);
-
-    return () => clearTimeout(delayFetch); // 언마운트 시 타이머 정리
+    // ※ AI 도움을 받아 구현했습니다
+    // setTimeout(0)으로 렌더링이 완료된 직후에 fetch가 실행되도록 했습니다.
+    const delayFetch = setTimeout(() => { fetchMapRecords(); }, 0);
+    return () => clearTimeout(delayFetch);
   }, [currentUser, fetchMapRecords, onNavigate]);
 
   const handleLogout = () => {
@@ -86,11 +74,7 @@ export default function MyMapPage({
 
   return (
     <div className="flex-col-full h-screen bg-background antialiased text-dark">
-      <NavBar
-        userName={currentUser.name}
-        onNavigate={onNavigate}
-        onLogout={handleLogout}
-      />
+      <NavBar userName={currentUser.name} onNavigate={onNavigate} onLogout={handleLogout} />
 
       <main className="flex-1 h-0 w-[70%] mx-auto py-6 flex flex-row gap-8 items-stretch overflow-hidden">
 
@@ -106,19 +90,16 @@ export default function MyMapPage({
           </div>
         </div>
 
-        {/* 우측: 히스토리 목록 or 사진 상세 */}
+        {/* 우측: 지역 미선택 시 히스토리 목록, 선택 시 사진 상세 */}
         <div className="w-1/2 flex flex-col h-full overflow-hidden">
           {selectedRegion === null ? (
-            <MyMapHistory
-              onSelectRegion={setSelectedRegion}
-              onNavigate={onNavigate}
-            />
+            <MyMapHistory onSelectRegion={setSelectedRegion} onNavigate={onNavigate} />
           ) : (
             <PhotoGrid
               regionName={selectedRegion}
               onBack={() => {
                 setSelectedRegion(null);
-                // 뒤로가기 시 최신 데이터 다시 불러옴
+                // 뒤로가기 시 최신 데이터 다시 불러옵니다
                 setTimeout(() => { fetchMapRecords(); }, 0);
               }}
               mapRecords={mapRecords}

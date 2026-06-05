@@ -1,10 +1,9 @@
-// ===================================================
-// LoginForm.tsx - 로그인 폼 (실제 라이브 서버 주소 연동 완료)
-// ===================================================
+// LoginForm.tsx - 로그인 폼
+// 아이디/비밀번호 입력 후 서버에 POST 요청을 보냅니다.
+// 서버에서 오는 에러 메시지(어떤 필드에서 오류가 났는지)를 각 입력 칸 옆에 표시합니다.
 
 import { useState } from "react";
-// 💡 수정: 상단에 정의된 실제 Render 클라우드 서버 베이스 주소를 import 합니다.
-import { API_BASE_URL } from "../../../config/api"; 
+import { API_BASE_URL } from "../../../config/api";
 
 interface LoginFormProps {
   onLoginSuccess: () => void;
@@ -34,7 +33,6 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
     if (!isValid) return;
 
     try {
-      // 💡 수정됨: 하드코딩된 localhost 주소를 제거하고 백틱(`)과 API_BASE_URL 변수로 연동했습니다.
       const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

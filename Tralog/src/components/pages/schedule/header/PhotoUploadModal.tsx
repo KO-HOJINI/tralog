@@ -1,3 +1,10 @@
+// PhotoUploadModal.tsx - 사진 추가 모달
+// 일정 편집 페이지에서 사진 추가 버튼을 누르면 뜨는 모달입니다.
+// 지역을 선택하고 파일을 업로드하면 나만의 지도에 사진이 저장됩니다.
+//
+// ※ AI 도움을 받아 구현한 부분
+// FileReader로 이미지를 base64로 변환해서 서버에 전송하는 방법을 AI 도움으로 작성했습니다.
+
 import { useState, useRef } from "react";
 import { API_BASE_URL } from "../../../../config/api";
 
