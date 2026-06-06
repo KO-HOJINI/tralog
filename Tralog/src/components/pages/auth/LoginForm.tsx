@@ -75,6 +75,7 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
         <input
           type="text"
           placeholder="아이디를 입력해주세요"
+          autoComplete="username"
           value={id}
           onChange={(e) => setId(e.target.value)}
           className={`w-full h-12 px-4 text-sm focus:outline-none input-custom ${
@@ -94,6 +95,7 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
         <input
           type="password"
           placeholder="비밀번호를 입력해주세요"
+          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className={`w-full h-12 px-4 text-sm focus:outline-none input-custom ${

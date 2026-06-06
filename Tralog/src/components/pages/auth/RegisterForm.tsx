@@ -97,6 +97,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         <input
           type="text"
           placeholder="아이디를 입력해주세요"
+          autoComplete="username"
           value={formData.id}
           onChange={(e) => setFormData({ ...formData, id: e.target.value })}
           className={inputClass("id")}
@@ -112,6 +113,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         <input
           type="password"
           placeholder="비밀번호를 입력해주세요"
+          autoComplete="new-password"
           value={formData.password}
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           className={inputClass("password")}
@@ -127,6 +129,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         <input
           type="password"
           placeholder="비밀번호를 한번 더 입력해주세요"
+          autoComplete="new-password"
           value={formData.confirmPassword}
           onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
           className={inputClass("confirmPassword")}
@@ -142,6 +145,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         <input
           type="text"
           placeholder="홍길동"
+          autoComplete="name"
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className={inputClass("name")}
@@ -176,6 +180,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         <input
           type="email"
           placeholder="traveler@example.com"
+          autoComplete="email"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           className={inputClass("email")}
