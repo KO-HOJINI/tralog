@@ -29,6 +29,8 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     email: "",
   });
 
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -53,6 +55,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     setErrors(newErrors);
     if (!isValid) return;
 
+    setIsLoading(true);
     try {
       // API_BASE_URL
       const response = await fetch(`${API_BASE_URL}/api/register`, {
@@ -78,6 +81,8 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     } catch (error) {
       console.error("서버 통신 오류:", error);
       alert("백엔드 서버가 켜져 있는지 확인해 주세요.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -192,15 +197,21 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         <button
           type="button"
           onClick={onToggleLogin}
+          disabled={isLoading}
           className="btn-dark flex-1 h-12"
         >
           취소
         </button>
         <button
           type="submit"
+          disabled={isLoading}
           className="btn-primary flex-1 h-12"
         >
-          회원가입
+          {isLoading ? (
+            <span className="loading loading-spinner loading-md text-white" />
+          ) : (
+            "회원가입"
+          )}
         </button>
       </div>
     </form>

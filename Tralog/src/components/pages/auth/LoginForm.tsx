@@ -15,6 +15,7 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
   const [password, setPassword] = useState<string>("");
   const [idError, setIdError] = useState<string>("");
   const [passwordError, setPasswordError] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,6 +33,7 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
     }
     if (!isValid) return;
 
+    setIsLoading(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: "POST",
@@ -59,6 +61,8 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
     } catch (error) {
       console.error("서버 통신 오류:", error);
       alert("백엔드 서버가 작동 중인지 확인해 주세요.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -109,15 +113,21 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
         <button
           type="button"
           onClick={onToggleRegister}
+          disabled={isLoading}
           className="btn-dark flex-1 h-12"
         >
           <h3 className="text-white">회원가입</h3>
         </button>
         <button
           type="submit"
+          disabled={isLoading}
           className="btn-primary flex-1 h-12"
         >
-          <h3 className="text-white">로그인</h3>
+          {isLoading ? (
+            <span className="loading loading-spinner loading-md text-white" />
+          ) : (
+            <h3 className="text-white">로그인</h3>
+          )}
         </button>
       </div>
     </form>
