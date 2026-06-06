@@ -30,6 +30,10 @@ jobs:
       - name: Build
         working-directory: ./Tralog # 👈 중요: 프론트엔드 폴더로 이동해서 빌드 실행
         run: npm run build
+        env:
+          # 프론트 번들에 포함되는 공개 클라이언트 값 (.env가 커밋되지 않으므로 여기서 주입)
+          VITE_API_BASE_URL: https://tralog-gql3.onrender.com
+          VITE_NAVER_MAP_CLIENT_ID: 9ffc0uiggv
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
