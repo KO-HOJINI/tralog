@@ -52,7 +52,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
       {/* 지도 카드 - 클릭하면 나만의 지도 페이지로 이동 */}
       <div onClick={() => onNavigate("mymap")} className="card-map-theme flex-1 h-0">
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
-          <div className="w-full h-full max-w-[320px] max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">
+          <div className="w-full h-full max-w-60 sm:max-w-70 lg:max-w-85 xl:max-w-100 2xl:max-w-115 max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">
             <InteractiveMap
               selectedRegion={null}
               onSelectRegion={() => {}}
