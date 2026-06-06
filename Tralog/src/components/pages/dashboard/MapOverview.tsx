@@ -82,7 +82,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           </div>
 
           <div className="flex flex-col gap-1.5 w-full mt-1">
-            {/* HTML <progress> 요소 사용 - DaisyUI progress 클래스로 스타일을 줬습니다 */}
+            {/* 달성률 게이지 */}
             <progress
               className="progress w-full h-2.5"
               style={{ accentColor: "var(--color-primary)" }}
