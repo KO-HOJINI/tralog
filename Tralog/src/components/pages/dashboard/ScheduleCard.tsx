@@ -7,11 +7,11 @@ import { API_BASE_URL } from "../../../config/api";
 interface TravelSchedule {
   id: string;
   title: string;
-  location: string; // 일정의 지역명 (예: "서울특별시", "제주특별자치도")
+  location: string; // 일정의 지역명
   startDate: string;
   endDate: string;
   dDay: string;
-  bgImage?: string; // 📸 마이맵의 'coverImage' 데이터를 여기에 매핑하여 전달받음
+  bgImage?: string; // 마이맵 데이터를 여기에 매핑하여 전달받음
 }
 
 interface ScheduleCardProps {
@@ -29,7 +29,7 @@ export default function ScheduleCard({
     onNavigate("handleschedule", schedule.id);
   };
 
-  // 💡 백엔드 이미지 주소 가공 가이드 (PhotoGrid.tsx의 가공 방식과 동기화)
+  // 백엔드 이미지 주소 가공 가이드 (PhotoGrid.tsx의 가공 방식과 동기화)
   const getBackgroundImageSrc = () => {
     if (!schedule.bgImage) return "";
     // base64 데이터형식이거나 이미 풀 주소인 경우 그대로 반환
@@ -54,7 +54,7 @@ export default function ScheduleCard({
       <div
         className="flex-1 h-0 w-full relative p-5 flex flex-col justify-end overflow-hidden border-b border-slate-200/40 rounded-t-4xl transition-all duration-300"
         style={{
-          // 💡 마이맵에서 선택한 대표사진(bgSrc)이 존재하면 보여주고, 없으면 UI 기조에 맞는 은은한 민트 그라데이션 적용
+          // 마이맵에서 선택한 대표사진(bgSrc)이 존재하면 보여주고, 없으면 UI 기조에 맞는 은은한 민트 그라데이션 적용
           backgroundImage: bgSrc
             ? `url(${bgSrc})`
             : "linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%)",

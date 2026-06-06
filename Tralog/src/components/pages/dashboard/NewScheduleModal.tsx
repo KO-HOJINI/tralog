@@ -44,8 +44,11 @@ export default function NewScheduleModal({
   };
 
   return (
-    <dialog className="modal modal-open">
-      <div className="box-white max-w-sm w-full mx-4 p-6 flex flex-col gap-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* 배경 오버레이 (클릭 시 닫힘) */}
+      <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
+
+      <div className="box-white relative z-10 max-w-sm w-full p-6 flex flex-col gap-5">
         <div className="flex justify-between items-center">
           <h2 className="m-0">새 일정 만들기</h2>
           <button onClick={handleClose} className="btn btn-sm btn-ghost btn-circle text-slate-400">✕</button>
@@ -95,7 +98,6 @@ export default function NewScheduleModal({
           </button>
         </div>
       </div>
-      <div className="modal-backdrop" onClick={handleClose} />
-    </dialog>
+    </div>
   );
 }
