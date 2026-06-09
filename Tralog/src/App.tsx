@@ -94,15 +94,16 @@ function App() {
   return (
     <div className="App min-h-screen bg-base-100 font-sans">
       {renderPage()}
-
       {/* 개발 테스트용 빠른 이동 버튼 (제출 전 제거 예정) */}
+      {/* 
       <div className="fixed bottom-4 right-4 bg-neutral text-neutral-content p-2 rounded-xl shadow-custom text-xs flex gap-2 z-50 opacity-50 hover:opacity-100 transition-opacity">
         <span className="font-bold self-center">test:</span>
         <button onClick={() => navigateTo("login")} className="btn-primary px-3 py-1 text-xs">로그인</button>
         <button onClick={() => navigateTo("dashboard")} className="btn-primary px-3 py-1 text-xs">대시보드</button>
         <button onClick={() => navigateTo("mymap")} className="btn-primary px-3 py-1 text-xs">나만의지도</button>
         <button onClick={() => navigateTo("handleschedule")} className="btn-primary px-3 py-1 text-xs">일정편집</button>
-      </div>
+      </div> 
+      */}
     </div>
   );
 }
