@@ -89,14 +89,10 @@ app.get("/api/schedules/history/:userId", (req, res) => {
   autoCompleteSchedules(() => {
     const userId = req.params.userId;
     const query = `
-      SELECT DISTINCT s.*, 
-        (SELECT si.image_data 
-          FROM schedule_images si 
-          JOIN schedules s2 ON si.schedule_id = s2.id 
-          LEFT JOIN schedule_companions sc2 ON s2.id = sc2.schedule_id
-          WHERE si.region = s.region 
-            AND si.is_cover = TRUE 
-            AND (s2.user_id = ? OR sc2.user_id = ?)
+      SELECT DISTINCT s.*,
+        (SELECT umc.image_data
+          FROM user_map_covers umc
+          WHERE umc.user_id = ? AND umc.region = s.region
           LIMIT 1) as bgImage,
         (SELECT COUNT(*) FROM schedule_images si3 WHERE si3.schedule_id = s.id) as photo_count
       FROM schedules s
@@ -104,7 +100,7 @@ app.get("/api/schedules/history/:userId", (req, res) => {
       WHERE (s.user_id = ? OR sc.user_id = ?) AND s.status = 'completed'
       ORDER BY s.end_date DESC
     `;
-    db.query(query, [userId, userId, userId, userId], (err, results) => {
+    db.query(query, [userId, userId, userId], (err, results) => {
       if (err) return res.status(500).json({ error: err.message });
       res.status(200).json(results);
     });
@@ -116,14 +112,10 @@ app.get("/api/schedules/active/:userId", (req, res) => {
   autoCompleteSchedules(() => {
     const userId = req.params.userId;
     const query = `
-      SELECT DISTINCT s.*, 
-        (SELECT si.image_data 
-          FROM schedule_images si 
-          JOIN schedules s2 ON si.schedule_id = s2.id 
-          LEFT JOIN schedule_companions sc2 ON s2.id = sc2.schedule_id
-          WHERE si.region = s.region 
-            AND si.is_cover = TRUE 
-            AND (s2.user_id = ? OR sc2.user_id = ?)
+      SELECT DISTINCT s.*,
+        (SELECT umc.image_data
+          FROM user_map_covers umc
+          WHERE umc.user_id = ? AND umc.region = s.region
           LIMIT 1) as bgImage,
         (SELECT COUNT(*) FROM schedule_images si3 WHERE si3.schedule_id = s.id) as photo_count
       FROM schedules s
@@ -131,7 +123,7 @@ app.get("/api/schedules/active/:userId", (req, res) => {
       WHERE (s.user_id = ? OR sc.user_id = ?) AND s.status = 'planning'
       ORDER BY s.start_date ASC
     `;
-    db.query(query, [userId, userId, userId, userId], (err, results) => {
+    db.query(query, [userId, userId, userId], (err, results) => {
       if (err) return res.status(500).json({ error: err.message });
       res.status(200).json(results);
     });
@@ -435,13 +427,14 @@ app.delete("/api/companions/:scheduleId/:userId", (req, res) => {
  * ========================================== */
 app.get("/api/map/records/:userId", (req, res) => {
   const userId = req.params.userId;
-  const query = `
-    SELECT si.region, si.image_data, si.is_cover FROM schedule_images si
+  // 갤러리 사진은 본인 일정 + 일행으로 참여한 일정까지 모두 가져옵니다 (공유 O)
+  const galleryQuery = `
+    SELECT si.region, si.image_data FROM schedule_images si
     JOIN schedules s ON si.schedule_id = s.id
     LEFT JOIN schedule_companions sc ON s.id = sc.schedule_id
     WHERE s.user_id = ? OR sc.user_id = ?
   `;
-  db.query(query, [userId, userId], (err, results) => {
+  db.query(galleryQuery, [userId, userId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
 
     const mapDict = {};
@@ -454,9 +447,25 @@ app.get("/api/map/records/:userId", (req, res) => {
         };
       }
       mapDict[row.region].images.push(row.image_data);
-      if (row.is_cover) mapDict[row.region].coverImage = row.image_data;
     });
-    res.status(200).json(Object.values(mapDict));
+
+    // 대표사진은 유저별로 저장됩니다 (일행과 공유 X)
+    db.query(
+      "SELECT region, image_data FROM user_map_covers WHERE user_id = ?",
+      [userId],
+      (coverErr, covers) => {
+        if (coverErr) return res.status(500).json({ error: coverErr.message });
+
+        covers.forEach((c) => {
+          const record = mapDict[c.region];
+          // 갤러리에 아직 남아있는 사진만 대표사진으로 반영합니다 (삭제된 사진 방지)
+          if (record && record.images.includes(c.image_data)) {
+            record.coverImage = c.image_data;
+          }
+        });
+        res.status(200).json(Object.values(mapDict));
+      },
+    );
   });
 });
 
@@ -509,20 +518,16 @@ app.post("/api/map/upload", (req, res) => {
 });
 
 app.post("/api/map/cover", (req, res) => {
-  const { schedule_id, region, image_data } = req.body;
+  // 대표사진은 유저별로 지역마다 하나씩 저장합니다 (일행과 공유되지 않음)
+  const { user_id, region, image_data } = req.body;
+  if (!user_id) return res.status(400).json({ error: "user_id가 필요합니다." });
   db.query(
-    "UPDATE schedule_images SET is_cover = FALSE WHERE region = ? AND schedule_id = ?",
-    [region, schedule_id],
+    `INSERT INTO user_map_covers (user_id, region, image_data) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE image_data = VALUES(image_data)`,
+    [user_id, region, image_data],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });
-      db.query(
-        "UPDATE schedule_images SET is_cover = TRUE WHERE region = ? AND schedule_id = ? AND image_data = ?",
-        [region, schedule_id, image_data],
-        (err2) => {
-          if (err2) return res.status(500).json({ error: err2.message });
-          res.status(200).json({ message: "대표사진 설정 완료" });
-        },
-      );
+      res.status(200).json({ message: "대표사진 설정 완료" });
     },
   );
 });

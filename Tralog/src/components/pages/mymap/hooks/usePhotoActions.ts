@@ -31,6 +31,12 @@ export function usePhotoActions(
   const getScheduleId = () =>
     localStorage.getItem("tralog_active_schedule_id") || `direct-${regionName}`;
 
+  // 대표사진은 유저별로 저장되므로 현재 로그인 유저 ID가 필요합니다
+  const getUserId = (): string | null => {
+    const sessionData = localStorage.getItem("tralog_current_user");
+    return sessionData ? JSON.parse(sessionData).id : null;
+  };
+
   // ※ AI 도움을 받아 구현했습니다
   // FileReader로 이미지 파일을 base64 문자열로 변환해서 서버에 전송합니다.
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -86,7 +92,7 @@ export function usePhotoActions(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          schedule_id: getScheduleId(),
+          user_id: getUserId(),
           region: regionName,
           image_data: selectedSrc,
         }),

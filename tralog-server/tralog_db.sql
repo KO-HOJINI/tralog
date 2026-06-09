@@ -59,28 +59,23 @@ CREATE TABLE IF NOT EXISTS schedule_expenses (
     FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE
 );
 
--- 6. 지역별/일정별 사진 업로드 및 대표사진 관리 테이블 (PhotoGrid & InteractiveMap용)
+-- 6. 지역별/일정별 사진 업로드 테이블 (PhotoGrid & InteractiveMap용)
+-- ※ 사진(갤러리)은 일행과 공유되지만, 대표사진은 user_map_covers에서 유저별로 따로 관리합니다.
 CREATE TABLE IF NOT EXISTS schedule_images (
     id          INT          AUTO_INCREMENT PRIMARY KEY,
     schedule_id VARCHAR(50)  NOT NULL,
     region      VARCHAR(50)  NOT NULL, -- '제주특별자치도' 등
     image_data  LONGTEXT     NOT NULL, -- Base64 인코딩 데이터 스트링
-    is_cover    BOOLEAN      DEFAULT FALSE, -- 대표사진 여부 (인터랙티브맵 배경 가동용)
     FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE
 );
 
-
--- ===================================================
--- 시스템 초기 더미 데이터 (테스트용)
--- ===================================================
-
--- 예정된 일정 3개 (status: 'planning')
-INSERT INTO schedules (id, user_id, title, region, start_date, end_date, status) VALUES
-('s-1', 'admin', '에메랄드빛 제주 바다 여행', '제주특별자치도', '2026-06-15', '2026-06-18', 'planning'),
-('s-2', 'admin', '고즈넉한 경주 야경 산책', '경상북도', '2026-09-04', '2026-09-06', 'planning'),
-('s-3', 'admin', '부산 광안리 해변과 식도락 투어', '부산광역시', '2026-10-10', '2026-10-12', 'planning');
-
--- 완료된 지난 일정 2개 (status: 'completed')
-INSERT INTO schedules (id, user_id, title, region, start_date, end_date, status) VALUES
-('h-1', 'admin', '강릉 안목해변 커피거리 휴가', '강원특별자치도', '2025-11-20', '2025-11-22', 'completed'),
-('h-2', 'admin', '서울 도심 야경 투어', '서울특별시', '2025-12-24', '2025-12-26', 'completed');
+-- 7. 유저별 지역 대표사진 테이블 (인터랙티브맵 배경 / 일정 카드 썸네일용)
+-- 갤러리(schedule_images)는 일행끼리 공유되지만, 대표사진은 일행과 공유되지 않고
+-- 각 유저가 지역별로 자신의 대표사진을 따로 지정합니다.
+CREATE TABLE IF NOT EXISTS user_map_covers (
+    user_id    VARCHAR(50) NOT NULL,
+    region     VARCHAR(50) NOT NULL, -- '제주특별자치도' 등
+    image_data LONGTEXT    NOT NULL, -- 대표로 지정한 사진의 Base64 데이터
+    PRIMARY KEY (user_id, region),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
