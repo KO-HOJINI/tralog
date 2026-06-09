@@ -5,16 +5,14 @@
 
 import { usePhotoActions } from "./hooks/usePhotoActions";
 import { API_BASE_URL } from "../../../config/api";
-import type { MapRecord } from "./MyMapPage";
 
 interface PhotoGridProps {
   regionName: string;
   onBack: () => void;
-  mapRecords: MapRecord[];
   onRefresh: () => void;
 }
 
-export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }: PhotoGridProps) {
+export default function PhotoGrid({ regionName, onBack, onRefresh }: PhotoGridProps) {
   const {
     fileInputRef,
     uploadedFileName,
@@ -25,7 +23,7 @@ export default function PhotoGrid({ regionName, onBack, mapRecords, onRefresh }:
     handleFileChange,
     handleSetCover,
     handleDeletePhoto,
-  } = usePhotoActions(regionName, mapRecords, onRefresh);
+  } = usePhotoActions(regionName, onRefresh);
 
   return (
     <div className="flex flex-col gap-4 w-full h-full min-h-0 overflow-hidden">

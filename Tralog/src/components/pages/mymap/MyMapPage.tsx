@@ -105,7 +105,6 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
                 // 뒤로가기 시 최신 데이터 다시 로드
                 setTimeout(() => { fetchMapRecords(); }, 0);
               }}
-              mapRecords={mapRecords}
               onRefresh={fetchMapRecords}
             />
           )}

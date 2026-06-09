@@ -3,32 +3,53 @@
 //
 // ※ AI 도움 - FileReader로 파일을 base64 문자열로 변환 후 서버 전송
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import type { ChangeEvent } from "react";
 import { API_BASE_URL } from "../../../../config/api";
 import type { MapRecord } from "../MyMapPage";
 
-export function usePhotoActions(
-  regionName: string,
-  mapRecords: MapRecord[],
-  onRefresh: () => void,
-) {
+// 대표사진은 유저별 저장이라 로그인 유저 ID 필요
+const getUserId = (): string | null => {
+  const sessionData = localStorage.getItem("tralog_current_user");
+  return sessionData ? JSON.parse(sessionData).id : null;
+};
+
+export function usePhotoActions(regionName: string, onRefresh: () => void) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음");
   const [isUploading, setIsUploading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // 현재 지역의 사진 기록 (없으면 빈 객체 반환)
-  const currentRecord = mapRecords.find((r) => r.region === regionName) ?? {
+  // 선택한 지역의 사진은 지도 로딩과 분리해 필요할 때만 따로 불러온다.
+  // (지도는 대표사진만 받으므로 전체 사진은 이 훅에서 지역별로 지연 로드)
+  const [currentRecord, setCurrentRecord] = useState<MapRecord>({
     region: regionName,
     images: [],
     coverImage: "",
-  };
+  });
 
-  // 대표사진은 유저별 저장이라 로그인 유저 ID 필요
-  const getUserId = (): string | null => {
-    const sessionData = localStorage.getItem("tralog_current_user");
-    return sessionData ? JSON.parse(sessionData).id : null;
+  const fetchRegion = useCallback(async () => {
+    const userId = getUserId();
+    if (!userId) return;
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/map/region/${userId}/${encodeURIComponent(regionName)}`,
+      );
+      if (res.ok) setCurrentRecord(await res.json());
+    } catch (error) {
+      console.error("지역 사진 로드 에러:", error);
+    }
+  }, [regionName]);
+
+  // 지역이 바뀌면 해당 지역 사진을 다시 로드
+  useEffect(() => {
+    fetchRegion();
+  }, [fetchRegion]);
+
+  // 업로드/대표설정/삭제 후: 이 지역 갤러리 + 지도 대표사진을 함께 갱신
+  const refreshAll = () => {
+    fetchRegion();
+    onRefresh();
   };
 
   // 마이맵 갤러리 업로드는 "나만의 지도"라 개인 저장.
@@ -64,7 +85,7 @@ export function usePhotoActions(
 
         if (response.ok) {
           setSelectedIndex(null);
-          onRefresh();
+          refreshAll();
         } else {
           const errorData = await response.json().catch(() => ({})) as { error?: string; message?: string };
           const errorMsg = errorData.error ?? errorData.message ?? "알 수 없는 에러";
@@ -103,7 +124,7 @@ export function usePhotoActions(
       if (response.ok) {
         alert(`${regionName}의 대표 사진이 지도로 반영되었습니다!`);
         setSelectedIndex(null);
-        onRefresh();
+        refreshAll();
       }
     } catch (error) {
       console.error("대표 설정 에러:", error);
@@ -130,7 +151,7 @@ export function usePhotoActions(
 
       if (response.ok) {
         setSelectedIndex(null);
-        onRefresh();
+        refreshAll();
       }
     } catch (error) {
       console.error("삭제 에러:", error);
