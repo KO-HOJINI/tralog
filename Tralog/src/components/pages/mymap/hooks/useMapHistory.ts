@@ -46,11 +46,13 @@ export function useMapHistory(
       if (isMounted) setIsLoading(true);
 
       try {
-        // 완료된 일정 + 진행 중인 일정 각각 로드
-        const historyRes = await fetch(`${API_BASE_URL}/api/schedules/history/${user.id}`);
+        // 완료된 일정 + 진행 중인 일정을 병렬로 로드 (예전엔 순차라 왕복이 2번 직렬로 쌓였음).
+        // 이 목록은 대표사진을 쓰지 않으므로 ?images=0 으로 base64를 빼서 응답을 가볍게 받는다.
+        const [historyRes, activeRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/api/schedules/history/${user.id}?images=0`),
+          fetch(`${API_BASE_URL}/api/schedules/active/${user.id}?images=0`),
+        ]);
         const historyData: ScheduleRow[] = historyRes.ok ? await historyRes.json() : [];
-
-        const activeRes = await fetch(`${API_BASE_URL}/api/schedules/active/${user.id}`);
         const activeData: ScheduleRow[] = activeRes.ok ? await activeRes.json() : [];
 
         const today = new Date();

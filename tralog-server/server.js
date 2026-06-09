@@ -65,27 +65,6 @@ setInterval(runAutoComplete, 60 * 60 * 1000);
 // 콜드 스타트 방지용 핑 대상 (DB를 건드리지 않는 가벼운 헬스체크)
 app.get("/health", (req, res) => res.status(200).send("ok"));
 
-// 진단용: DB 왕복 시간(ms) 측정 - 리전 변경 효과 확인용 (확인 후 삭제해도 됨)
-// 브라우저에서 https://<your-app>/api/diag/db 로 접속하면 됨
-app.get("/api/diag/db", async (req, res) => {
-  const time = async (label, sql, params = []) => {
-    const start = process.hrtime.bigint();
-    await db.promise().query(sql, params);
-    const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    return { label, ms: Math.round(ms * 10) / 10 };
-  };
-  try {
-    const results = [];
-    // SELECT 1 = 순수 왕복 지연(RTT) 측정. 첫 호출은 커넥션 준비 비용이 섞일 수 있어 여러 번.
-    for (let i = 0; i < 5; i++) results.push(await time(`SELECT 1 #${i + 1}`, "SELECT 1"));
-    // 실제 테이블 조회도 한 번 (인덱스 유무/데이터량 영향 확인)
-    results.push(await time("COUNT schedules", "SELECT COUNT(*) FROM schedules"));
-    res.status(200).json(results);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 /** ==========================================
  * 1. 인증 (Auth) API
  * ========================================== */
@@ -188,19 +167,24 @@ const autoCompleteSchedules = (callback) => callback();
 app.get("/api/schedules/history/:userId", (req, res) => {
   autoCompleteSchedules(() => {
     const userId = req.params.userId;
+    // ?images=0 이면 대표사진(base64)을 빼고 보낸다. 목록만 그리는 화면(마이맵 히스토리)은
+    // bgImage를 안 쓰는데도 일정마다 base64를 받아 느렸음 → 필요할 때만 싣도록 분기.
+    const includeImages = req.query.images !== "0";
+    const bgImageSelect = includeImages
+      ? `(SELECT umc.image_data FROM user_map_covers umc
+            WHERE umc.user_id = ? AND umc.region = s.region LIMIT 1) as bgImage,`
+      : `NULL as bgImage,`;
     const query = `
       SELECT DISTINCT s.*,
-        (SELECT umc.image_data
-          FROM user_map_covers umc
-          WHERE umc.user_id = ? AND umc.region = s.region
-          LIMIT 1) as bgImage,
+        ${bgImageSelect}
         (SELECT COUNT(*) FROM schedule_images si3 WHERE si3.schedule_id = s.id) as photo_count
       FROM schedules s
       LEFT JOIN schedule_companions sc ON s.id = sc.schedule_id
       WHERE (s.user_id = ? OR sc.user_id = ?) AND s.status = 'completed'
       ORDER BY s.end_date DESC
     `;
-    db.query(query, [userId, userId, userId], (err, results) => {
+    const params = includeImages ? [userId, userId, userId] : [userId, userId];
+    db.query(query, params, (err, results) => {
       if (err) return res.status(500).json({ error: err.message });
       res.status(200).json(results);
     });
@@ -211,19 +195,23 @@ app.get("/api/schedules/history/:userId", (req, res) => {
 app.get("/api/schedules/active/:userId", (req, res) => {
   autoCompleteSchedules(() => {
     const userId = req.params.userId;
+    // ?images=0 이면 대표사진(base64) 제외 (마이맵 히스토리처럼 목록만 필요한 경우)
+    const includeImages = req.query.images !== "0";
+    const bgImageSelect = includeImages
+      ? `(SELECT umc.image_data FROM user_map_covers umc
+            WHERE umc.user_id = ? AND umc.region = s.region LIMIT 1) as bgImage,`
+      : `NULL as bgImage,`;
     const query = `
       SELECT DISTINCT s.*,
-        (SELECT umc.image_data
-          FROM user_map_covers umc
-          WHERE umc.user_id = ? AND umc.region = s.region
-          LIMIT 1) as bgImage,
+        ${bgImageSelect}
         (SELECT COUNT(*) FROM schedule_images si3 WHERE si3.schedule_id = s.id) as photo_count
       FROM schedules s
       LEFT JOIN schedule_companions sc ON s.id = sc.schedule_id
       WHERE (s.user_id = ? OR sc.user_id = ?) AND s.status = 'planning'
       ORDER BY s.start_date ASC
     `;
-    db.query(query, [userId, userId, userId], (err, results) => {
+    const params = includeImages ? [userId, userId, userId] : [userId, userId];
+    db.query(query, params, (err, results) => {
       if (err) return res.status(500).json({ error: err.message });
       res.status(200).json(results);
     });
