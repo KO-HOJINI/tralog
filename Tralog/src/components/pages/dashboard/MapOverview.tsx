@@ -82,13 +82,16 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           </div>
 
           <div className="flex flex-col gap-1.5 w-full mt-1">
-            {/* 달성률 게이지 */}
-            <progress
-              className="progress w-full h-2.5"
-              style={{ accentColor: "var(--color-primary)" }}
-              value={achievementRate}
-              max={100}
-            />
+            {/* 달성률 게이지 - 금색 카드에 어울리는 앰버 톤 채움 */}
+            <div className="w-full h-2.5 rounded-full bg-white/45 overflow-hidden shadow-inner">
+              <div
+                className="h-full rounded-full transition-all duration-700 ease-out"
+                style={{
+                  width: `${achievementRate}%`,
+                  background: "linear-gradient(to right, #fb923c, #ea580c)",
+                }}
+              />
+            </div>
             <div className="flex justify-between items-center px-0.5">
               <span className="text-body-caption">달성률</span>
               <span className="text-body-caption">{achievementRate}%</span>
