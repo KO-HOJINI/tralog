@@ -110,14 +110,10 @@ app.post("/api/login", (req, res) => {
 
     const user = results[0];
 
-    // 저장된 값이 bcrypt 해시($2로 시작)면 해시 비교, 아니면 기존 평문 계정으로 간주
-    const isHashed = typeof user.password === "string" && user.password.startsWith("$2");
-
+    // 저장된 bcrypt 해시와 입력 비밀번호 비교
     let isMatch;
     try {
-      isMatch = isHashed
-        ? await bcrypt.compare(password, user.password)
-        : password === user.password;
+      isMatch = await bcrypt.compare(password, user.password);
     } catch (compareErr) {
       console.error("비밀번호 비교 오류:", compareErr);
       return res.status(500).json({ error: "DB 오류" });
@@ -127,18 +123,6 @@ app.post("/api/login", (req, res) => {
       return res
         .status(400)
         .json({ field: "password", message: "비밀번호가 일치하지 않습니다." });
-
-    // 기존 평문 계정은 로그인 성공 시 해시로 자동 업그레이드 (마이그레이션)
-    if (!isHashed) {
-      try {
-        const newHash = await bcrypt.hash(password, SALT_ROUNDS);
-        db.query("UPDATE users SET password = ? WHERE id = ?", [newHash, id], (updateErr) => {
-          if (updateErr) console.error("비밀번호 해시 마이그레이션 실패:", updateErr);
-        });
-      } catch (hashErr) {
-        console.error("비밀번호 해시 마이그레이션 오류:", hashErr);
-      }
-    }
 
     return res.status(200).json({ id: user.id, name: user.name });
   });
