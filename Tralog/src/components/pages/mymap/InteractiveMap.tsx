@@ -53,6 +53,13 @@ export default function InteractiveMap({
     .scale(8500)
     .translate([width - 25, height - 50]);
 
+  // 울릉도/독도(경상북도 소속)는 실제 좌표가 동쪽으로 너무 멀어 화면 밖으로 벗어납니다.
+  // 본토 투영기와 동일한 scale을 쓰되 translate만 왼쪽으로 당겨 동해안 가까이 붙였습니다.
+  const ulleungProjection = geoMercator()
+    .center([128, 37])
+    .scale(7500)
+    .translate([width / 2 - 148, height / 2 - 12]);
+
   // GeoJSON의 code 값을 한국어 지역명으로 변환합니다
   const getRegionInfo = (feature: Feature<Geometry, ProvinceProperties>) => {
     const code = feature.properties?.code;
@@ -125,8 +132,35 @@ export default function InteractiveMap({
           const activeProjection = isJeju ? jejuProjection : mainProjection;
           const pathGenerator = geoPath().projection(activeProjection);
 
-          const dPath = pathGenerator(feature) || "";
-          const centroid = pathGenerator.centroid(feature);
+          // 경상북도는 본토 + 울릉도/독도로 이루어진 MultiPolygon입니다.
+          // 본토 도형은 기본 투영기로, 멀리 떨어진 섬 도형은 동해안 가까이 당긴 투영기로 따로 그립니다.
+          const isGyeongbuk = feature.properties?.code === "37";
+          let mainFeature: Feature<Geometry, ProvinceProperties> = feature;
+          let islandPath = "";
+          if (isGyeongbuk && feature.geometry.type === "MultiPolygon") {
+            const polys = feature.geometry.coordinates;
+            // 면적이 가장 큰 폴리곤을 본토로 간주하고 나머지(섬)는 분리합니다.
+            let mainIdx = 0;
+            polys.forEach((poly, i) => {
+              if (poly[0].length > polys[mainIdx][0].length) mainIdx = i;
+            });
+            mainFeature = {
+              ...feature,
+              geometry: { type: "MultiPolygon", coordinates: [polys[mainIdx]] },
+            };
+            const islandFeature: Feature<Geometry, ProvinceProperties> = {
+              type: "Feature",
+              properties: feature.properties,
+              geometry: {
+                type: "MultiPolygon",
+                coordinates: polys.filter((_, i) => i !== mainIdx),
+              },
+            };
+            islandPath = geoPath().projection(ulleungProjection)(islandFeature) || "";
+          }
+
+          const dPath = pathGenerator(mainFeature) || "";
+          const centroid = pathGenerator.centroid(mainFeature);
           let [labelX, labelY] = centroid || [0, 0];
 
           // 일부 지역의 라벨 위치가 겹쳐서 수동으로 조정했습니다
@@ -153,6 +187,24 @@ export default function InteractiveMap({
                 strokeWidth={isSelected ? "2" : "0.7"}
               />
 
+              {/* 울릉도/독도: 본토와 같은 지역(경북)으로 취급해 클릭/스타일을 동일하게 적용합니다 */}
+              {islandPath && (
+                <path
+                  d={islandPath}
+                  onClick={() => !readOnly && onSelectRegion(isSelected ? null : regionKey)}
+                  className={`${!readOnly ? "cursor-pointer transition-all duration-200 hover:fill-teal-500/5" : ""}`}
+                  fill={
+                    hasCover
+                      ? `url(#pattern-${regionKey})`
+                      : isSelected
+                        ? "rgba(13, 148, 136, 0.15)"
+                        : "#ffffff"
+                  }
+                  stroke={isSelected ? "#0d9488" : "#e2e8f0"}
+                  strokeWidth={isSelected ? "2" : "0.7"}
+                />
+              )}
+
               {labelX && labelY && (
                 <text
                   x={labelX}
@@ -174,6 +226,38 @@ export default function InteractiveMap({
           );
         })}
       </g>
+
+      {/* 독도는 GeoJSON 데이터에 폴리곤이 없어서, 울릉도 옆에 작은 마커로 직접 표시합니다.
+          경상북도 소속이므로 경북의 대표사진/선택 상태/클릭을 그대로 따라갑니다.
+          (실제로는 울릉도에서 동남쪽으로 더 떨어져 있지만, 화면 밖으로 나가지 않게 가깝게 찍습니다.) */}
+      {(() => {
+        const dokdoRegionKey = "경상북도";
+        const record = mapRecords.find((r) => r.region === dokdoRegionKey);
+        const hasCover = record && record.coverImage;
+        const isSelected = !readOnly && selectedRegion === dokdoRegionKey;
+
+        const ulleungPt = ulleungProjection([130.85, 37.5]) || [0, 0];
+        const dokdoX = ulleungPt[0] + 25;
+        const dokdoY = ulleungPt[1] + 15;
+        return (
+          <circle
+            cx={dokdoX}
+            cy={dokdoY}
+            r={2.4}
+            onClick={() => !readOnly && onSelectRegion(isSelected ? null : dokdoRegionKey)}
+            className={`${!readOnly ? "cursor-pointer transition-all duration-200 hover:fill-teal-500/5" : ""}`}
+            fill={
+              hasCover
+                ? `url(#pattern-${dokdoRegionKey})`
+                : isSelected
+                  ? "rgba(13, 148, 136, 0.15)"
+                  : "#ffffff"
+            }
+            stroke={isSelected ? "#0d9488" : "#e2e8f0"}
+            strokeWidth={isSelected ? "2" : "0.7"}
+          />
+        );
+      })()}
 
       {/* 제주도 인셋 구역을 점선 테두리로 구분합니다 */}
       <rect
