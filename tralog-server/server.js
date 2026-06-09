@@ -447,11 +447,16 @@ app.delete("/api/companions/:scheduleId/:userId", (req, res) => {
 app.get("/api/map/records/:userId", (req, res) => {
   const userId = req.params.userId;
   // 갤러리 사진은 본인 일정 + 일행으로 참여한 일정까지 모두 조회 (공유 O)
+  // 동행자(companion)를 LEFT JOIN하면 동행자 수만큼 사진이 중복 조회되므로
+  // (카테시안 곱), 일행 참여 여부는 EXISTS 서브쿼리로 판별해 행 복제를 막는다.
   const galleryQuery = `
     SELECT si.region, si.image_data FROM schedule_images si
     JOIN schedules s ON si.schedule_id = s.id
-    LEFT JOIN schedule_companions sc ON s.id = sc.schedule_id
-    WHERE s.user_id = ? OR sc.user_id = ?
+    WHERE s.user_id = ?
+       OR EXISTS (
+         SELECT 1 FROM schedule_companions sc
+         WHERE sc.schedule_id = s.id AND sc.user_id = ?
+       )
   `;
   db.query(galleryQuery, [userId, userId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
