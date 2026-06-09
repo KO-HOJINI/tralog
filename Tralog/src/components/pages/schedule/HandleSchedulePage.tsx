@@ -62,7 +62,7 @@ export default function HandleSchedulePage({
         }}
       />
 
-      <main className="flex-1 h-0 w-[70%] max-w-300 mx-auto py-6 flex flex-col overflow-hidden">
+      <main className="flex-1 h-0 w-[70%] mx-auto py-6 flex flex-col overflow-hidden">
         {/* 상단: 일정 제목/날짜 (편집 모드면 입력 가능) + 헤더 버튼 영역 */}
         <div className="flex w-full gap-5 items-end shrink-0 pb-5">
           <div className="flex-1 flex flex-col gap-2.5 items-start pl-1">

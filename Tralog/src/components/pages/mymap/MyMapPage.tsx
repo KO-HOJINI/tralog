@@ -66,7 +66,7 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
     onNavigate("login");
   };
 
-  if (!currentUser || loading) return null;
+  if (!currentUser) return null;
 
   return (
     <div className="flex-col-full h-screen bg-background antialiased text-dark">
@@ -90,6 +90,10 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
         <div className="w-1/2 flex flex-col h-full overflow-hidden">
           {selectedRegion === null ? (
             <MyMapHistory onSelectRegion={setSelectedRegion} onNavigate={onNavigate} />
+          ) : loading ? (
+            <div className="flex-1 flex items-center justify-center">
+              <span className="loading loading-spinner loading-md text-primary" />
+            </div>
           ) : (
             <PhotoGrid
               regionName={selectedRegion}
