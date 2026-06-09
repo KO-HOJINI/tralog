@@ -50,9 +50,15 @@ export default function PhotoUploadModal({
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result as string;
-      const scheduleId =
-        localStorage.getItem("tralog_active_schedule_id") ||
-        `direct-${selectedRegion}`;
+
+      // 이 모달은 "나만의 지도"용 개인 사진 업로드다. 활성 일정 ID(공유 일정)에
+      // 붙이면 그 일정의 일행에게 사진이 전부 누수되므로, 마이맵 그리드 업로드와
+      // 동일하게 유저별 지역 ID(direct-유저-지역)로 저장한다. (※ usePhotoActions 와 동일 규칙)
+      const session = localStorage.getItem("tralog_current_user");
+      const userId = session ? (JSON.parse(session) as { id: string }).id : null;
+      const scheduleId = userId
+        ? `direct-${userId}-${selectedRegion}`
+        : `direct-${selectedRegion}`;
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/map/upload`, {
@@ -60,6 +66,7 @@ export default function PhotoUploadModal({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             schedule_id: scheduleId,
+            user_id: userId,
             region: selectedRegion,
             image_data: base64String,
           }),

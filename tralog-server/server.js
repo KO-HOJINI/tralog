@@ -31,7 +31,7 @@ db.connect((err) => {
     console.error("❌ MySQL 연결 실패:", err);
     return;
   }
-  console.log("✅ XAMPP MySQL 데이터베이스 연동 활성화 완료");
+  console.log("✅ MySQL 데이터베이스 연동 활성화 완료");
 });
 
 /** ==========================================
@@ -42,17 +42,33 @@ app.post("/api/register", (req, res) => {
 
   // 서버 측 유효성 검사 (DB 컬럼 길이/형식 위반 시 친절한 메시지 반환)
   if (!id || !password || !name || !birth || !email)
-    return res.status(400).json({ message: "필수 입력 항목이 누락되었습니다." });
+    return res
+      .status(400)
+      .json({ message: "필수 입력 항목이 누락되었습니다." });
   if (!/^[a-zA-Z0-9_]{4,20}$/.test(id))
-    return res.status(400).json({ message: "아이디는 영문/숫자/_ 4~20자여야 합니다." });
-  if (typeof password !== "string" || password.length < 8 || password.length > 20)
+    return res
+      .status(400)
+      .json({ message: "아이디는 영문/숫자/_ 4~20자여야 합니다." });
+  if (
+    typeof password !== "string" ||
+    password.length < 8 ||
+    password.length > 20
+  )
     return res.status(400).json({ message: "비밀번호는 8~20자여야 합니다." });
   if (typeof name !== "string" || name.trim().length < 1 || name.length > 50)
     return res.status(400).json({ message: "이름이 올바르지 않습니다." });
   if (!/^\d{6}$/.test(birth))
-    return res.status(400).json({ message: "생년월일은 6자리 숫자여야 합니다." });
-  if (typeof email !== "string" || email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    return res.status(400).json({ message: "이메일 형식이 올바르지 않습니다." });
+    return res
+      .status(400)
+      .json({ message: "생년월일은 6자리 숫자여야 합니다." });
+  if (
+    typeof email !== "string" ||
+    email.length > 100 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  )
+    return res
+      .status(400)
+      .json({ message: "이메일 형식이 올바르지 않습니다." });
 
   const checkQuery = "SELECT id FROM users WHERE id = ?";
   db.query(checkQuery, [id], (err, results) => {
@@ -453,10 +469,10 @@ app.get("/api/map/records/:userId", (req, res) => {
     SELECT si.region, si.image_data FROM schedule_images si
     JOIN schedules s ON si.schedule_id = s.id
     WHERE s.user_id = ?
-       OR EXISTS (
-         SELECT 1 FROM schedule_companions sc
-         WHERE sc.schedule_id = s.id AND sc.user_id = ?
-       )
+      OR EXISTS (
+        SELECT 1 FROM schedule_companions sc
+        WHERE sc.schedule_id = s.id AND sc.user_id = ?
+      )
   `;
   db.query(galleryQuery, [userId, userId], (err, results) => {
     if (err) return res.status(500).json({ error: err.message });
