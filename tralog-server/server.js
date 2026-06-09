@@ -401,13 +401,17 @@ app.delete("/api/places/:id", (req, res) => {
 });
 
 app.post("/api/expenses", (req, res) => {
-  const { id, schedule_id, category, detail, amount } = req.body;
+  const { id, schedule_id, category, detail, amount, day_number } = req.body;
   const query =
-    "INSERT INTO schedule_expenses (id, schedule_id, category, detail, amount) VALUES (?, ?, ?, ?, ?)";
-  db.query(query, [id, schedule_id, category, detail, amount], (err) => {
-    if (err) return res.status(500).json({ error: err.message });
-    res.status(201).json({ message: "지출 등록 완료" });
-  });
+    "INSERT INTO schedule_expenses (id, schedule_id, category, detail, amount, day_number) VALUES (?, ?, ?, ?, ?, ?)";
+  db.query(
+    query,
+    [id, schedule_id, category, detail, amount, day_number ?? null],
+    (err) => {
+      if (err) return res.status(500).json({ error: err.message });
+      res.status(201).json({ message: "지출 등록 완료" });
+    },
+  );
 });
 
 app.delete("/api/expenses/:id", (req, res) => {

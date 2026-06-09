@@ -121,7 +121,7 @@ export default function PlaceItemCard({
                   {isEditing && (
                     <button
                       onClick={handleDeleteMemo}
-                      className="text-white/60 hover:text-white text-[11px] font-bold px-1 transition-colors"
+                      className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 text-[11px] font-bold transition-colors"
                     >
                       ✕
                     </button>
@@ -140,7 +140,7 @@ export default function PlaceItemCard({
                   {isEditing && (
                     <button
                       onClick={() => handleDeleteExpense(idx)}
-                      className="text-slate-300 hover:text-red-500 text-[11px] font-bold px-1 transition-colors opacity-0 group-hover/exp:opacity-100"
+                      className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 text-[11px] font-bold transition-colors"
                     >
                       ✕
                     </button>

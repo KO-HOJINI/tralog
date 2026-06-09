@@ -129,7 +129,7 @@ export default function CompanionSection({
                   <button
                     onClick={() => canEdit && removeCompanion(comp.id)}
                     disabled={!canEdit}
-                    className="w-5 h-5 rounded-full text-slate-400 hover:text-red-500 font-bold text-[10px] flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-slate-400"
+                    className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 text-[11px] font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-slate-400"
                     title="멤버 제외"
                   >
                     ✕

@@ -149,7 +149,12 @@ export default function HandleSchedulePage({
               />
             )}
             {activeTab === "account" && (
-              <AccountBookSection scheduleId={scheduleId} canEdit={canEdit} />
+              <AccountBookSection
+                scheduleId={scheduleId}
+                canEdit={canEdit}
+                startDate={scheduleMeta.start_date}
+                endDate={scheduleMeta.end_date}
+              />
             )}
             {activeTab === "companion" && (
               <CompanionSection

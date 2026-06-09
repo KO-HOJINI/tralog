@@ -5,16 +5,27 @@
 import { useState } from "react";
 
 interface ExpenseAddFormProps {
-  onAddExpense: (category: string, detail: string, amount: number) => Promise<void>;
+  onAddExpense: (
+    category: string,
+    detail: string,
+    amount: number,
+    dayNumber: number | null,
+  ) => Promise<void>;
   canEdit?: boolean;
+  totalDays?: number;
 }
 
 const CATEGORIES = ["식비", "숙소", "교통", "기타"] as const;
 
-export default function ExpenseAddForm({ onAddExpense, canEdit = false }: ExpenseAddFormProps) {
+export default function ExpenseAddForm({
+  onAddExpense,
+  canEdit = false,
+  totalDays = 1,
+}: ExpenseAddFormProps) {
   const [detail, setDetail] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("식비");
+  const [day, setDay] = useState<string>("1"); // "" = 미지정
 
   // 제출 - 내역/금액 검증 후 부모에 추가 요청
   const handleSubmit = async (e: React.FormEvent) => {
@@ -27,9 +38,9 @@ export default function ExpenseAddForm({ onAddExpense, canEdit = false }: Expens
       return alert("올바른 금액을 입력해주세요.");
     }
 
-    // 부모 컴포넌트가 넘겨준 추가 함수 실행
-    await onAddExpense(category, detail.trim(), parsedAmount);
-    
+    // 부모 컴포넌트가 넘겨준 추가 함수 실행 (day === "" 이면 미지정)
+    await onAddExpense(category, detail.trim(), parsedAmount, day ? parseInt(day) : null);
+
     // 입력 칸 초기화
     setDetail("");
     setAmount("");
@@ -41,9 +52,19 @@ export default function ExpenseAddForm({ onAddExpense, canEdit = false }: Expens
       className="shrink-0 flex gap-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-200"
     >
       <select
+        value={day}
+        onChange={(e) => setDay(e.target.value)}
+        className="w-20 h-10 px-2 text-xs font-bold input-custom focus:outline-none shrink-0"
+      >
+        {Array.from({ length: totalDays }, (_, i) => i + 1).map((d) => (
+          <option key={d} value={d}>{d}일차</option>
+        ))}
+        <option value="">미지정</option>
+      </select>
+      <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-20 h-10 px-2 text-xs font-bold input-custom focus:outline-none"
+        className="w-20 h-10 px-2 text-xs font-bold input-custom focus:outline-none shrink-0"
       >
         {CATEGORIES.map((cat) => (
           <option key={cat} value={cat}>{cat}</option>

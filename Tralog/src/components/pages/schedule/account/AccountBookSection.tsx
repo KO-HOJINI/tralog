@@ -26,15 +26,30 @@ interface AccountBookSectionProps {
   scheduleId: string;
   companionCount?: number;
   canEdit?: boolean;
+  startDate?: string;
+  endDate?: string;
 }
 
 export default function AccountBookSection({
   scheduleId,
   companionCount = 1,
   canEdit = false,
+  startDate,
+  endDate,
 }: AccountBookSectionProps) {
   const [expenses, setExpenses] = useState<AccountItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // 시작일/종료일로 총 여행 일수 계산 (일차 선택용)
+  let totalDays = 1;
+  if (startDate && endDate) {
+    const diff =
+      Math.ceil(
+        (new Date(endDate).getTime() - new Date(startDate).getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1;
+    totalDays = Math.max(diff, 1);
+  }
 
   // 지출 내역 로드
   useEffect(() => {
@@ -86,20 +101,30 @@ export default function AccountBookSection({
   });
 
   // 지출 추가 - 서버 저장 후 목록에 반영
-  const handleAddExpense = async (category: string, detail: string, amount: number) => {
+  const handleAddExpense = async (
+    category: string,
+    detail: string,
+    amount: number,
+    dayNumber: number | null,
+  ) => {
     const newId = `acc-${Date.now()}`;
     const newExpense: AccountItem = {
       id: newId,
       category,
       detail,
       amount,
+      day_number: dayNumber ?? undefined,
     };
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newExpense, schedule_id: scheduleId }),
+        body: JSON.stringify({
+          ...newExpense,
+          schedule_id: scheduleId,
+          day_number: dayNumber,
+        }),
       });
       if (res.ok) {
         setExpenses((prev) => [...prev, newExpense]);
@@ -167,9 +192,9 @@ export default function AccountBookSection({
                     {canEdit && (
                       <button
                         onClick={() => handleDeleteExpense(item.id)}
-                        className="text-[10px] font-bold text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 text-[11px] font-bold transition-colors"
                       >
-                        삭제
+                        ✕
                       </button>
                     )}
                   </div>
@@ -191,7 +216,7 @@ export default function AccountBookSection({
       )}
 
       {/* 지출 추가 폼 (읽기 전용 일행은 비활성화) */}
-      <ExpenseAddForm onAddExpense={handleAddExpense} canEdit={canEdit} />
+      <ExpenseAddForm onAddExpense={handleAddExpense} canEdit={canEdit} totalDays={totalDays} />
     </div>
   );
 }

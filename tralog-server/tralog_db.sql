@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS schedule_expenses (
     category    VARCHAR(20) NOT NULL, -- '식비', '숙소', '교통', '기타'
     detail      VARCHAR(150) NOT NULL,
     amount      INT         NOT NULL DEFAULT 0,
+    day_number  INT         NULL,     -- 가계부 일차별 분류 (NULL = 미지정)
     FOREIGN KEY (schedule_id) REFERENCES schedules(id) ON DELETE CASCADE
 );
 

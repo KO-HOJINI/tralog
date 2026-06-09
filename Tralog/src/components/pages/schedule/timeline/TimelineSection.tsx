@@ -87,13 +87,23 @@ export default function TimelineSection({
         if (!res.ok) throw new Error("일정 로드 실패");
         const data = await res.json();
 
+        // 카드에서 추가한 비용은 가계부에 detail=장소명으로 저장된다.
+        // 재진입 시 장소명으로 매칭해 카드 비용 태그를 복원한다.
+        const apiExpenses: TimelineExpense[] = (data.expenses || []).map(
+          (e: { detail: string; amount: number; category: string }) => ({
+            detail: e.detail,
+            amount: e.amount,
+            category: e.category || "기타",
+          }),
+        );
+
         const mapped: TimelineItem[] = (data.places || []).map((p: ApiPlaceData) => ({
           id: p.id,
           time: p.visit_time,
           place: p.place_name,
           day_number: p.day_number,
           memo: p.memo,
-          expenses: [],
+          expenses: apiExpenses.filter((e) => e.detail === p.place_name),
           lat: p.lat ? Number(p.lat) : undefined,
           lng: p.lng ? Number(p.lng) : undefined,
         }));
@@ -153,6 +163,8 @@ export default function TimelineSection({
 
   // 비용 추가 - 가계부에 저장하고 해당 장소 카드에도 반영
   const handleAddExpense = async (placeId: string, detail: string, amount: number, category: string) => {
+    // 비용은 해당 장소가 속한 일차로 가계부에 분류한다.
+    const dayNumber = allItems.find((item) => item.id === placeId)?.day_number ?? null;
     try {
       await fetch(`${API_BASE_URL}/api/expenses`, {
         method: "POST",
@@ -163,6 +175,7 @@ export default function TimelineSection({
           category,
           detail,
           amount,
+          day_number: dayNumber,
         }),
       });
 
