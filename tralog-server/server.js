@@ -21,22 +21,46 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cors());
 
-// DB 연결 설정
-const db = mysql.createConnection({
+// DB 연결 설정 - 단일 커넥션 대신 커넥션 풀 사용
+// (단일 커넥션은 Aiven이 유휴 커넥션을 끊으면 다음 요청이 재연결로 지연되고,
+//  동시 요청도 직렬화됨. 풀은 끊긴 커넥션을 새로 만들고 동시 처리도 가능)
+const db = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   port: process.env.DB_PORT || 3306,
   user: process.env.DB_USER || "tralog",
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME || "tralog",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  // 유휴 커넥션이 중간 네트워크 장비/DB 타임아웃으로 끊기는 것을 방지
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 
-db.connect((err) => {
+// 풀은 첫 쿼리 때 실제 커넥션을 만들므로, 시작 시 한 번 연결을 확인한다
+db.getConnection((err, conn) => {
   if (err) {
     console.error("❌ MySQL 연결 실패:", err);
     return;
   }
-  console.log("✅ MySQL 데이터베이스 연동 활성화 완료");
+  console.log("✅ MySQL 데이터베이스 연동 활성화 완료 (connection pool)");
+  conn.release();
 });
+
+// 날짜가 지난 일정을 'completed'로 일괄 갱신하는 실제 작업
+const runAutoComplete = () => {
+  const updateQuery =
+    "UPDATE schedules SET status = 'completed' WHERE end_date < CURDATE() AND status = 'planning'";
+  db.query(updateQuery, (err) => {
+    if (err) console.error("⚠️ 지난 일정 자동 완료 업데이트 실패:", err);
+  });
+};
+
+// 예전엔 목록 조회 때마다 위 UPDATE를 실행해 매 요청에 DB 왕복이 한 번씩 더 붙었다.
+// 완료 전환은 자정 경계에서만 일어나므로, 서버 시작 시 1회 + 1시간마다 갱신으로 충분하다.
+runAutoComplete();
+setInterval(runAutoComplete, 60 * 60 * 1000);
 
 /** ==========================================
  * 1. 인증 (Auth) API
@@ -132,15 +156,9 @@ app.post("/api/login", (req, res) => {
  * 2. 일정(Schedules) 목록 및 상세 조회 API
  * ========================================== */
 
-// 날짜가 지난 일정을 자동으로 'completed' 처리하는 헬퍼
-const autoCompleteSchedules = (callback) => {
-  const updateQuery =
-    "UPDATE schedules SET status = 'completed' WHERE end_date < CURDATE() AND status = 'planning'";
-  db.query(updateQuery, (err) => {
-    if (err) console.error("⚠️ 지난 일정 자동 완료 업데이트 실패:", err);
-    callback(); // 업데이트 완료 후 기존 조회 로직 실행
-  });
-};
+// 지난 일정 자동 완료는 이제 주기 실행(runAutoComplete)이 담당하므로,
+// 조회 경로에서는 DB를 건드리지 않고 곧장 콜백만 실행한다. (호환을 위해 이름 유지)
+const autoCompleteSchedules = (callback) => callback();
 
 // 완료된 일정 리스트 (해당 지역의 대표 사진 및 업로드된 사진 개수 포함)
 app.get("/api/schedules/history/:userId", (req, res) => {
@@ -189,7 +207,7 @@ app.get("/api/schedules/active/:userId", (req, res) => {
 });
 
 // 단일 일정 종합 데이터 조회
-app.get("/api/schedules/:scheduleId", (req, res) => {
+app.get("/api/schedules/:scheduleId", async (req, res) => {
   const scheduleId = req.params.scheduleId;
   const scheduleQuery = "SELECT * FROM schedules WHERE id = ?";
   const placesQuery =
@@ -197,29 +215,34 @@ app.get("/api/schedules/:scheduleId", (req, res) => {
   const expensesQuery = "SELECT * FROM schedule_expenses WHERE schedule_id = ?";
 
   const companionsQuery = `
-    SELECT sc.user_id as id, u.name, sc.role 
+    SELECT sc.user_id as id, u.name, sc.role
     FROM schedule_companions sc
     JOIN users u ON sc.user_id = u.id
     WHERE sc.schedule_id = ?
   `;
 
-  db.query(scheduleQuery, [scheduleId], (err, sMeta) => {
-    if (err || sMeta.length === 0)
+  try {
+    // 예전엔 콜백 중첩으로 4개 쿼리를 순차 실행해 DB 왕복이 4번 일어났음.
+    // 서로 의존이 없으므로 병렬로 실행해 왕복 1회분 시간으로 단축한다.
+    const [[sMeta], [sPlaces], [sExpenses], [sCompanions]] = await Promise.all([
+      db.promise().query(scheduleQuery, [scheduleId]),
+      db.promise().query(placesQuery, [scheduleId]),
+      db.promise().query(expensesQuery, [scheduleId]),
+      db.promise().query(companionsQuery, [scheduleId]),
+    ]);
+
+    if (sMeta.length === 0)
       return res.status(404).json({ message: "일정을 찾을 수 없습니다." });
 
-    db.query(placesQuery, [scheduleId], (err, sPlaces) => {
-      db.query(expensesQuery, [scheduleId], (err, sExpenses) => {
-        db.query(companionsQuery, [scheduleId], (err, sCompanions) => {
-          res.status(200).json({
-            meta: sMeta[0],
-            places: sPlaces,
-            expenses: sExpenses,
-            companions: sCompanions,
-          });
-        });
-      });
+    res.status(200).json({
+      meta: sMeta[0],
+      places: sPlaces,
+      expenses: sExpenses,
+      companions: sCompanions,
     });
-  });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // 새 일정 생성
