@@ -2,7 +2,7 @@
 
 > 여행 일정을 짜고, 다녀온 곳을 **나만의 지도**에 추억으로 남기는 여행 기록 웹앱
 
-크로스플랫폼프로그래밍2 수업 프로젝트로 만든 React 웹 애플리케이션입니다.
+크로스플랫폼프로그래밍2 강의 프로젝트로 만든 React 웹 애플리케이션입니다.
 "여행 계획"과 "여행 기록"이 보통 따로 노는 게 아쉬워서, 일정 짜기부터 다녀온 후 사진/추억 정리까지 한 곳에서 할 수 있게 만들어 봤습니다.
 
 ---
@@ -43,16 +43,27 @@
 | 애니메이션 | Framer Motion |
 | 지도 | d3-geo (대한민국 지도), Naver Maps API (장소 검색) |
 | 상태 관리 | React Hooks (별도 라이브러리 없이 `useState` / 커스텀 훅) |
+| 백엔드 | Node.js + Express, MySQL (`mysql2`) |
 
 > 라우팅 라이브러리(React Router)를 쓰지 않고 `useState` + History API로 직접 페이지 전환을 구현했습니다.
 > 브라우저 뒤로가기 버튼도 동작하도록 `pushState` / `popstate`를 연동했습니다.
 
 ---
 
-## 폴더 구조
+## 프로젝트 구성
+
+이 저장소는 프론트엔드와 백엔드 두 개의 프로젝트로 이루어진 모노레포입니다.
 
 ```
-src/
+.
+├── Tralog/          # 프론트엔드 (React + Vite)
+└── tralog-server/   # 백엔드 (Express + MySQL)
+```
+
+### 프론트엔드 (`Tralog/`)
+
+```
+Tralog/src/
 ├── App.tsx                  # 루트 컴포넌트 (페이지 전환 + History API)
 ├── main.tsx                 # 진입점
 ├── config/
@@ -76,40 +87,60 @@ src/
 
 데이터 로직은 최대한 커스텀 훅(`hooks/`)으로 분리해서 컴포넌트는 UI에 집중하도록 했습니다.
 
+### 백엔드 (`tralog-server/`)
+
+```
+tralog-server/
+├── server.js          # Express 서버 (회원가입/로그인, 장소 검색 프록시 등)
+├── tralog_db.sql      # MySQL 스키마
+└── .env.example       # 백엔드 환경변수 견본
+```
+
 ---
 
 ## 실행 방법
 
-### 1. 패키지 설치
+프론트엔드와 백엔드를 각각 실행합니다. (각 폴더에서 따로 `npm install`)
+
+### 백엔드 (`tralog-server/`)
+
 ```bash
+cd tralog-server
 npm install
+
+# 환경변수: .env.example을 복사해 .env 작성 (DB 접속 정보 / 네이버 검색 API 키)
+cp .env.example .env
+
+# DB 스키마 준비 (MySQL에 tralog_db.sql 적용)
+npm run dev        # nodemon으로 server.js 실행 (기본 포트 5000)
 ```
 
-### 2. 환경변수 설정
-`.env.example`을 복사해서 `.env`를 만들고, 값을 채워주세요.
+> DB 접속 정보(`DB_HOST` / `DB_USER` / `DB_PASSWORD` 등)와 네이버 검색 API 키는 `.env`에 채워야 합니다.
+> 스키마는 `tralog_db.sql`을 참고하세요.
+
+### 프론트엔드 (`Tralog/`)
 
 ```bash
+cd Tralog
+npm install
+
+# 환경변수: .env.example을 복사해 .env 작성
 cp .env.example .env
 ```
 
 ```env
-VITE_API_BASE_URL=백엔드_API_주소
+VITE_API_BASE_URL=백엔드_API_주소        # 예: http://localhost:5000
 VITE_NAVER_MAP_CLIENT_ID=네이버_지도_클라이언트_ID
+```
+
+```bash
+npm run dev        # 개발 서버 실행
+npm run build      # 타입 체크(tsc) 후 빌드
+npm run preview    # 빌드 결과 미리보기
 ```
 
 > `.env`가 없어도 빌드는 되지만, 로그인/장소 검색 같은 기능은 동작하지 않습니다.
 > 실제 키가 든 `.env`는 `.gitignore`에 등록되어 있어 커밋되지 않습니다. (공유는 `.env.example`로만)
-
-### 3. 개발 서버 실행
-```bash
-npm run dev
-```
-
-### 4. 빌드
-```bash
-npm run build      # 타입 체크(tsc) 후 빌드
-npm run preview    # 빌드 결과 미리보기
-```
 
 ---
 
