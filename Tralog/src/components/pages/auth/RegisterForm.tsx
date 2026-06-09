@@ -35,24 +35,61 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 항목별 유효성 검사 (빈 칸, 비밀번호 일치, 생년월일 6자리)
+    // 항목별 유효성 검사 (빈 칸, 형식, 길이 제한 / DB 컬럼 길이와 맞춤)
     const newErrors = { id: "", password: "", confirmPassword: "", name: "", birth: "", email: "" };
     let isValid = true;
 
-    if (!formData.id.trim()) { newErrors.id = "필수 입력 항목입니다."; isValid = false; }
-    if (!formData.password.trim()) { newErrors.password = "필수 입력 항목입니다."; isValid = false; }
-    if (!formData.confirmPassword.trim()) {
+    // 아이디: 영문/숫자/언더스코어 4~20자
+    if (!formData.id.trim()) {
+      newErrors.id = "필수 입력 항목입니다."; isValid = false;
+    } else if (!/^[a-zA-Z0-9_]{4,20}$/.test(formData.id)) {
+      newErrors.id = "영문/숫자/_ 조합 4~20자로 입력해 주세요."; isValid = false;
+    }
+
+    // 비밀번호: 8~20자, 영문과 숫자를 모두 포함
+    if (!formData.password) {
+      newErrors.password = "필수 입력 항목입니다."; isValid = false;
+    } else if (formData.password.length < 8 || formData.password.length > 20) {
+      newErrors.password = "비밀번호는 8~20자로 입력해 주세요."; isValid = false;
+    } else if (!/^(?=.*[A-Za-z])(?=.*\d).+$/.test(formData.password)) {
+      newErrors.password = "영문과 숫자를 모두 포함해 주세요."; isValid = false;
+    }
+
+    // 비밀번호 확인: 일치 여부
+    if (!formData.confirmPassword) {
       newErrors.confirmPassword = "필수 입력 항목입니다."; isValid = false;
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "비밀번호가 일치하지 않습니다."; isValid = false;
     }
-    if (!formData.name.trim()) { newErrors.name = "필수 입력 항목입니다."; isValid = false; }
+
+    // 이름: 한글/영문 2~20자 (공백 제외)
+    if (!formData.name.trim()) {
+      newErrors.name = "필수 입력 항목입니다."; isValid = false;
+    } else if (!/^[가-힣a-zA-Z]{2,20}$/.test(formData.name.trim())) {
+      newErrors.name = "이름은 한글 또는 영문 2~20자로 입력해 주세요."; isValid = false;
+    }
+
+    // 생년월일: 6자리 숫자 + 실제 존재하는 월/일
     if (!formData.birth.trim()) {
       newErrors.birth = "필수 입력 항목입니다."; isValid = false;
-    } else if (formData.birth.length !== 6) {
+    } else if (!/^\d{6}$/.test(formData.birth)) {
       newErrors.birth = "생년월일 6자리를 입력해 주세요. (ex. 990101)"; isValid = false;
+    } else {
+      const month = Number(formData.birth.slice(2, 4));
+      const day = Number(formData.birth.slice(4, 6));
+      if (month < 1 || month > 12 || day < 1 || day > 31) {
+        newErrors.birth = "올바른 생년월일을 입력해 주세요. (ex. 990101)"; isValid = false;
+      }
     }
-    if (!formData.email.trim()) { newErrors.email = "필수 입력 항목입니다."; isValid = false; }
+
+    // 이메일: 형식 + 100자 이하
+    if (!formData.email.trim()) {
+      newErrors.email = "필수 입력 항목입니다."; isValid = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "올바른 이메일 형식이 아닙니다."; isValid = false;
+    } else if (formData.email.length > 100) {
+      newErrors.email = "이메일은 100자 이하로 입력해 주세요."; isValid = false;
+    }
 
     setErrors(newErrors);
     if (!isValid) return;
@@ -104,8 +141,9 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         </label>
         <input
           type="text"
-          placeholder="아이디를 입력해주세요"
+          placeholder="아이디를 입력해주세요 (영문/숫자 4~20자)"
           autoComplete="username"
+          maxLength={20}
           value={formData.id}
           onChange={(e) => setFormData({ ...formData, id: e.target.value })}
           className={inputClass("id")}
@@ -120,8 +158,9 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         </label>
         <input
           type="password"
-          placeholder="비밀번호를 입력해주세요"
+          placeholder="영문+숫자 8~20자"
           autoComplete="new-password"
+          maxLength={20}
           value={formData.password}
           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
           className={inputClass("password")}
@@ -138,6 +177,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
           type="password"
           placeholder="비밀번호를 한번 더 입력해주세요"
           autoComplete="new-password"
+          maxLength={20}
           value={formData.confirmPassword}
           onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
           className={inputClass("confirmPassword")}
@@ -154,6 +194,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
           type="text"
           placeholder="홍길동"
           autoComplete="name"
+          maxLength={20}
           value={formData.name}
           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           className={inputClass("name")}
@@ -189,6 +230,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
           type="email"
           placeholder="traveler@example.com"
           autoComplete="email"
+          maxLength={100}
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           className={inputClass("email")}
