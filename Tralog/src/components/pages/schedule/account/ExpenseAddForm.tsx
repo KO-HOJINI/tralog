@@ -49,7 +49,7 @@ export default function ExpenseAddForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="shrink-0 flex gap-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-200"
+      className="flex gap-2 shrink-0 bg-slate-50 p-3 rounded-4xl border border-slate-200 relative mt-2"
     >
       <select
         value={day}
@@ -75,7 +75,7 @@ export default function ExpenseAddForm({
         placeholder="지출 내역"
         value={detail}
         onChange={(e) => setDetail(e.target.value)}
-        className="flex-1 h-10 px-3 text-xs input-custom focus:outline-none"
+        className="flex-1 min-w-0 h-10 px-3 text-xs input-custom focus:outline-none"
       />
       <input
         type="number"
@@ -83,7 +83,7 @@ export default function ExpenseAddForm({
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         min={0}
-        className="w-24 h-10 px-3 text-xs input-custom focus:outline-none font-mono"
+        className="flex-1 min-w-0 h-10 px-3 text-xs input-custom focus:outline-none font-mono"
       />
       <button
         type="submit"
