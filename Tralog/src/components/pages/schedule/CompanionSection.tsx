@@ -10,6 +10,7 @@ interface CompanionSectionProps {
   scheduleId: string;
   scheduleTitle?: string;
   schedulePeriod?: string;
+  canEdit?: boolean;
 }
 
 export default function CompanionSection({
@@ -17,6 +18,7 @@ export default function CompanionSection({
   scheduleId,
   scheduleTitle,
   schedulePeriod,
+  canEdit = false,
 }: CompanionSectionProps) {
   const [searchId, setSearchId] = useState("");
   const [selectedRole, setSelectedRole] = useState<"read" | "edit">("read");
@@ -29,6 +31,7 @@ export default function CompanionSection({
   // 일행 추가 - 성공하면 검색 입력칸 비우기
   const handleAddCompanion = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) return; // 읽기 전용 일행은 다른 일행 초대 불가
     const success = await addCompanion(searchId, selectedRole);
     if (success) setSearchId("");
   };
@@ -67,7 +70,11 @@ export default function CompanionSection({
             onChange={(e) => setSearchId(e.target.value)}
             className="flex-1 h-11 px-4 text-xs focus:outline-none input-custom"
           />
-          <button type="submit" className="btn-primary h-11 px-5 text-xs shrink-0">
+          <button
+            type="submit"
+            disabled={!canEdit}
+            className="btn-primary h-11 px-5 text-xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             추가
           </button>
         </form>
@@ -120,8 +127,9 @@ export default function CompanionSection({
                     {comp.role === "edit" ? "편집 가능" : "읽기 전용"}
                   </span>
                   <button
-                    onClick={() => removeCompanion(comp.id)}
-                    className="w-5 h-5 rounded-full text-slate-400 hover:text-red-500 font-bold text-[10px] flex items-center justify-center transition-colors"
+                    onClick={() => canEdit && removeCompanion(comp.id)}
+                    disabled={!canEdit}
+                    className="w-5 h-5 rounded-full text-slate-400 hover:text-red-500 font-bold text-[10px] flex items-center justify-center transition-colors disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:text-slate-400"
                     title="멤버 제외"
                   >
                     ✕

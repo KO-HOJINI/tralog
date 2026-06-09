@@ -36,6 +36,7 @@ export default function HandleSchedulePage({
     scheduleMeta,
     mapPlaces,
     isEditing,
+    canEdit,
     editTitle,
     setEditTitle,
     editStartDate,
@@ -109,6 +110,7 @@ export default function HandleSchedulePage({
               activeTab={activeTab}
               setActiveTab={setActiveTab}
               isEditing={isEditing}
+              canEdit={canEdit}
               onToggleEdit={handleToggleEdit}
               onNavigate={onNavigate}
               scheduleRegion={scheduleMeta.region}
@@ -147,7 +149,7 @@ export default function HandleSchedulePage({
               />
             )}
             {activeTab === "account" && (
-              <AccountBookSection scheduleId={scheduleId} />
+              <AccountBookSection scheduleId={scheduleId} canEdit={canEdit} />
             )}
             {activeTab === "companion" && (
               <CompanionSection
@@ -155,6 +157,7 @@ export default function HandleSchedulePage({
                 scheduleId={scheduleId}
                 scheduleTitle={scheduleMeta.title}
                 schedulePeriod={scheduleMeta.period}
+                canEdit={canEdit}
               />
             )}
           </div>

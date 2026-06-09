@@ -17,6 +17,7 @@ interface ScheduleHeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   isEditing: boolean;
+  canEdit: boolean;
   onToggleEdit: () => void;
   onNavigate: (page: string) => void;
   scheduleRegion?: string;
@@ -28,6 +29,7 @@ export default function ScheduleHeader({
   activeTab,
   setActiveTab,
   isEditing,
+  canEdit,
   onToggleEdit,
   scheduleRegion = "",
   onChangeRegion,
@@ -72,15 +74,20 @@ export default function ScheduleHeader({
           </div>
         )}
 
-        {/* 우측: 사진 추가 + 편집/저장 */}
+        {/* 우측: 사진 추가 + 편집/저장 (읽기 전용 일행은 비활성화) */}
         <div className="flex gap-3 shrink-0">
           <button
             onClick={() => setShowPhotoModal(true)}
-            className="btn-secondary h-9 px-4 text-body-caption"
+            disabled={!canEdit}
+            className="btn-secondary h-9 px-4 text-body-caption disabled:opacity-40 disabled:cursor-not-allowed"
           >
             사진 추가
           </button>
-          <button onClick={onToggleEdit} className="btn-primary h-9 px-4 text-body-caption">
+          <button
+            onClick={onToggleEdit}
+            disabled={!canEdit}
+            className="btn-primary h-9 px-4 text-body-caption disabled:opacity-40 disabled:cursor-not-allowed"
+          >
             {isEditing ? "저장" : "편집"}
           </button>
         </div>

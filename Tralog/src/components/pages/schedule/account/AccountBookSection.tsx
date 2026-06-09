@@ -25,11 +25,13 @@ interface ApiExpenseData {
 interface AccountBookSectionProps {
   scheduleId: string;
   companionCount?: number;
+  canEdit?: boolean;
 }
 
 export default function AccountBookSection({
   scheduleId,
   companionCount = 1,
+  canEdit = false,
 }: AccountBookSectionProps) {
   const [expenses, setExpenses] = useState<AccountItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -109,6 +111,7 @@ export default function AccountBookSection({
 
   // 지출 삭제
   const handleDeleteExpense = async (id: string) => {
+    if (!canEdit) return; // 읽기 전용 일행 방어
     try {
       const res = await fetch(`${API_BASE_URL}/api/expenses/${id}`, { method: "DELETE" });
       if (res.ok) setExpenses((prev) => prev.filter((item) => item.id !== id));
@@ -161,12 +164,14 @@ export default function AccountBookSection({
                     <span className="text-sm font-mono font-bold text-slate-800">
                       {item.amount.toLocaleString()} 원
                     </span>
-                    <button
-                      onClick={() => handleDeleteExpense(item.id)}
-                      className="text-[10px] font-bold text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      삭제
-                    </button>
+                    {canEdit && (
+                      <button
+                        onClick={() => handleDeleteExpense(item.id)}
+                        className="text-[10px] font-bold text-red-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        삭제
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -185,8 +190,8 @@ export default function AccountBookSection({
         </div>
       )}
 
-      {/* 지출 추가 폼 */}
-      <ExpenseAddForm onAddExpense={handleAddExpense} />
+      {/* 지출 추가 폼 (읽기 전용 일행은 비활성화) */}
+      <ExpenseAddForm onAddExpense={handleAddExpense} canEdit={canEdit} />
     </div>
   );
 }

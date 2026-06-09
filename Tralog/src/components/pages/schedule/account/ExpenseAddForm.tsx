@@ -6,11 +6,12 @@ import { useState } from "react";
 
 interface ExpenseAddFormProps {
   onAddExpense: (category: string, detail: string, amount: number) => Promise<void>;
+  canEdit?: boolean;
 }
 
 const CATEGORIES = ["식비", "숙소", "교통", "기타"] as const;
 
-export default function ExpenseAddForm({ onAddExpense }: ExpenseAddFormProps) {
+export default function ExpenseAddForm({ onAddExpense, canEdit = false }: ExpenseAddFormProps) {
   const [detail, setDetail] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState<string>("식비");
@@ -18,6 +19,7 @@ export default function ExpenseAddForm({ onAddExpense }: ExpenseAddFormProps) {
   // 제출 - 내역/금액 검증 후 부모에 추가 요청
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) return; // 읽기 전용 일행은 지출 기록 불가
     if (!detail.trim() || !amount.trim()) return;
 
     const parsedAmount = parseInt(amount);
@@ -62,7 +64,11 @@ export default function ExpenseAddForm({ onAddExpense }: ExpenseAddFormProps) {
         min={0}
         className="w-24 h-10 px-3 text-xs input-custom focus:outline-none font-mono"
       />
-      <button type="submit" className="btn-primary h-10 px-4 text-xs shrink-0">
+      <button
+        type="submit"
+        disabled={!canEdit}
+        className="btn-primary h-10 px-4 text-xs shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+      >
         기록
       </button>
     </form>

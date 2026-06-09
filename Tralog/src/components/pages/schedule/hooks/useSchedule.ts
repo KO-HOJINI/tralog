@@ -30,12 +30,20 @@ interface ApiPlace {
   lng: number;
 }
 
+interface ApiCompanion {
+  id: string;
+  name: string;
+  role: "read" | "edit";
+}
+
 export function useSchedule(
   scheduleId: string,
   currentUser: UserSession | null,
   onNavigate: (page: string) => void,
 ) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
+  // 편집 권한: 소유자이거나 'edit' 권한 일행만 true. 'read' 일행은 편집 불가.
+  const [canEdit, setCanEdit] = useState<boolean>(false);
   const [editTitle, setEditTitle] = useState("");
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
@@ -92,12 +100,19 @@ export function useSchedule(
             lng: p.lng,
           }));
           setMapPlaces(markers);
+
+          // 편집 권한 판별: 소유자 OR 'edit' 권한으로 초대된 일행만 편집 가능.
+          const isOwner = meta.user_id === currentUser?.id;
+          const myCompanion = (data.companions as ApiCompanion[] | undefined)?.find(
+            (c) => c.id === currentUser?.id,
+          );
+          setCanEdit(isOwner || myCompanion?.role === "edit");
         }
       } catch (err) {
         console.error("일정 로딩 오류:", err);
       }
     },
-    [scheduleId],
+    [scheduleId, currentUser],
   );
 
   useEffect(() => {
@@ -150,6 +165,7 @@ export function useSchedule(
 
   // 편집/저장 토글 - 편집 모드 진입 또는 저장 실행
   const handleToggleEdit = () => {
+    if (!canEdit) return; // 읽기 전용 일행 방어 (UI 버튼은 비활성화되지만 이중 차단)
     if (isEditing) {
       handleUpdateMeta();
     } else {
@@ -207,6 +223,7 @@ export function useSchedule(
     scheduleMeta,
     mapPlaces,
     isEditing,
+    canEdit,
     editTitle,
     setEditTitle,
     editStartDate,
