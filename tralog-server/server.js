@@ -8,6 +8,10 @@ const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
 const https = require("https");
+const bcrypt = require("bcrypt");
+
+// bcrypt 해싱 강도 (cost factor) - 높을수록 안전하지만 느려짐
+const SALT_ROUNDS = 10;
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -71,14 +75,23 @@ app.post("/api/register", (req, res) => {
       .json({ message: "이메일 형식이 올바르지 않습니다." });
 
   const checkQuery = "SELECT id FROM users WHERE id = ?";
-  db.query(checkQuery, [id], (err, results) => {
+  db.query(checkQuery, [id], async (err, results) => {
     if (err) return res.status(500).json({ error: "DB 오류" });
     if (results.length > 0)
       return res.status(400).json({ message: "이미 사용 중인 아이디입니다." });
 
+    // 비밀번호를 평문이 아닌 bcrypt 해시로 저장 (DB 유출 시 원본 보호)
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+    } catch (hashErr) {
+      console.error("비밀번호 해싱 오류:", hashErr);
+      return res.status(500).json({ error: "회원가입 오류" });
+    }
+
     const insertQuery =
       "INSERT INTO users (id, password, name, birth, email) VALUES (?, ?, ?, ?, ?)";
-    db.query(insertQuery, [id, password, name, birth, email], (err) => {
+    db.query(insertQuery, [id, hashedPassword, name, birth, email], (err) => {
       if (err) return res.status(500).json({ error: "회원가입 오류" });
       return res.status(201).json({ message: "회원가입 완료" });
     });
@@ -88,7 +101,7 @@ app.post("/api/register", (req, res) => {
 app.post("/api/login", (req, res) => {
   const { id, password } = req.body;
   const loginQuery = "SELECT id, password, name FROM users WHERE id = ?";
-  db.query(loginQuery, [id], (err, results) => {
+  db.query(loginQuery, [id], async (err, results) => {
     if (err) return res.status(500).json({ error: "DB 오류" });
     if (results.length === 0)
       return res
@@ -96,10 +109,36 @@ app.post("/api/login", (req, res) => {
         .json({ field: "id", message: "등록되지 않은 아이디입니다." });
 
     const user = results[0];
-    if (user.password !== password)
+
+    // 저장된 값이 bcrypt 해시($2로 시작)면 해시 비교, 아니면 기존 평문 계정으로 간주
+    const isHashed = typeof user.password === "string" && user.password.startsWith("$2");
+
+    let isMatch;
+    try {
+      isMatch = isHashed
+        ? await bcrypt.compare(password, user.password)
+        : password === user.password;
+    } catch (compareErr) {
+      console.error("비밀번호 비교 오류:", compareErr);
+      return res.status(500).json({ error: "DB 오류" });
+    }
+
+    if (!isMatch)
       return res
         .status(400)
         .json({ field: "password", message: "비밀번호가 일치하지 않습니다." });
+
+    // 기존 평문 계정은 로그인 성공 시 해시로 자동 업그레이드 (마이그레이션)
+    if (!isHashed) {
+      try {
+        const newHash = await bcrypt.hash(password, SALT_ROUNDS);
+        db.query("UPDATE users SET password = ? WHERE id = ?", [newHash, id], (updateErr) => {
+          if (updateErr) console.error("비밀번호 해시 마이그레이션 실패:", updateErr);
+        });
+      } catch (hashErr) {
+        console.error("비밀번호 해시 마이그레이션 오류:", hashErr);
+      }
+    }
 
     return res.status(200).json({ id: user.id, name: user.name });
   });
