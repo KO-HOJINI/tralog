@@ -20,6 +20,7 @@ interface ScheduleHeaderProps {
   canEdit: boolean;
   onToggleEdit: () => void;
   onNavigate: (page: string) => void;
+  scheduleId: string;
   scheduleRegion?: string;
   onChangeRegion: (newRegion: string) => void;
   onDeleteSchedule: () => void;
@@ -31,6 +32,7 @@ export default function ScheduleHeader({
   isEditing,
   canEdit,
   onToggleEdit,
+  scheduleId,
   scheduleRegion = "",
   onChangeRegion,
   onDeleteSchedule,
@@ -96,6 +98,7 @@ export default function ScheduleHeader({
       <PhotoUploadModal
         isOpen={showPhotoModal}
         onClose={() => setShowPhotoModal(false)}
+        scheduleId={scheduleId}
         scheduleRegion={scheduleRegion}
       />
     </>

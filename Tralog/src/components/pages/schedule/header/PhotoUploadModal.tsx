@@ -10,23 +10,16 @@ import { API_BASE_URL } from "../../../../config/api";
 interface PhotoUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
+  scheduleId: string;
   scheduleRegion: string;
 }
-
-// 지역 선택 옵션 (광역시/도 17개)
-const REGION_OPTIONS = [
-  "서울특별시", "부산광역시", "대구광역시", "인천광역시",
-  "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
-  "경기도", "강원특별자치도", "충청북도", "충청남도",
-  "전라북도", "전라남도", "경상북도", "경상남도", "제주특별자치도",
-];
 
 export default function PhotoUploadModal({
   isOpen,
   onClose,
+  scheduleId,
   scheduleRegion,
 }: PhotoUploadModalProps) {
-  const [selectedRegion, setSelectedRegion] = useState(scheduleRegion);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,11 +32,6 @@ export default function PhotoUploadModal({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (!selectedRegion) {
-      alert("먼저 지역을 선택해주세요.");
-      return;
-    }
-
     setUploadedFileName(file.name);
     setIsUploading(true);
 
@@ -51,14 +39,10 @@ export default function PhotoUploadModal({
     reader.onloadend = async () => {
       const base64String = reader.result as string;
 
-      // 이 모달은 "나만의 지도"용 개인 사진 업로드다. 활성 일정 ID(공유 일정)에
-      // 붙이면 그 일정의 일행에게 사진이 전부 누수되므로, 마이맵 그리드 업로드와
-      // 동일하게 유저별 지역 ID(direct-유저-지역)로 저장한다. (※ usePhotoActions 와 동일 규칙)
+      // 편집 중인 바로 그 일정에 사진을 연결한다. (별도 'direct-' 더미 일정을 만들지 않음)
+      // → 마이맵 히스토리에서 "직접 기록"이 아니라 해당 일정의 사진으로 표시된다.
       const session = localStorage.getItem("tralog_current_user");
       const userId = session ? (JSON.parse(session) as { id: string }).id : null;
-      const scheduleId = userId
-        ? `direct-${userId}-${selectedRegion}`
-        : `direct-${selectedRegion}`;
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/map/upload`, {
@@ -67,13 +51,13 @@ export default function PhotoUploadModal({
           body: JSON.stringify({
             schedule_id: scheduleId,
             user_id: userId,
-            region: selectedRegion,
+            region: scheduleRegion,
             image_data: base64String,
           }),
         });
 
         if (response.ok) {
-          alert(`📸 ${selectedRegion}에 사진이 업로드되었습니다!\n나만의 지도에서 확인하세요.`);
+          alert(`📸 ${scheduleRegion}에 사진이 업로드되었습니다!\n나만의 지도에서 확인하세요.`);
           setUploadedFileName("선택된 파일 없음");
           onClose(); // 업로드 성공 시 모달 닫기
         } else {
@@ -104,17 +88,10 @@ export default function PhotoUploadModal({
         </p>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-dark">지역 선택</label>
-          <select
-            value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
-            className="w-full h-11 px-3 text-sm input-custom focus:outline-none font-bold"
-          >
-            <option value="">-- 지역을 선택하세요 --</option>
-            {REGION_OPTIONS.map((reg) => (
-              <option key={reg} value={reg}>{reg}</option>
-            ))}
-          </select>
+          <label className="text-xs font-bold text-dark">지역</label>
+          <div className="w-full h-11 px-3 text-sm input-custom font-bold flex items-center bg-slate-50 text-dark select-none">
+            {scheduleRegion}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -138,13 +115,7 @@ export default function PhotoUploadModal({
             </div>
             <button
               type="button"
-              onClick={() => {
-                if (!selectedRegion) {
-                  alert("먼저 지역을 선택해주세요.");
-                  return;
-                }
-                fileInputRef.current?.click();
-              }}
+              onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
               className={`h-11 px-4 text-xs font-bold shrink-0 rounded-(--radius-btn) whitespace-nowrap ${
                 isUploading ? "btn-ghost cursor-not-allowed" : "btn-primary"

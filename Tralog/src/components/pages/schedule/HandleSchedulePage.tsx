@@ -113,6 +113,7 @@ export default function HandleSchedulePage({
               canEdit={canEdit}
               onToggleEdit={handleToggleEdit}
               onNavigate={onNavigate}
+              scheduleId={scheduleId}
               scheduleRegion={scheduleMeta.region}
               onChangeRegion={handleChangeRegion}
               onDeleteSchedule={handleDeleteSchedule}
