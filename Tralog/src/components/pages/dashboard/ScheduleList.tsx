@@ -1,7 +1,7 @@
 // ScheduleList.tsx - 대시보드 우측 여행 일정 목록
-// 진행 중인 일정을 불러와서 D-Day 계산 후 카드로 보여줍니다.
-// 종료된 일정(endDate가 오늘보다 과거)은 목록에서 제외합니다.
-// + 새 일정 추가 버튼을 누르면 지역 선택 모달이 뜨고, 확인 시 일정이 생성됩니다.
+// 진행 중인 일정을 불러와 D-Day 계산 후 카드로 표시
+// 종료된 일정(endDate가 오늘보다 과거)은 목록에서 제외
+// "+ 새 일정 추가" 클릭 시 지역 선택 모달 표시, 확인하면 일정 생성
 
 import { useState, useEffect } from "react";
 import ScheduleCard from "./ScheduleCard";
@@ -18,7 +18,7 @@ interface TravelSchedule {
   bgImage?: string;
 }
 
-// DB에서 오는 원본 형식 (bgImage 포함)
+// DB 원본 형식 (bgImage 포함)
 interface DBSchedule {
   id: string;
   title: string;
@@ -42,6 +42,7 @@ export default function ScheduleList({
   const [isCreating, setIsCreating] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
+  // 모달 확인 - 새 일정 생성 후 편집 페이지로 이동
   const handleCreateConfirm = async (region: string, title: string) => {
     if (isCreating) return;
     setIsCreating(true);
@@ -77,7 +78,7 @@ export default function ScheduleList({
     }
   };
 
-  // 로컬 날짜를 직접 조합해서 YYYY-MM-DD 반환
+  // 로컬 날짜를 YYYY-MM-DD 문자열로 변환 (시차 오류 방지)
   const getLocalDateString = (date: Date = new Date()): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -85,7 +86,7 @@ export default function ScheduleList({
     return `${y}-${m}-${d}`;
   };
 
-  // 일정 목록 불러오기 + D-Day 계산 + 종료된 일정 숨기기
+  // 일정 목록 로드 + D-Day 계산 + 종료된 일정 숨김
   useEffect(() => {
     if (!userId) return;
 
@@ -98,7 +99,7 @@ export default function ScheduleList({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // ISO 표준 포맷(T...) 수신 시 시차 오류 방지용 로컬 문자열 파싱 헬퍼
+        // ISO 포맷(T...) 수신 시 시차 오류 방지용 로컬 문자열 변환
         const formatLocalDateString = (rawDate: string | undefined) => {
           if (!rawDate) return "";
           if (rawDate.includes("T")) {
@@ -111,7 +112,7 @@ export default function ScheduleList({
           return rawDate.slice(0, 10);
         };
 
-        // 종료된 일정 필터링 (endDate가 오늘보다 과거면 목록에서 제외)
+        // 종료된 일정 필터링 (endDate가 오늘보다 과거면 제외)
         const activeSchedules = data.filter((item) => {
           const End = formatLocalDateString(item.end_date);
           const [ey, em, ed] = End.split("-").map(Number);

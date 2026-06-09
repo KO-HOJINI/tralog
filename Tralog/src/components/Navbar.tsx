@@ -1,6 +1,6 @@
 // Navbar.tsx - 상단 고정 내비게이션 바
-// sticky top-0으로 스크롤해도 항상 상단에 고정됩니다.
-// 로고 클릭 시 대시보드로 이동, 우측에 사용자 이름과 로그아웃 버튼을 배치했습니다.
+// sticky top-0으로 스크롤해도 상단 고정
+// 로고 클릭 시 대시보드 이동, 우측에 사용자 이름 + 로그아웃 버튼 배치
 
 interface NavBarProps {
   userName: string;
@@ -13,7 +13,7 @@ export default function NavBar({ userName, onNavigate, onLogout }: NavBarProps) 
     <div className="w-full pt-6 sticky top-0 z-50">
       <header className="w-[80%] mx-auto h-18 box-white px-10 flex items-center justify-between">
 
-        {/* 로고 - 클릭하면 대시보드로 이동 */}
+        {/* 로고 - 클릭 시 대시보드 이동 */}
         <span
           onClick={() => onNavigate("dashboard")}
           className="tracking-tight cursor-pointer select-none"

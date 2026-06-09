@@ -1,6 +1,6 @@
 // PlaceItemCard.tsx - 타임라인 장소 카드
-// 방문 장소 하나를 카드 형태로 보여줍니다.
-// 편집 모드에서 메모 추가, 비용 기록, 방문 시간 수정, 장소 삭제가 가능합니다.
+// 방문 장소 하나를 카드 형태로 표시
+// 편집 모드에서 메모 추가, 비용 기록, 방문 시간 수정, 장소 삭제 가능
 
 import { useState } from "react";
 
@@ -39,7 +39,7 @@ export default function PlaceItemCard({
   onAddExpense,
   onUpdateTime,
 }: PlaceItemCardProps) {
-  // 각 입력 폼의 표시 여부를 개별로 관리합니다
+  // 각 입력 폼의 표시 여부를 개별 관리
   const [showMemoInput, setShowMemoInput] = useState(false);
   const [showCostInput, setShowCostInput] = useState(false);
   const [showTimeInput, setShowTimeInput] = useState(false);
@@ -49,21 +49,24 @@ export default function PlaceItemCard({
   const [costCategory, setCostCategory] = useState<string>("식비");
   const [timeInput, setTimeInput] = useState(time);
 
-  // 비용은 로컬 상태로 관리해서 저장 버튼 없이 즉시 카드에 반영합니다
+  // 비용은 로컬 상태로 관리 - 저장 버튼 없이 즉시 카드에 반영
   const [localExpenses, setLocalExpenses] = useState<LocalExpense[]>(
     initialExpenses.map((e) => ({ ...e, category: e.category || "기타" }))
   );
   const [displayTime, setDisplayTime] = useState(time);
 
+  // 메모 저장
   const handleSaveMemo = () => {
     onUpdateMemo(id, memoInput);
     setShowMemoInput(false);
   };
 
+  // 메모 삭제 (빈 문자열로 업데이트)
   const handleDeleteMemo = () => {
     onUpdateMemo(id, "");
   };
 
+  // 비용 저장 - 금액 검증 후 카드/서버에 추가
   const handleSaveExpense = () => {
     const amount = parseInt(costAmount);
     if (isNaN(amount) || amount <= 0) return alert("올바른 금액을 입력해 주세요.");
@@ -74,10 +77,12 @@ export default function PlaceItemCard({
     setCostAmount("");
   };
 
+  // 비용 삭제 (로컬 목록에서 제거)
   const handleDeleteExpense = (idx: number) => {
     setLocalExpenses((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  // 방문 시간 저장
   const handleSaveTime = () => {
     if (!timeInput.trim()) return;
     setDisplayTime(timeInput);

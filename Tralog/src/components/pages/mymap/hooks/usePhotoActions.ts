@@ -1,9 +1,7 @@
-// usePhotoActions.ts - 사진 관련 액션 커스텀 훅
-// PhotoGrid 컴포넌트에서 사진 업로드, 대표사진 설정, 삭제 기능을 분리했습니다.
+// usePhotoActions.ts - 사진 액션 커스텀 훅
+// PhotoGrid의 사진 업로드, 대표사진 설정, 삭제 로직 분리
 //
-// ※ AI 도움을 받아 구현한 부분
-// FileReader를 사용해서 파일을 base64 문자열로 변환한 뒤 서버에 전송하는 방법을
-// AI 도움으로 작성했습니다. (FileReader API는 비동기로 동작해서 처음에 헷갈렸습니다)
+// ※ AI 도움 - FileReader로 파일을 base64 문자열로 변환 후 서버 전송
 
 import { useState, useRef } from "react";
 import type { ChangeEvent } from "react";
@@ -20,25 +18,28 @@ export function usePhotoActions(
   const [isUploading, setIsUploading] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
-  // 현재 지역의 사진 기록을 찾아옵니다 (없으면 빈 객체 반환)
+  // 현재 지역의 사진 기록 (없으면 빈 객체 반환)
   const currentRecord = mapRecords.find((r) => r.region === regionName) ?? {
     region: regionName,
     images: [],
     coverImage: "",
   };
 
-  // 일정에서 들어온 경우 일정 ID를 사용하고, 직접 들어온 경우 "direct-지역명"을 사용합니다
-  const getScheduleId = () =>
-    localStorage.getItem("tralog_active_schedule_id") || `direct-${regionName}`;
-
-  // 대표사진은 유저별로 저장되므로 현재 로그인 유저 ID가 필요합니다
+  // 대표사진은 유저별 저장이라 로그인 유저 ID 필요
   const getUserId = (): string | null => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData).id : null;
   };
 
-  // ※ AI 도움을 받아 구현했습니다
-  // FileReader로 이미지 파일을 base64 문자열로 변환해서 서버에 전송합니다.
+  // 마이맵 갤러리 업로드는 "나만의 지도"라 개인 저장.
+  // 낡은 active_schedule_id(공유 일정)를 재사용하면 일행에게 누수되므로
+  // 항상 유저별 지역 ID(direct-유저-지역)로 저장한다. (일정 내 업로드만 일행과 공유)
+  const getScheduleId = () => {
+    const userId = getUserId();
+    return userId ? `direct-${userId}-${regionName}` : `direct-${regionName}`;
+  };
+
+  // 파일 업로드 - FileReader로 base64 변환 후 서버 전송 (※ AI 도움)
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -55,6 +56,7 @@ export function usePhotoActions(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             schedule_id: getScheduleId(),
+            user_id: getUserId(),
             region: regionName,
             image_data: base64String,
           }),
@@ -82,7 +84,7 @@ export function usePhotoActions(
     reader.readAsDataURL(file);
   };
 
-  // 선택한 사진을 해당 지역의 대표 사진으로 설정합니다
+  // 선택한 사진을 해당 지역 대표 사진으로 설정
   const handleSetCover = async () => {
     if (selectedIndex === null) return;
     const selectedSrc = currentRecord.images[selectedIndex];
@@ -108,7 +110,7 @@ export function usePhotoActions(
     }
   };
 
-  // 선택한 사진을 삭제합니다
+  // 선택한 사진 삭제
   const handleDeletePhoto = async () => {
     if (selectedIndex === null) return;
     if (!window.confirm("선택한 사진을 삭제하시겠습니까?")) return;

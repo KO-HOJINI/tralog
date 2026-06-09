@@ -5,6 +5,7 @@
 import { useState } from "react";
 import PhotoUploadModal from "./PhotoUploadModal";
 
+// 지역 변경 드롭다운 옵션 (광역시/도 17개)
 const REGION_OPTIONS = [
   "서울특별시", "부산광역시", "대구광역시", "인천광역시",
   "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
@@ -34,6 +35,7 @@ export default function ScheduleHeader({
 }: ScheduleHeaderProps) {
   const [showPhotoModal, setShowPhotoModal] = useState(false);
 
+  // 탭 변경 - 타임라인 외 탭으로 가면 편집 모드 해제
   const handleTabChange = (tab: string) => {
     if (tab !== "timeline" && isEditing) onToggleEdit();
     setActiveTab(tab);

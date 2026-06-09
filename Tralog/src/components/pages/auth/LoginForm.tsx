@@ -1,6 +1,6 @@
 // LoginForm.tsx - 로그인 폼
-// 아이디/비밀번호 입력 후 서버에 POST 요청을 보냅니다.
-// 서버에서 오는 에러 메시지(어떤 필드에서 오류가 났는지)를 각 입력 칸 옆에 표시합니다.
+// 아이디/비밀번호 입력 후 서버에 POST 요청
+// 서버 에러 메시지(오류 발생 필드)를 각 입력 칸 옆에 표시
 
 import { useState } from "react";
 import { API_BASE_URL } from "../../../config/api";
@@ -17,11 +17,13 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
   const [passwordError, setPasswordError] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // 로그인 제출 - 입력값 검증 후 서버 인증 요청
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIdError("");
     setPasswordError("");
 
+    // 빈 칸 검사
     let isValid = true;
     if (!id.trim()) {
       setIdError("아이디를 입력해 주세요.");
@@ -44,12 +46,14 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
       const data = await response.json();
 
       if (response.ok) {
+        // 로그인 성공 - 세션 정보 저장 후 대시보드로
         localStorage.setItem(
           "tralog_current_user",
           JSON.stringify({ id: data.id, name: data.name }),
         );
         onLoginSuccess();
       } else {
+        // 서버가 알려준 오류 필드에 맞춰 메시지 표시
         if (data.field === "id") {
           setIdError(data.message);
         } else if (data.field === "password") {

@@ -1,7 +1,7 @@
 // MyMapHistory.tsx - 나만의 지도 우측 히스토리 목록
-// 완료된 여행 기록과 사진이 있는 진행 중 일정을 목록으로 보여줍니다.
-// 일정 없이 방문한 지역을 직접 선택해서 사진을 추가하는 기능도 있습니다.
-// 데이터 로직은 useMapHistory 훅으로 분리했습니다.
+// 완료된 여행 기록 + 사진이 있는 진행 중 일정을 목록으로 표시
+// 일정 없이 방문한 지역을 직접 선택해 사진 추가하는 기능도 포함
+// 데이터 로직은 useMapHistory 훅으로 분리
 
 import { useMapHistory, parseLocalDate } from "./hooks/useMapHistory";
 
@@ -10,6 +10,7 @@ interface MyMapHistoryProps {
   onNavigate: (page: string, scheduleId?: string) => void;
 }
 
+// 직접 추가용 지역 선택 옵션 (광역시/도 17개)
 const REGION_OPTIONS = [
   "서울특별시", "부산광역시", "대구광역시", "인천광역시",
   "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
@@ -41,6 +42,7 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar pr-1 flex flex-col gap-3">
+        {/* 직접 추가 영역 - 닫힘: 안내 버튼 / 열림: 지역 선택 폼 */}
         {!isAddingSection ? (
           <div
             onClick={() => setIsAddingSection(true)}
@@ -82,6 +84,7 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
           </div>
         )}
 
+        {/* 히스토리 목록 - 로딩 / 빈 상태 / 카드 목록 */}
         {isLoading ? (
           <div className="flex-1 flex items-center justify-center">
             <span className="loading loading-spinner loading-md text-primary" />
@@ -118,6 +121,7 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
                   </div>
                 </div>
 
+                {/* 우측 버튼: 일정 보기 / 사진 보기 / 삭제 */}
                 <div className="flex items-center gap-2 shrink-0">
                   <button onClick={() => handleViewSchedule(history.id)} className="btn-ghost h-9 px-4 text-body-caption">
                     일정 보기

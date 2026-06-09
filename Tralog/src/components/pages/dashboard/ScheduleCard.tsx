@@ -1,6 +1,6 @@
 // ScheduleCard.tsx - 여행 일정 카드 컴포넌트
-// 나만의 지도에서 선택한 대표사진이 카드 배경으로 표시됩니다.
-// 대표사진이 없으면 기본 민트 그라데이션 배경을 사용합니다.
+// 나만의 지도에서 선택한 대표사진을 카드 배경으로 표시
+// 대표사진 없으면 기본 민트 그라데이션 배경 사용
 
 import { API_BASE_URL } from "../../../config/api";
 
@@ -23,23 +23,23 @@ export default function ScheduleCard({
   schedule,
   onNavigate,
 }: ScheduleCardProps) {
+  // 카드 클릭 - 일정 ID 저장 후 편집 페이지로 이동
   const handleClick = () => {
-    // 클릭한 카드의 일정 ID 저장 → 편집 페이지에서 불러옴
     localStorage.setItem("tralog_active_schedule_id", schedule.id);
     onNavigate("handleschedule", schedule.id);
   };
 
-  // 백엔드 이미지 주소 가공 가이드 (PhotoGrid.tsx의 가공 방식과 동기화)
+  // 배경 이미지 주소 가공 (PhotoGrid.tsx 방식과 동일)
   const getBackgroundImageSrc = () => {
     if (!schedule.bgImage) return "";
-    // base64 데이터형식이거나 이미 풀 주소인 경우 그대로 반환
+    // base64거나 이미 전체 주소면 그대로 사용
     if (
       schedule.bgImage.startsWith("data:") ||
       schedule.bgImage.startsWith("http")
     ) {
       return schedule.bgImage;
     }
-    // 상대 경로로 들어올 경우 API 베이스 주소 결합
+    // 상대 경로면 API 베이스 주소와 결합
     return `${API_BASE_URL}${schedule.bgImage}`;
   };
 
@@ -50,11 +50,11 @@ export default function ScheduleCard({
       onClick={handleClick}
       className="box-white hover:border-primary/40 hover:scale-[1.004] transition-all duration-300 cursor-pointer flex flex-col overflow-hidden relative group w-full h-full min-h-36"
     >
-      {/* 배경 이미지 영역 */}
+      {/* 상단: 배경 이미지 영역 */}
       <div
         className="flex-1 h-0 w-full relative p-5 flex flex-col justify-end overflow-hidden border-b border-slate-200/40 rounded-t-4xl transition-all duration-300"
         style={{
-          // 마이맵에서 선택한 대표사진(bgSrc)이 존재하면 보여주고, 없으면 UI 기조에 맞는 은은한 민트 그라데이션 적용
+          // 대표사진(bgSrc) 있으면 표시, 없으면 민트 그라데이션
           backgroundImage: bgSrc
             ? `url(${bgSrc})`
             : "linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%)",

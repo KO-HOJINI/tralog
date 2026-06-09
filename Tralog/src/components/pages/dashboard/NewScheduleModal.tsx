@@ -1,9 +1,10 @@
 // NewScheduleModal.tsx - 새 일정 만들기 모달
-// 대시보드에서 + 새 일정 추가 버튼을 누르면 뜨는 모달입니다.
-// 여행 지역(필수)과 일정 이름(선택)을 입력받고 일정을 생성합니다.
+// 대시보드에서 "+ 새 일정 추가" 버튼 클릭 시 표시
+// 여행 지역(필수) + 일정 이름(선택)을 입력받아 일정 생성
 
 import { useState } from "react";
 
+// 지역 선택 드롭다운 옵션 (광역시/도 17개)
 const REGION_OPTIONS = [
   "서울특별시", "부산광역시", "대구광역시", "인천광역시",
   "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
@@ -29,6 +30,7 @@ export default function NewScheduleModal({
 
   if (!isOpen) return null;
 
+  // 확인 - 지역은 필수, 이름 비우면 "새 일정"으로 생성
   const handleConfirm = () => {
     if (!region) {
       alert("여행할 지역을 선택해주세요.");
@@ -37,6 +39,7 @@ export default function NewScheduleModal({
     onConfirm(region, title.trim() || "새 일정");
   };
 
+  // 닫기 - 입력값 초기화
   const handleClose = () => {
     setRegion("");
     setTitle("");
@@ -45,7 +48,7 @@ export default function NewScheduleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* 배경 오버레이 (클릭 시 닫힘) */}
+      {/* 배경 오버레이 - 클릭 시 닫기 */}
       <div className="absolute inset-0 bg-black/40" onClick={handleClose} />
 
       <div className="box-white relative z-10 max-w-sm w-full p-6 flex flex-col gap-5">

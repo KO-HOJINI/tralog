@@ -1,7 +1,6 @@
 // App.tsx - 루트 컴포넌트
-// React Router 없이 useState로 직접 페이지 전환을 구현했습니다.
-// 브라우저 뒤로가기 버튼 지원을 위해 History API(pushState/popstate)를 연동했는데,
-// 이 부분은 AI 도움을 받아 구현했습니다.
+// React Router 없이 useState로 페이지 전환 처리
+// 브라우저 뒤로가기 지원을 위해 History API(pushState/popstate) 연동 (※ AI 도움)
 
 import "./styles/App.css";
 import { useState, useEffect } from "react";
@@ -11,7 +10,7 @@ import MyMapPage from "./components/pages/mymap/MyMapPage";
 import HandleSchedulePage from "./components/pages/schedule/HandleSchedulePage";
 
 function App() {
-  // URL 해시(#)에서 현재 페이지를 읽어서 초기값으로 설정 (새로고침해도 유지됨)
+  // URL 해시(#)에서 현재 페이지 읽어 초기값 설정 (새로고침해도 유지)
   const [currentPage, setCurrentPage] = useState<string>(() => {
     const hash = window.location.hash.replace("#", "");
     return hash || "login";
@@ -22,9 +21,8 @@ function App() {
     () => localStorage.getItem("tralog_active_schedule_id") || undefined,
   );
 
-  // ※ AI 도움을 받아 구현했습니다
-  // 브라우저 뒤로가기/앞으로가기 버튼과 앱 상태를 동기화하는 로직입니다.
-  // History API의 pushState/replaceState와 popstate 이벤트를 활용했습니다.
+  // 브라우저 뒤로가기/앞으로가기 버튼과 앱 상태 동기화 (※ AI 도움)
+  // History API의 pushState/replaceState + popstate 이벤트 활용
   useEffect(() => {
     window.history.replaceState(
       { page: currentPage, scheduleId: activeScheduleId },
@@ -46,7 +44,7 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, [currentPage, activeScheduleId]);
 
-  // 페이지 이동 함수 - 페이지명과 일정 ID를 받아서 화면을 전환합니다
+  // 페이지 이동 - 페이지명과 일정 ID를 받아 화면 전환
   const navigateTo = (pageName: string, scheduleId?: string) => {
     let nextScheduleId = scheduleId;
 
@@ -62,7 +60,7 @@ function App() {
     }
 
     setCurrentPage(pageName);
-    // 주소창 해시도 바꿔서 뒤로가기 히스토리에 남깁니다
+    // 주소창 해시도 변경해 뒤로가기 히스토리에 기록
     window.history.pushState(
       { page: pageName, scheduleId: nextScheduleId },
       "",
@@ -70,7 +68,7 @@ function App() {
     );
   };
 
-  // 현재 페이지에 해당하는 컴포넌트를 렌더링합니다
+  // 현재 페이지에 맞는 컴포넌트 렌더링
   const renderPage = () => {
     switch (currentPage) {
       case "login":

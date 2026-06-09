@@ -1,6 +1,6 @@
 // AccountBookSection.tsx - 여행 가계부 섹션
-// 일정에 기록된 지출 내역을 일차별로 그룹화해서 보여줍니다.
-// 하단 입력 폼에서 새 지출을 추가하고, 항목 위에 마우스를 올리면 삭제 버튼이 나타납니다.
+// 일정에 기록된 지출 내역을 일차별로 그룹화해 표시
+// 하단 입력 폼에서 새 지출 추가, 항목에 마우스 올리면 삭제 버튼 노출
 
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../../../../config/api";
@@ -34,7 +34,7 @@ export default function AccountBookSection({
   const [expenses, setExpenses] = useState<AccountItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 지출 내역 불러오기
+  // 지출 내역 로드
   useEffect(() => {
     let isMounted = true;
     const fetchExpenses = async () => {
@@ -83,7 +83,7 @@ export default function AccountBookSection({
     return parseInt(a) - parseInt(b);
   });
 
-  // 지출 추가 API 호출 전담 함수
+  // 지출 추가 - 서버 저장 후 목록에 반영
   const handleAddExpense = async (category: string, detail: string, amount: number) => {
     const newId = `acc-${Date.now()}`;
     const newExpense: AccountItem = {

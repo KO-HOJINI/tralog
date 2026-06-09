@@ -1,7 +1,7 @@
 // PhotoGrid.tsx - 지역별 사진 그리드
-// 선택된 지역의 사진 목록을 3열 그리드로 보여줍니다.
-// 사진 업로드, 대표사진 설정, 삭제 기능이 있습니다.
-// API 관련 로직은 usePhotoActions 훅으로 분리했습니다.
+// 선택된 지역의 사진 목록을 3열 그리드로 표시
+// 사진 업로드, 대표사진 설정, 삭제 기능 제공
+// API 로직은 usePhotoActions 훅으로 분리
 
 import { usePhotoActions } from "./hooks/usePhotoActions";
 import { API_BASE_URL } from "../../../config/api";

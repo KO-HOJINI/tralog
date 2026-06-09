@@ -1,10 +1,8 @@
-// useMapHistory.ts - 나만의 지도 히스토리 페이지 커스텀 훅
-// 여행 기록 목록 불러오기, 일정 삭제, 직접 지역 추가 기능을 담당합니다.
-// MyMapHistory 컴포넌트에서 데이터 로직을 분리했습니다.
+// useMapHistory.ts - 나만의 지도 히스토리 커스텀 훅
+// 여행 기록 목록 로드, 일정 삭제, 직접 지역 추가 담당
+// MyMapHistory 컴포넌트의 데이터 로직 분리
 //
-// ※ AI 도움을 받아 구현한 부분
-// isMounted 패턴 - 컴포넌트가 언마운트된 후 setState가 호출되는 것을 막기 위해
-// isMounted 변수를 사용하는 방법을 AI 도움으로 작성했습니다.
+// ※ AI 도움 - isMounted 패턴 (언마운트 후 setState 호출 방지)
 
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../../../../config/api";
@@ -19,7 +17,7 @@ export interface ScheduleRow {
   photo_count?: number;
 }
 
-// "T"가 포함된 ISO 날짜 문자열을 로컬 Date 객체로 변환합니다
+// "T"가 포함된 ISO 날짜 문자열을 로컬 Date 객체로 변환
 export const parseLocalDate = (raw: string): Date => {
   const dateStr = raw.split("T")[0];
   const [y, m, d] = dateStr.split("-").map(Number);
@@ -37,8 +35,7 @@ export function useMapHistory(
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    // ※ AI 도움을 받아 구현했습니다
-    // isMounted 변수로 컴포넌트가 언마운트된 후 setState 호출을 막습니다.
+    // isMounted로 언마운트 후 setState 호출 방지 (※ AI 도움)
     let isMounted = true;
 
     const loadHistory = async () => {
@@ -49,7 +46,7 @@ export function useMapHistory(
       if (isMounted) setIsLoading(true);
 
       try {
-        // 완료된 일정과 진행 중인 일정을 각각 불러옵니다
+        // 완료된 일정 + 진행 중인 일정 각각 로드
         const historyRes = await fetch(`${API_BASE_URL}/api/schedules/history/${user.id}`);
         const historyData: ScheduleRow[] = historyRes.ok ? await historyRes.json() : [];
 
@@ -59,7 +56,7 @@ export function useMapHistory(
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // 진행 중 일정 중에서 종료됐거나 사진이 있는 것만 히스토리에 포함합니다
+        // 진행 중 일정 중 종료됐거나 사진이 있는 것만 히스토리에 포함
         const activeWithPhotosOrPast = activeData.filter((item) => {
           const endDate = parseLocalDate(item.end_date);
           return endDate < today || (item.photo_count && item.photo_count > 0);
@@ -84,13 +81,13 @@ export function useMapHistory(
     return () => { isMounted = false; clearTimeout(delayFetch); };
   }, []);
 
-  // 일정 보기 버튼 - 해당 일정의 편집 페이지로 이동합니다
+  // 일정 보기 - 해당 일정의 편집 페이지로 이동
   const handleViewSchedule = (scheduleId: string) => {
     localStorage.setItem("tralog_active_schedule_id", scheduleId);
     onNavigate("handleschedule", scheduleId);
   };
 
-  // 일정 삭제 - 확인 후 서버에서 삭제하고 목록에서 제거합니다
+  // 일정 삭제 - 확인 후 서버에서 삭제하고 목록에서 제거
   const handleDeleteSchedule = async (scheduleId: string, title: string) => {
     if (!window.confirm(`"${title}" 일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.`)) return;
 

@@ -1,10 +1,9 @@
 // PlaceSearchBox.tsx - 장소 검색 및 추가 폼
-// 타임라인 편집 모드 하단에 표시됩니다.
-// 네이버 장소 검색 API로 실시간 검색 결과를 드롭다운으로 보여줍니다.
+// 타임라인 편집 모드 하단에 표시
+// 네이버 장소 검색 API로 실시간 검색 결과를 드롭다운으로 표시
 //
-// ※ AI 도움을 받아 구현한 부분
-// 검색 결과 장소명에 <b>같은 HTML 태그가 섞여 있어서
-// 정규식으로 제거하는 처리를 AI 도움으로 작성했습니다: replace(/<[^>]*>?/gm, "")
+// ※ AI 도움 - 검색 결과 장소명에 섞인 <b> 같은 HTML 태그를
+//   정규식으로 제거: replace(/<[^>]*>?/gm, "")
 
 import { useState } from "react";
 import { API_BASE_URL } from "../../../../config/api";
@@ -46,6 +45,7 @@ export default function PlaceSearchBox({
     null,
   );
 
+  // 장소 검색 - 지역명을 앞에 붙여 정확도 높임, 결과의 HTML 태그 제거
   const handleSearchPlace = async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -77,6 +77,7 @@ export default function PlaceSearchBox({
     }
   };
 
+  // 장소 추가 - 시간 형식 검증 후 선택한 장소를 타임라인/서버에 등록
   const handleAddItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTime.trim() || !newPlace.trim())

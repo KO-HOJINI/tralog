@@ -1,10 +1,8 @@
 // useCompanion.ts - 일행 관리 커스텀 훅
-// 일행 목록 불러오기, 추가, 삭제 기능을 담당합니다.
-// CompanionSection 컴포넌트에서 데이터 로직을 분리했습니다.
+// 일행 목록 로드, 추가, 삭제 담당
+// CompanionSection 컴포넌트의 데이터 로직 분리
 //
-// ※ AI 도움을 받아 구현한 부분
-// isMounted 패턴과 useCallback을 함께 사용해서
-// 컴포넌트 언마운트 후 setState 호출을 방지하는 방법을 AI 도움으로 작성했습니다.
+// ※ AI 도움 - isMounted 패턴 + useCallback으로 언마운트 후 setState 호출 방지
 
 import { useState, useEffect, useCallback } from "react";
 import { API_BASE_URL } from "../../../../config/api";
@@ -20,8 +18,7 @@ export function useCompanion(scheduleId: string, currentUserId: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  // ※ AI 도움을 받아 구현했습니다
-  // useCallback으로 감싸서 scheduleId가 바뀔 때만 함수를 새로 만듭니다.
+  // 일행 목록 로드 - scheduleId 바뀔 때만 함수 재생성 (※ AI 도움)
   const fetchCompanions = useCallback(
     async (isMounted: boolean) => {
       try {
@@ -50,7 +47,7 @@ export function useCompanion(scheduleId: string, currentUserId: string) {
     return () => { isMounted = false; };
   }, [fetchCompanions]);
 
-  // 일행 추가 - 중복/본인 여부 확인 후 서버에 저장합니다
+  // 일행 추가 - 중복/본인 여부 확인 후 서버에 저장
   const addCompanion = async (targetId: string, role: string) => {
     setMessage("");
     if (!targetId.trim()) return false;

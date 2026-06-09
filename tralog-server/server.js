@@ -1,3 +1,7 @@
+// server.js - Tralog 백엔드 서버 (Express + MySQL)
+// 인증, 일정, 장소/가계부/일행, 이미지 갤러리 API 제공
+// 네이버 지역 검색 API 프록시도 여기서 처리
+
 require("dotenv").config();
 
 const express = require("express");
@@ -74,7 +78,7 @@ app.post("/api/login", (req, res) => {
  * 2. 일정(Schedules) 목록 및 상세 조회 API
  * ========================================== */
 
-// 💡 날짜가 지난 일정을 자동으로 'completed' 처리하는 헬퍼 함수
+// 날짜가 지난 일정을 자동으로 'completed' 처리하는 헬퍼
 const autoCompleteSchedules = (callback) => {
   const updateQuery =
     "UPDATE schedules SET status = 'completed' WHERE end_date < CURDATE() AND status = 'planning'";
@@ -267,7 +271,7 @@ app.get("/api/places/search", (req, res) => {
 
   const options = {
     hostname: "openapi.naver.com",
-    // 💡 변경: display=5 에서 display=15 로 늘려서 결과 리스트가 풍성하게 나오도록 수정
+    // display=15로 설정해 검색 결과를 넉넉하게 받음
     path: `/v1/search/local.json?query=${encodeURIComponent(query)}&display=15`,
     method: "GET",
     headers: {
@@ -427,7 +431,7 @@ app.delete("/api/companions/:scheduleId/:userId", (req, res) => {
  * ========================================== */
 app.get("/api/map/records/:userId", (req, res) => {
   const userId = req.params.userId;
-  // 갤러리 사진은 본인 일정 + 일행으로 참여한 일정까지 모두 가져옵니다 (공유 O)
+  // 갤러리 사진은 본인 일정 + 일행으로 참여한 일정까지 모두 조회 (공유 O)
   const galleryQuery = `
     SELECT si.region, si.image_data FROM schedule_images si
     JOIN schedules s ON si.schedule_id = s.id
@@ -449,7 +453,7 @@ app.get("/api/map/records/:userId", (req, res) => {
       mapDict[row.region].images.push(row.image_data);
     });
 
-    // 대표사진은 유저별로 저장됩니다 (일행과 공유 X)
+    // 대표사진은 유저별 저장 (일행과 공유 X)
     db.query(
       "SELECT region, image_data FROM user_map_covers WHERE user_id = ?",
       [userId],
@@ -458,7 +462,7 @@ app.get("/api/map/records/:userId", (req, res) => {
 
         covers.forEach((c) => {
           const record = mapDict[c.region];
-          // 갤러리에 아직 남아있는 사진만 대표사진으로 반영합니다 (삭제된 사진 방지)
+          // 갤러리에 남아있는 사진만 대표사진으로 반영 (삭제된 사진 방지)
           if (record && record.images.includes(c.image_data)) {
             record.coverImage = c.image_data;
           }
@@ -470,7 +474,7 @@ app.get("/api/map/records/:userId", (req, res) => {
 });
 
 app.post("/api/map/upload", (req, res) => {
-  const { schedule_id, region, image_data } = req.body;
+  const { schedule_id, region, image_data, user_id } = req.body;
 
   const insertImage = () => {
     const query =
@@ -484,6 +488,21 @@ app.post("/api/map/upload", (req, res) => {
     });
   };
 
+  // 마이맵 개인 업로드(direct-)는 업로드한 유저 소유의 더미 일정으로 저장해야
+  // 일행에게 공유되지 않는다. (소유자가 잘못되면 그 유저의 일행에게 누수됨)
+  const createDummySchedule = (ownerId) => {
+    const dummyQuery =
+      "INSERT INTO schedules (id, user_id, title, region, start_date, end_date, status) VALUES (?, ?, ?, ?, CURDATE(), CURDATE(), 'completed')";
+    db.query(
+      dummyQuery,
+      [schedule_id, ownerId, `${region} 직접 기록`, region],
+      (sErr) => {
+        if (sErr) return res.status(500).json({ error: "가상 일정 생성 실패" });
+        insertImage();
+      },
+    );
+  };
+
   if (schedule_id.startsWith("direct-")) {
     db.query(
       "SELECT id FROM schedules WHERE id = ?",
@@ -491,24 +510,17 @@ app.post("/api/map/upload", (req, res) => {
       (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
 
-        if (rows.length === 0) {
+        if (rows.length > 0) {
+          insertImage();
+        } else if (user_id) {
+          createDummySchedule(user_id);
+        } else {
+          // user_id 누락 시 폴백 (구버전 호환)
           db.query("SELECT id FROM users LIMIT 1", (uErr, uRows) => {
             const validUserId =
               uRows && uRows.length > 0 ? uRows[0].id : "admin";
-            const dummyQuery =
-              "INSERT INTO schedules (id, user_id, title, region, start_date, end_date, status) VALUES (?, ?, ?, ?, CURDATE(), CURDATE(), 'completed')";
-            db.query(
-              dummyQuery,
-              [schedule_id, validUserId, `${region} 직접 기록`, region],
-              (sErr) => {
-                if (sErr)
-                  return res.status(500).json({ error: "가상 일정 생성 실패" });
-                insertImage();
-              },
-            );
+            createDummySchedule(validUserId);
           });
-        } else {
-          insertImage();
         }
       },
     );
@@ -518,7 +530,7 @@ app.post("/api/map/upload", (req, res) => {
 });
 
 app.post("/api/map/cover", (req, res) => {
-  // 대표사진은 유저별로 지역마다 하나씩 저장합니다 (일행과 공유되지 않음)
+  // 대표사진은 유저별로 지역마다 하나씩 저장 (일행과 공유 안 함)
   const { user_id, region, image_data } = req.body;
   if (!user_id) return res.status(400).json({ error: "user_id가 필요합니다." });
   db.query(

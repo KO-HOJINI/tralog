@@ -1,19 +1,17 @@
 // useNaverMap.ts - 네이버 지도 커스텀 훅
-// 네이버 Maps API 스크립트를 동적으로 로드하고,
-// 장소 마커와 일차별 이동 경로(폴리라인)를 지도 위에 그립니다.
+// 네이버 Maps API 스크립트를 동적 로드하고,
+// 장소 마커 + 일차별 이동 경로(폴리라인)를 지도 위에 그림
 //
-// ※ 이 파일 전체를 AI 도움을 받아 구현했습니다.
-// 네이버 지도 SDK는 window.naver.maps 네임스페이스를 사용하는데,
-// TypeScript에서 전역 타입 선언(declare global)을 하는 방법,
-// 스크립트 동적 로드 후 콜백으로 지도를 초기화하는 방법,
-// useRef로 지도/마커 인스턴스를 관리하는 방법 등을 AI 도움으로 작성했습니다.
+// ※ 이 파일 전체 AI 도움
+// 네이버 지도 SDK는 window.naver.maps 네임스페이스 사용
+// TypeScript 전역 타입 선언(declare global), 스크립트 동적 로드 후 콜백 초기화,
+// useRef로 지도/마커 인스턴스 관리 등을 AI 도움으로 작성
 
 import { useEffect, useRef, useCallback } from "react";
 import { NAVER_MAP_CLIENT_ID } from "../../../../config/api";
 import { type PlaceMarker } from "../NaverMapContainer";
 
-// 네이버 지도 SDK 타입들을 TypeScript에서 쓸 수 있도록 선언합니다
-// ※ AI 도움을 받아 작성한 타입 선언입니다
+// 네이버 지도 SDK 타입 선언 (※ AI 도움)
 interface NaverMap {
   setCenter: (latlng: NaverLatLng) => void;
 }
@@ -32,7 +30,7 @@ interface NaverPolyline {
   setMap: (map: NaverMap | null) => void;
 }
 
-// window 전역 객체에 naver 속성을 추가합니다 (SDK 로드 후 생성됨)
+// window 전역 객체에 naver 속성 추가 (SDK 로드 후 생성됨)
 declare global {
   interface Window {
     naver: {
@@ -57,7 +55,7 @@ interface UseNaverMapProps {
   centerLng: number;
 }
 
-// 일차별로 다른 색상을 사용합니다 (1일차=teal, 2일차=amber, ...)
+// 일차별 색상 (1일차=teal, 2일차=amber, ...)
 const DAY_COLORS = ["#0d9488", "#f59e0b", "#6366f1", "#ec4899", "#10b981", "#8b5cf6", "#ef4444"];
 
 export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) {
@@ -68,9 +66,8 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
   const infoWindowRef = useRef<NaverInfoWindow | null>(null);
   const scriptLoadedRef = useRef(false);
 
-  // ※ AI 도움을 받아 구현했습니다
-  // 기존 마커/폴리라인을 모두 지우고 장소 목록을 다시 그립니다.
-  // useCallback으로 감싸서 places가 바뀔 때만 함수를 새로 만들도록 했습니다.
+  // 마커/경로 다시 그리기 - 기존 것 모두 지우고 장소 목록 재렌더 (※ AI 도움)
+  // useCallback으로 places 바뀔 때만 함수 재생성
   const renderMarkersAndLines = useCallback(() => {
     const naver = window.naver;
     if (!naver || !mapInstanceRef.current) return;
@@ -82,7 +79,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
     polylinesRef.current = [];
     if (infoWindowRef.current) infoWindowRef.current.close();
 
-    // 좌표가 있는 장소만 필터링해서 시간 순으로 정렬
+    // 좌표 있는 장소만 필터링 후 시간 순 정렬
     const validPlaces = places.filter((p) => p.lat && p.lng);
     if (validPlaces.length === 0) return;
 
@@ -93,7 +90,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
 
     const dayCounts = new Map<number, number>();
 
-    // 각 장소에 번호 마커 생성 (일차별로 색상 구분)
+    // 장소마다 번호 마커 생성 (일차별 색상 구분)
     sortedPlaces.forEach((place) => {
       const position = new naver.maps.LatLng(place.lat!, place.lng!);
       const color = DAY_COLORS[(place.day_number - 1) % DAY_COLORS.length];
@@ -119,7 +116,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
         title: place.place_name,
       });
 
-      // 마커 클릭 시 장소 이름과 방문 시간을 보여주는 인포윈도우
+      // 마커 클릭 시 장소 이름 + 방문 시간을 띄우는 인포윈도우
       const infoWindow = new naver.maps.InfoWindow({
         content: `
           <div style="
@@ -143,7 +140,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
       markersRef.current.push(marker);
     });
 
-    // 같은 일차의 장소들을 선으로 연결합니다 (이동 경로 표시)
+    // 같은 일차 장소들을 선으로 연결 (이동 경로 표시)
     const uniqueDays = Array.from(new Set(sortedPlaces.map((p) => p.day_number)));
     uniqueDays.forEach((day) => {
       const dayPlaces = sortedPlaces.filter((p) => p.day_number === day);
@@ -162,9 +159,8 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
     });
   }, [places]);
 
-  // ※ AI 도움을 받아 구현했습니다
-  // 네이버 지도 SDK 스크립트를 <head>에 동적으로 추가하고, 로드 완료 시 지도를 초기화합니다.
-  // 이미 로드된 경우에는 바로 초기화합니다.
+  // 지도 초기화 - SDK 스크립트를 <head>에 동적 추가, 로드 완료 시 지도 생성 (※ AI 도움)
+  // 이미 로드돼 있으면 바로 초기화
   useEffect(() => {
     const initMap = () => {
       if (!mapRef.current || mapInstanceRef.current) return;
@@ -176,7 +172,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
       renderMarkersAndLines();
     };
 
-    // 이미 SDK가 로드돼 있으면 바로 초기화
+    // SDK 이미 로드됐으면 바로 초기화
     if (window.naver?.maps) {
       initMap();
       return;
@@ -186,7 +182,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
     scriptLoadedRef.current = true;
     if (!NAVER_MAP_CLIENT_ID) return;
 
-    // SDK 스크립트 태그를 동적으로 생성해서 추가합니다
+    // SDK 스크립트 태그 동적 생성 후 추가
     const script = document.createElement("script");
     script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_MAP_CLIENT_ID}`;
     script.async = true;
@@ -194,7 +190,7 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
     document.head.appendChild(script);
   }, [centerLat, centerLng, renderMarkersAndLines]);
 
-  // 장소 목록이 바뀌면 마커를 다시 그립니다
+  // 장소 목록 바뀌면 마커 다시 그리기
   useEffect(() => {
     if (mapInstanceRef.current && window.naver?.maps) {
       renderMarkersAndLines();

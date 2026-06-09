@@ -1,6 +1,6 @@
 // HandleSchedulePage.tsx - 일정 편집 페이지
-// 좌측에 네이버 지도, 우측에 타임라인/가계부/일행 탭을 보여줍니다.
-// 데이터 관련 로직은 useSchedule 훅으로 분리했습니다.
+// 좌측: 네이버 지도, 우측: 타임라인/가계부/일행 탭
+// 데이터 로직은 useSchedule 훅으로 분리
 
 import { useState } from "react";
 import NavBar from "../../Navbar";
@@ -25,7 +25,7 @@ export default function HandleSchedulePage({
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
-  // props로 받은 ID가 없으면 localStorage에서 가져옵니다
+  // props ID가 없으면 localStorage에서 가져옴
   const [scheduleId] = useState(
     () => scheduleIdProp || localStorage.getItem("tralog_active_schedule_id") || "s-1",
   );
@@ -62,7 +62,7 @@ export default function HandleSchedulePage({
       />
 
       <main className="flex-1 h-0 w-[70%] max-w-300 mx-auto py-6 flex flex-col overflow-hidden">
-        {/* 상단: 일정 제목/날짜 (편집 모드면 입력 가능) + 헤더 버튼 */}
+        {/* 상단: 일정 제목/날짜 (편집 모드면 입력 가능) + 헤더 버튼 영역 */}
         <div className="flex w-full gap-5 items-end shrink-0 pb-5">
           <div className="flex-1 flex flex-col gap-2.5 items-start pl-1">
             {isEditing ? (
@@ -164,7 +164,7 @@ export default function HandleSchedulePage({
   );
 }
 
-// 지역명으로 지도 중심 좌표를 반환합니다
+// 지역명 -> 지도 중심 좌표 반환
 function getRegionCenter(region: string): { lat: number; lng: number } {
   const centers: Record<string, { lat: number; lng: number }> = {
     서울특별시: { lat: 37.5665, lng: 126.978 },

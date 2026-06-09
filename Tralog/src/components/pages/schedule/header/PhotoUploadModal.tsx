@@ -1,9 +1,8 @@
 // PhotoUploadModal.tsx - 사진 추가 모달
-// 일정 편집 페이지에서 사진 추가 버튼을 누르면 뜨는 모달입니다.
-// 지역을 선택하고 파일을 업로드하면 나만의 지도에 사진이 저장됩니다.
+// 일정 편집 페이지에서 사진 추가 버튼 클릭 시 표시
+// 지역 선택 후 파일 업로드하면 나만의 지도에 사진 저장
 //
-// ※ AI 도움을 받아 구현한 부분
-// FileReader로 이미지를 base64로 변환해서 서버에 전송하는 방법을 AI 도움으로 작성했습니다.
+// ※ AI 도움 - FileReader로 이미지를 base64로 변환 후 서버 전송
 
 import { useState, useRef } from "react";
 import { API_BASE_URL } from "../../../../config/api";
@@ -14,6 +13,7 @@ interface PhotoUploadModalProps {
   scheduleRegion: string;
 }
 
+// 지역 선택 옵션 (광역시/도 17개)
 const REGION_OPTIONS = [
   "서울특별시", "부산광역시", "대구광역시", "인천광역시",
   "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
@@ -31,9 +31,10 @@ export default function PhotoUploadModal({
   const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 모달이 닫혀있으면 아무것도 렌더링하지 않음
+  // 모달 닫힘 상태면 렌더링 안 함
   if (!isOpen) return null;
 
+  // 파일 선택 - base64 변환 후 업로드, 성공 시 모달 닫기
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;

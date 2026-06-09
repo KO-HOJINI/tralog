@@ -1,4 +1,4 @@
-// 환경변수로 API 기본 URL을 관리.
+// api.ts - 환경변수 기반 API 기본 URL / 외부 키 관리
 
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "";

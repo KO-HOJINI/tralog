@@ -1,6 +1,6 @@
 // RegisterForm.tsx - 회원가입 폼
-// 아이디, 비밀번호, 이름, 생년월일, 이메일을 입력받아 서버에 POST 요청을 보냅니다.
-// 비밀번호 확인 일치 여부, 필수 입력 항목 등 클라이언트 측 유효성 검사를 먼저 합니다.
+// 아이디/비밀번호/이름/생년월일/이메일을 입력받아 서버에 POST 요청
+// 비밀번호 확인 일치, 필수 항목 등 클라이언트 측 유효성 검사 먼저 수행
 
 import { useState } from "react";
 import { API_BASE_URL } from "../../../config/api";
@@ -31,9 +31,11 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
+  // 회원가입 제출 - 필수/형식 검증 후 서버에 등록 요청
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 항목별 유효성 검사 (빈 칸, 비밀번호 일치, 생년월일 6자리)
     const newErrors = { id: "", password: "", confirmPassword: "", name: "", birth: "", email: "" };
     let isValid = true;
 
@@ -57,7 +59,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
 
     setIsLoading(true);
     try {
-      // API_BASE_URL
+      // 서버에 회원가입 요청
       const response = await fetch(`${API_BASE_URL}/api/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -86,6 +88,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     }
   };
 
+  // 입력 칸 공통 스타일 - 에러가 있으면 빨간 테두리 추가
   const inputClass = (errorKey: keyof typeof errors) =>
     `w-full h-12 px-4 text-sm focus:outline-none input-custom ${
       errors[errorKey] ? "border-red-500!" : ""

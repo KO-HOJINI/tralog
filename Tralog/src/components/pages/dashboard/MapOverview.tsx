@@ -1,6 +1,6 @@
 // MapOverview.tsx - 대시보드 좌측 지도 + 달성률 카드
-// 사용자가 방문한 지역 수와 전체 대비 달성률을 보여줍니다.
-// 지도 or 달성률 카드를 클릭하면 나만의 지도 페이지로 이동합니다.
+// 방문한 지역 수와 전체 대비 달성률 표시
+// 지도/달성률 카드 클릭 시 나만의 지도 페이지로 이동
 
 import { useState, useEffect } from "react";
 import InteractiveMap from "../mymap/InteractiveMap";
@@ -28,13 +28,13 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
   useEffect(() => {
     if (!userId) return;
 
-    // 지도에 표시할 사진 기록을 불러옵니다
+    // 지도에 표시할 사진 기록 로드
     fetch(`${API_BASE_URL}/api/map/records/${userId}`)
       .then((res) => res.json())
       .then((data: MapRecord[]) => setMapRecords(data))
       .catch((err) => console.error("지도 기록 로드 오류:", err));
 
-    // 방문한 지역 수를 계산합니다 (중복 지역은 하나로 카운트)
+    // 방문 지역 수 계산 (중복 지역은 하나로 카운트)
     fetch(`${API_BASE_URL}/api/schedules/history/${userId}`)
       .then((res) => res.json())
       .then((data: HistorySchedule[]) => {
@@ -49,7 +49,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
 
   return (
     <div className="flex flex-col gap-5 w-full h-full pl-1">
-      {/* 지도 카드 - 클릭하면 나만의 지도 페이지로 이동 */}
+      {/* 지도 카드 - 클릭 시 나만의 지도 페이지로 이동 */}
       <div onClick={() => onNavigate("mymap")} className="card-map-theme flex-1 h-0">
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
           <div className="w-full h-full max-w-60 sm:max-w-70 lg:max-w-85 xl:max-w-100 2xl:max-w-115 max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">

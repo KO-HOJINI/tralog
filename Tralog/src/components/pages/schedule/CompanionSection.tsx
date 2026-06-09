@@ -1,6 +1,6 @@
 // CompanionSection.tsx - 일행 추가 섹션
-// 아이디를 검색해서 일정에 일행을 초대하고 읽기/편집 권한을 설정합니다.
-// 일행 데이터 로직은 useCompanion 훅으로 분리했습니다.
+// 아이디 검색으로 일정에 일행 초대, 읽기/편집 권한 설정
+// 일행 데이터 로직은 useCompanion 훅으로 분리
 
 import { useState } from "react";
 import { useCompanion } from "./hooks/useCompanion";
@@ -26,6 +26,7 @@ export default function CompanionSection({
     userId
   );
 
+  // 일행 추가 - 성공하면 검색 입력칸 비우기
   const handleAddCompanion = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await addCompanion(searchId, selectedRole);

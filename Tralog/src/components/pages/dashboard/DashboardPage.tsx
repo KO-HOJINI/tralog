@@ -1,6 +1,6 @@
 // DashboardPage.tsx - 메인 대시보드 페이지
-// 로그인된 사용자의 지도 현황과 여행 일정 목록을 보여줍니다.
-// localStorage에서 로그인 세션을 확인하고, 없으면 로그인 페이지로 이동시킵니다.
+// 로그인 사용자의 지도 현황 + 여행 일정 목록 표시
+// localStorage에서 로그인 세션 확인, 없으면 로그인 페이지로 이동
 
 import { useState, useEffect } from "react";
 import NavBar from "../../Navbar";
@@ -17,19 +17,20 @@ interface UserSession {
 }
 
 export default function DashboardPage({ onNavigate }: DashboardPageProps) {
-  // localStorage에서 세션 초기값으로 설정
+  // localStorage 세션을 초기값으로 설정
   const [currentUser, setCurrentUser] = useState<UserSession | null>(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
-  // 로그인 안 됐으면 로그인 페이지로 보냄
+  // 세션 없으면 로그인 페이지로 이동
   useEffect(() => {
     if (!currentUser) {
       onNavigate("login");
     }
   }, [currentUser, onNavigate]);
 
+  // 로그아웃 - 세션 제거 후 로그인 페이지로
   const handleLogout = () => {
     localStorage.removeItem("tralog_current_user");
     setCurrentUser(null);

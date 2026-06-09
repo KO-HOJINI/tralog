@@ -1,6 +1,6 @@
 // TimelineSection.tsx - 타임라인 섹션
-// 일차별 장소 목록을 보여주고, 편집 모드에서 장소 추가/삭제/메모/비용 입력을 지원합니다.
-// 일차 버튼을 클릭해서 해당 날의 일정만 볼 수 있습니다.
+// 일차별 장소 목록 표시, 편집 모드에서 장소 추가/삭제/메모/비용 입력 지원
+// 일차 버튼 클릭 시 해당 날의 일정만 표시
 
 import { useState, useEffect } from "react";
 import PlaceItemCard from "./PlaceItemCard";
@@ -65,7 +65,7 @@ export default function TimelineSection({
   const [allItems, setAllItems] = useState<TimelineItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 시작일과 종료일로 총 여행 일수를 계산합니다
+  // 시작일/종료일로 총 여행 일수 계산
   let totalDays = 1;
   if (startDate && endDate) {
     const start = new Date(startDate);
@@ -76,7 +76,7 @@ export default function TimelineSection({
 
   const currentDay = day > totalDays ? totalDays : day;
 
-  // 컴포넌트가 처음 렌더링될 때 장소 목록을 불러옵니다
+  // 첫 렌더링 시 장소 목록 로드
   useEffect(() => {
     let isMounted = true;
     const fetchPlaces = async () => {
@@ -110,7 +110,7 @@ export default function TimelineSection({
     return () => { isMounted = false; };
   }, [scheduleId]);
 
-  // 장소가 추가됐을 때 목록에 바로 반영하고 지도에도 알립니다
+  // 장소 추가 성공 - 목록에 바로 반영하고 지도에도 전달
   const handlePlaceAddedSuccess = (newItem: TimelineItem) => {
     setAllItems((prev) => [...prev, newItem]);
     if (onPlaceAdded) {
@@ -125,6 +125,7 @@ export default function TimelineSection({
     }
   };
 
+  // 장소 삭제
   const handleDeleteItem = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/places/${id}`, { method: "DELETE" });
@@ -134,6 +135,7 @@ export default function TimelineSection({
     }
   };
 
+  // 메모 수정
   const handleUpdateMemo = async (id: string, memo: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
@@ -149,6 +151,7 @@ export default function TimelineSection({
     }
   };
 
+  // 비용 추가 - 가계부에 저장하고 해당 장소 카드에도 반영
   const handleAddExpense = async (placeId: string, detail: string, amount: number, category: string) => {
     try {
       await fetch(`${API_BASE_URL}/api/expenses`, {
@@ -175,7 +178,7 @@ export default function TimelineSection({
     }
   };
 
-  // 네이버 지도 길찾기 URL을 만들어서 새 탭으로 엽니다
+  // 두 장소 사이 네이버 지도 길찾기 URL을 만들어 새 탭으로 열기
   const handleOpenDirections = (start: TimelineItem, end: TimelineItem) => {
     const getRoutingParam = (item: TimelineItem) => {
       const name = encodeURIComponent(item.place);
@@ -189,7 +192,7 @@ export default function TimelineSection({
     window.open(url, "_blank", "noopener,noreferrer");
   };
 
-  // 현재 선택된 일차의 장소만 시간 순으로 정렬해서 보여줍니다
+  // 현재 선택된 일차의 장소만 시간 순으로 정렬
   const filteredItems = allItems
     .filter((item) => item.day_number === currentDay)
     .sort((a, b) => a.time.localeCompare(b.time));
@@ -244,7 +247,7 @@ export default function TimelineSection({
                       onAddExpense={handleAddExpense}
                     />
 
-                    {/* 다음 장소가 있으면 길찾기 버튼 표시 */}
+                    {/* 다음 장소가 있으면 길찾기 버튼 노출 */}
                     {nextItem && (
                       <div className="relative flex justify-start items-center pl-10 py-1 z-20 mt-1 mb-1">
                         <button
@@ -263,7 +266,7 @@ export default function TimelineSection({
         </div>
       </div>
 
-      {/* 편집 모드에서만 장소 검색/추가 폼을 보여줍니다 */}
+      {/* 편집 모드에서만 장소 검색/추가 폼 노출 */}
       {isEditing && (
         <PlaceSearchBox
           scheduleId={scheduleId}
