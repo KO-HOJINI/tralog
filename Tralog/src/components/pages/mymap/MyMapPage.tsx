@@ -22,6 +22,9 @@ export interface MapRecord {
   region: string;
   images: string[];
   coverImage?: string;
+  // 해당 지역에 완료된 일정이 있는지 여부 - 인터랙티브맵 색칠 조건으로 사용
+  // (진행 중 일정만 있는 지역은 대표사진이 있어도 지도에 표시하지 않음)
+  hasCompletedSchedule?: boolean;
 }
 
 export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) => void }) {

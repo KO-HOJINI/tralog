@@ -122,7 +122,8 @@ export default function InteractiveMap({
           if (!regionKey) return null;
 
           const record = mapRecords.find((r) => r.region === regionKey);
-          const hasCover = record && record.coverImage;
+          // 완료된 일정이 있는 지역만 대표사진으로 색칠 (진행 중 일정은 제외)
+          const hasCover = record && record.coverImage && record.hasCompletedSchedule;
           const isSelected = !readOnly && selectedRegion === regionKey;
 
           // 제주도는 별도 투영기, 나머지는 본토 투영기 사용
@@ -231,7 +232,7 @@ export default function InteractiveMap({
       {(() => {
         const dokdoRegionKey = "경상북도";
         const record = mapRecords.find((r) => r.region === dokdoRegionKey);
-        const hasCover = record && record.coverImage;
+        const hasCover = record && record.coverImage && record.hasCompletedSchedule;
         const isSelected = !readOnly && selectedRegion === dokdoRegionKey;
 
         const ulleungPt = ulleungProjection([130.85, 37.5]) || [0, 0];

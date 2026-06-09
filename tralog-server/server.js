@@ -488,51 +488,72 @@ app.delete("/api/companions/:scheduleId/:userId", (req, res) => {
  * 4. 이미지 갤러리 및 대표사진(Cover) API
  * ========================================== */
 app.get("/api/map/records/:userId", (req, res) => {
-  const userId = req.params.userId;
-  // 갤러리 사진은 본인 일정 + 일행으로 참여한 일정까지 모두 조회 (공유 O)
-  // 동행자(companion)를 LEFT JOIN하면 동행자 수만큼 사진이 중복 조회되므로
-  // (카테시안 곱), 일행 참여 여부는 EXISTS 서브쿼리로 판별해 행 복제를 막는다.
-  const galleryQuery = `
-    SELECT si.region, si.image_data FROM schedule_images si
-    JOIN schedules s ON si.schedule_id = s.id
-    WHERE s.user_id = ?
-      OR EXISTS (
-        SELECT 1 FROM schedule_companions sc
-        WHERE sc.schedule_id = s.id AND sc.user_id = ?
-      )
-  `;
-  db.query(galleryQuery, [userId, userId], (err, results) => {
-    if (err) return res.status(500).json({ error: err.message });
+  // 지난 일정을 먼저 'completed'로 갱신해야 완료 여부 판정이 정확함
+  autoCompleteSchedules(() => {
+    const userId = req.params.userId;
+    // 갤러리 사진은 본인 일정 + 일행으로 참여한 일정까지 모두 조회 (공유 O)
+    // 동행자(companion)를 LEFT JOIN하면 동행자 수만큼 사진이 중복 조회되므로
+    // (카테시안 곱), 일행 참여 여부는 EXISTS 서브쿼리로 판별해 행 복제를 막는다.
+    const galleryQuery = `
+      SELECT si.region, si.image_data FROM schedule_images si
+      JOIN schedules s ON si.schedule_id = s.id
+      WHERE s.user_id = ?
+        OR EXISTS (
+          SELECT 1 FROM schedule_companions sc
+          WHERE sc.schedule_id = s.id AND sc.user_id = ?
+        )
+    `;
+    db.query(galleryQuery, [userId, userId], (err, results) => {
+      if (err) return res.status(500).json({ error: err.message });
 
-    const mapDict = {};
-    results.forEach((row) => {
-      if (!mapDict[row.region]) {
-        mapDict[row.region] = {
-          region: row.region,
-          images: [],
-          coverImage: "",
-        };
-      }
-      mapDict[row.region].images.push(row.image_data);
+      const mapDict = {};
+      results.forEach((row) => {
+        if (!mapDict[row.region]) {
+          mapDict[row.region] = {
+            region: row.region,
+            images: [],
+            coverImage: "",
+            hasCompletedSchedule: false,
+          };
+        }
+        mapDict[row.region].images.push(row.image_data);
+      });
+
+      // 대표사진은 유저별 저장 (일행과 공유 X)
+      db.query(
+        "SELECT region, image_data FROM user_map_covers WHERE user_id = ?",
+        [userId],
+        (coverErr, covers) => {
+          if (coverErr) return res.status(500).json({ error: coverErr.message });
+
+          covers.forEach((c) => {
+            const record = mapDict[c.region];
+            // 갤러리에 남아있는 사진만 대표사진으로 반영 (삭제된 사진 방지)
+            if (record && record.images.includes(c.image_data)) {
+              record.coverImage = c.image_data;
+            }
+          });
+
+          // 완료된 일정이 있는 지역만 인터랙티브맵에 색칠되도록 플래그 설정
+          // (진행 중 일정만 있는 지역은 대표사진을 지정해도 지도엔 표시하지 않음)
+          const completedQuery = `
+            SELECT DISTINCT s.region
+            FROM schedules s
+            LEFT JOIN schedule_companions sc ON s.id = sc.schedule_id
+            WHERE (s.user_id = ? OR sc.user_id = ?) AND s.status = 'completed'
+          `;
+          db.query(completedQuery, [userId, userId], (compErr, compRows) => {
+            if (compErr) return res.status(500).json({ error: compErr.message });
+
+            const completedRegions = new Set(compRows.map((r) => r.region));
+            Object.values(mapDict).forEach((record) => {
+              record.hasCompletedSchedule = completedRegions.has(record.region);
+            });
+            res.status(200).json(Object.values(mapDict));
+          });
+        },
+      );
     });
-
-    // 대표사진은 유저별 저장 (일행과 공유 X)
-    db.query(
-      "SELECT region, image_data FROM user_map_covers WHERE user_id = ?",
-      [userId],
-      (coverErr, covers) => {
-        if (coverErr) return res.status(500).json({ error: coverErr.message });
-
-        covers.forEach((c) => {
-          const record = mapDict[c.region];
-          // 갤러리에 남아있는 사진만 대표사진으로 반영 (삭제된 사진 방지)
-          if (record && record.images.includes(c.image_data)) {
-            record.coverImage = c.image_data;
-          }
-        });
-        res.status(200).json(Object.values(mapDict));
-      },
-    );
   });
 });
 
