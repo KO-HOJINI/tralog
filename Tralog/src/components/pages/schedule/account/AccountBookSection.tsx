@@ -24,7 +24,6 @@ interface ApiExpenseData {
 
 interface AccountBookSectionProps {
   scheduleId: string;
-  companionCount?: number;
   canEdit?: boolean;
   startDate?: string;
   endDate?: string;
@@ -32,13 +31,14 @@ interface AccountBookSectionProps {
 
 export default function AccountBookSection({
   scheduleId,
-  companionCount = 1,
   canEdit = false,
   startDate,
   endDate,
 }: AccountBookSectionProps) {
   const [expenses, setExpenses] = useState<AccountItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // 여행 인원 = 일행 수 + 본인 1명 (일정 응답의 companions로 계산)
+  const [companionCount, setCompanionCount] = useState(1);
 
   // 시작일/종료일로 총 여행 일수 계산 (일차 선택용)
   let totalDays = 1;
@@ -70,7 +70,10 @@ export default function AccountBookSection({
           day_number: e.day_number ?? undefined,
         }));
 
-        if (isMounted) setExpenses(mapped);
+        if (isMounted) {
+          setExpenses(mapped);
+          setCompanionCount((data.companions?.length ?? 0) + 1);
+        }
       } catch (err) {
         console.error("가계부 로딩 오류:", err);
       } finally {
