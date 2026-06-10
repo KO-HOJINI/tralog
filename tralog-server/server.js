@@ -447,15 +447,36 @@ app.put("/api/places/:id", (req, res) => {
   );
 });
 
-app.delete("/api/places/:id", (req, res) => {
-  db.query(
-    "DELETE FROM schedule_places WHERE id = ?",
-    [req.params.id],
-    (err) => {
-      if (err) return res.status(500).json({ error: err.message });
-      res.status(200).json({ message: "동선 삭제 완료" });
-    },
-  );
+app.delete("/api/places/:id", async (req, res) => {
+  const placeId = req.params.id;
+  try {
+    // 카드에서 추가한 비용은 가계부에 detail=장소명, day_number=장소 일차로 저장된다.
+    // 장소를 지울 땐 해당 장소에 묶인 비용도 함께 지운다.
+    const [rows] = await db
+      .promise()
+      .query(
+        "SELECT schedule_id, place_name, day_number FROM schedule_places WHERE id = ?",
+        [placeId],
+      );
+
+    await db
+      .promise()
+      .query("DELETE FROM schedule_places WHERE id = ?", [placeId]);
+
+    if (rows.length > 0) {
+      const { schedule_id, place_name, day_number } = rows[0];
+      await db
+        .promise()
+        .query(
+          "DELETE FROM schedule_expenses WHERE schedule_id = ? AND detail = ? AND day_number = ?",
+          [schedule_id, place_name, day_number],
+        );
+    }
+
+    res.status(200).json({ message: "동선 삭제 완료" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.post("/api/expenses", (req, res) => {

@@ -51,6 +51,7 @@ interface TimelineSectionProps {
   endDate?: string;
   region?: string;
   onPlaceAdded?: (place: PlaceMarkerEvent) => void;
+  onPlaceDeleted?: (placeId: string) => void;
 }
 
 export default function TimelineSection({
@@ -60,6 +61,7 @@ export default function TimelineSection({
   endDate,
   region,
   onPlaceAdded,
+  onPlaceDeleted,
 }: TimelineSectionProps) {
   const [day, setDay] = useState<number>(1);
   const [allItems, setAllItems] = useState<TimelineItem[]>([]);
@@ -139,7 +141,10 @@ export default function TimelineSection({
   const handleDeleteItem = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/places/${id}`, { method: "DELETE" });
-      if (res.ok) setAllItems((prev) => prev.filter((item) => item.id !== id));
+      if (res.ok) {
+        setAllItems((prev) => prev.filter((item) => item.id !== id));
+        onPlaceDeleted?.(id); // 지도 마커도 함께 제거
+      }
     } catch (err) {
       console.error("장소 삭제 실패:", err);
     }

@@ -219,6 +219,11 @@ export function useSchedule(
     setMapPlaces((prev) => [...prev, place]);
   }, []);
 
+  // 장소 삭제 시 지도 마커도 함께 제거 (안 하면 삭제된 마커가 남아 번호가 꼬임)
+  const handlePlaceDeleted = useCallback((placeId: string) => {
+    setMapPlaces((prev) => prev.filter((p) => p.id !== placeId));
+  }, []);
+
   return {
     scheduleMeta,
     mapPlaces,
@@ -234,5 +239,6 @@ export function useSchedule(
     handleChangeRegion,
     handleDeleteSchedule,
     handlePlaceAdded,
+    handlePlaceDeleted,
   };
 }
