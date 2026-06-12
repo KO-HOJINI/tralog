@@ -27,21 +27,28 @@ export interface MapRecord {
   hasCompletedSchedule?: boolean;
 }
 
-export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) => void }) {
+export default function MyMapPage({
+  onNavigate,
+}: {
+  onNavigate: (page: string) => void;
+}) {
+  // 로그인 유저 세션 (localStorage 초기값)
   const [currentUser] = useState<UserSession | null>(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
   });
 
-  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
-  const [mapRecords, setMapRecords] = useState<MapRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null); // 지도에서 선택된 지역 (null=미선택)
+  const [mapRecords, setMapRecords] = useState<MapRecord[]>([]); // 지역별 지도 기록 목록
+  const [loading, setLoading] = useState(true); // 데이터 로딩 여부
 
   // 지도 사진 기록 로드 - currentUser 바뀔 때만 함수 재생성 (※ AI 도움)
   const fetchMapRecords = useCallback(async () => {
     if (!currentUser) return;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/map/records/${currentUser.id}`);
+      const response = await fetch(
+        `${API_BASE_URL}/api/map/records/${currentUser.id}`,
+      );
       if (response.ok) {
         const data = await response.json();
         setMapRecords(data);
@@ -60,7 +67,9 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
     }
 
     // setTimeout(0)으로 렌더링 완료 직후 fetch 실행 (※ AI 도움)
-    const delayFetch = setTimeout(() => { fetchMapRecords(); }, 0);
+    const delayFetch = setTimeout(() => {
+      fetchMapRecords();
+    }, 0);
     return () => clearTimeout(delayFetch);
   }, [currentUser, fetchMapRecords, onNavigate]);
 
@@ -73,10 +82,13 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
 
   return (
     <div className="flex-col-full h-screen bg-background antialiased text-dark">
-      <NavBar userName={currentUser.name} onNavigate={onNavigate} onLogout={handleLogout} />
+      <NavBar
+        userName={currentUser.name}
+        onNavigate={onNavigate}
+        onLogout={handleLogout}
+      />
 
       <main className="flex-1 h-0 w-[70%] mx-auto py-6 flex flex-row gap-8 items-stretch overflow-hidden">
-
         {/* 좌측: 지도 */}
         <div className="w-1/2 flex flex-col shrink-0 h-full box-white p-6 shadow-card overflow-hidden">
           <h2 className="mb-4">나만의 지도 채우기</h2>
@@ -92,7 +104,10 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
         {/* 우측: 지역 미선택 → 히스토리 목록 / 선택 → 사진 상세 */}
         <div className="w-1/2 flex flex-col h-full overflow-hidden">
           {selectedRegion === null ? (
-            <MyMapHistory onSelectRegion={setSelectedRegion} onNavigate={onNavigate} />
+            <MyMapHistory
+              onSelectRegion={setSelectedRegion}
+              onNavigate={onNavigate}
+            />
           ) : loading ? (
             <div className="flex-1 flex items-center justify-center">
               <span className="loading loading-spinner loading-md text-primary" />
@@ -103,7 +118,9 @@ export default function MyMapPage({ onNavigate }: { onNavigate: (page: string) =
               onBack={() => {
                 setSelectedRegion(null);
                 // 뒤로가기 시 최신 데이터 다시 로드
-                setTimeout(() => { fetchMapRecords(); }, 0);
+                setTimeout(() => {
+                  fetchMapRecords();
+                }, 0);
               }}
               onRefresh={fetchMapRecords}
             />

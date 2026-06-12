@@ -12,13 +12,29 @@ interface MyMapHistoryProps {
 
 // 직접 추가용 지역 선택 옵션 (광역시/도 17개)
 const REGION_OPTIONS = [
-  "서울특별시", "부산광역시", "대구광역시", "인천광역시",
-  "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
-  "경기도", "강원특별자치도", "충청북도", "충청남도",
-  "전라북도", "전라남도", "경상북도", "경상남도", "제주특별자치도",
+  "서울특별시",
+  "부산광역시",
+  "대구광역시",
+  "인천광역시",
+  "광주광역시",
+  "대전광역시",
+  "울산광역시",
+  "세종특별자치시",
+  "경기도",
+  "강원특별자치도",
+  "충청북도",
+  "충청남도",
+  "전라북도",
+  "전라남도",
+  "경상북도",
+  "경상남도",
+  "제주특별자치도",
 ];
 
-export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistoryProps) {
+export default function MyMapHistory({
+  onSelectRegion,
+  onNavigate,
+}: MyMapHistoryProps) {
   const {
     historyList,
     isLoading,
@@ -48,7 +64,9 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
             onClick={() => setIsAddingSection(true)}
             className="box-muted shrink-0 h-20 border-2 border-dashed border-slate-200 hover:border-slate-300 transition-all duration-300 cursor-pointer flex items-center justify-center gap-3 text-slate-400 hover:text-slate-600 group"
           >
-            <span className="text-body-caption font-bold select-none tracking-tight">+</span>
+            <span className="text-body-caption font-bold select-none tracking-tight">
+              +
+            </span>
             <span className="text-body-caption font-bold select-none tracking-tight">
               일정 없이 방문했던 지역 사진 직접 추가하기
             </span>
@@ -60,7 +78,10 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
                 📍 추억을 기록할 새로운 지역 선택
               </span>
               <button
-                onClick={() => { setIsAddingSection(false); setSelectedNewRegion(""); }}
+                onClick={() => {
+                  setIsAddingSection(false);
+                  setSelectedNewRegion("");
+                }}
                 className="text-slate-400 hover:text-dark text-xs font-medium transition-colors"
               >
                 취소
@@ -74,10 +95,15 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
               >
                 <option value="">-- 지역을 선택하세요 --</option>
                 {REGION_OPTIONS.map((reg) => (
-                  <option key={reg} value={reg}>{reg}</option>
+                  <option key={reg} value={reg}>
+                    {reg}
+                  </option>
                 ))}
               </select>
-              <button onClick={handleDirectRegionSubmit} className="btn-primary h-10 px-5 text-xs shrink-0">
+              <button
+                onClick={handleDirectRegionSubmit}
+                className="btn-primary h-10 px-5 text-xs shrink-0"
+              >
                 기록 바로가기
               </button>
             </div>
@@ -106,31 +132,48 @@ export default function MyMapHistory({ onSelectRegion, onNavigate }: MyMapHistor
               >
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
-                    <span className="text-body-main font-bold text-dark">{history.title}</span>
+                    <span className="text-body-main font-bold text-dark">
+                      {history.title}
+                    </span>
                     {isPast ? (
-                      <span className="badge badge-sm bg-slate-100 text-slate-500 border-0">지난 일정</span>
+                      <span className="badge badge-sm bg-slate-100 text-slate-500 border-0">
+                        지난 일정
+                      </span>
                     ) : (
-                      <span className="badge badge-sm bg-primary/10 text-primary border-primary/20">진행 중</span>
+                      <span className="badge badge-sm bg-primary/10 text-primary border-primary/20">
+                        진행 중
+                      </span>
                     )}
                   </div>
                   <div className="flex flex-col gap-0.5 mt-0.5">
-                    <span className="text-xs text-slate-500 font-medium">{history.region}</span>
+                    <span className="text-xs text-slate-500 font-medium">
+                      {history.region}
+                    </span>
                     <span className="text-[10px] text-slate-400">
-                      {history.start_date.split("T")[0]} ~ {history.end_date.split("T")[0]}
+                      {history.start_date.split("T")[0]} ~{" "}
+                      {history.end_date.split("T")[0]}
                     </span>
                   </div>
                 </div>
 
                 {/* 우측 버튼: 일정 보기 / 사진 보기 / 삭제 */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <button onClick={() => handleViewSchedule(history.id)} className="btn-ghost h-9 px-4 text-body-caption">
+                  <button
+                    onClick={() => handleViewSchedule(history.id)}
+                    className="btn-ghost h-9 px-4 text-body-caption"
+                  >
                     일정 보기
                   </button>
-                  <button onClick={() => onSelectRegion(history.region)} className="btn-secondary h-9 px-4 text-body-caption">
+                  <button
+                    onClick={() => onSelectRegion(history.region)}
+                    className="btn-secondary h-9 px-4 text-body-caption"
+                  >
                     사진 보기
                   </button>
                   <button
-                    onClick={() => handleDeleteSchedule(history.id, history.title)}
+                    onClick={() =>
+                      handleDeleteSchedule(history.id, history.title)
+                    }
                     disabled={deletingId === history.id}
                     className="btn-danger h-9 px-3 text-body-caption"
                   >

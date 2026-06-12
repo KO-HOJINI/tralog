@@ -41,19 +41,20 @@ export function useSchedule(
   currentUser: UserSession | null,
   onNavigate: (page: string) => void,
 ) {
-  const [isEditing, setIsEditing] = useState<boolean>(false);
-  // 편집 권한: 소유자이거나 'edit' 권한 일행만 true. 'read' 일행은 편집 불가.
+  const [isEditing, setIsEditing] = useState<boolean>(false); // 편집 모드 on/off
+  // 편집 권한: 소유자이거나 edit 권한 일행만 true. read 일행은 편집 불가.
   const [canEdit, setCanEdit] = useState<boolean>(false);
-  const [editTitle, setEditTitle] = useState("");
-  const [editStartDate, setEditStartDate] = useState("");
-  const [editEndDate, setEditEndDate] = useState("");
+  const [editTitle, setEditTitle] = useState(""); // 편집 폼 - 제목 입력값
+  const [editStartDate, setEditStartDate] = useState(""); // 편집 폼 - 시작일 입력값
+  const [editEndDate, setEditEndDate] = useState(""); // 편집 폼 - 종료일 입력값
 
+  // 화면 표시용 일정 메타 정보 (제목/기간/지역)
   const [scheduleMeta, setScheduleMeta] = useState<ScheduleMeta>({
     title: "로딩 중...",
     period: "",
     region: "",
   });
-  const [mapPlaces, setMapPlaces] = useState<PlaceMarker[]>([]);
+  const [mapPlaces, setMapPlaces] = useState<PlaceMarker[]>([]); // 지도에 찍을 장소 마커 목록
 
   // 일정 데이터 로드 - scheduleId 바뀔 때만 함수 재생성 (※ AI 도움)
   // 이렇게 안 하면 useEffect가 매 렌더마다 실행됨
@@ -91,21 +92,23 @@ export function useSchedule(
           });
 
           // 지도에 표시할 마커 데이터로 변환
-          const markers: PlaceMarker[] = (data.places || []).map((p: ApiPlace) => ({
-            id: p.id,
-            place_name: p.place_name,
-            day_number: p.day_number,
-            visit_time: p.visit_time,
-            lat: p.lat,
-            lng: p.lng,
-          }));
+          const markers: PlaceMarker[] = (data.places || []).map(
+            (p: ApiPlace) => ({
+              id: p.id,
+              place_name: p.place_name,
+              day_number: p.day_number,
+              visit_time: p.visit_time,
+              lat: p.lat,
+              lng: p.lng,
+            }),
+          );
           setMapPlaces(markers);
 
           // 편집 권한 판별: 소유자 OR 'edit' 권한으로 초대된 일행만 편집 가능.
           const isOwner = meta.user_id === currentUser?.id;
-          const myCompanion = (data.companions as ApiCompanion[] | undefined)?.find(
-            (c) => c.id === currentUser?.id,
-          );
+          const myCompanion = (
+            data.companions as ApiCompanion[] | undefined
+          )?.find((c) => c.id === currentUser?.id);
           setCanEdit(isOwner || myCompanion?.role === "edit");
         }
       } catch (err) {
@@ -151,7 +154,10 @@ export function useSchedule(
           title: editTitle,
           start_date: editStartDate,
           end_date: editEndDate,
-          period: editStartDate && editEndDate ? `${editStartDate} ~ ${editEndDate}` : "",
+          period:
+            editStartDate && editEndDate
+              ? `${editStartDate} ~ ${editEndDate}`
+              : "",
         }));
         setIsEditing(false);
       } else {
@@ -165,7 +171,8 @@ export function useSchedule(
 
   // 편집/저장 토글 - 편집 모드 진입 또는 저장 실행
   const handleToggleEdit = () => {
-    if (!canEdit) return; // 읽기 전용 일행 방어 (UI 버튼은 비활성화되지만 이중 차단)
+    // 읽기 전용 일행 방어
+    if (!canEdit) return;
     if (isEditing) {
       handleUpdateMeta();
     } else {
@@ -197,7 +204,12 @@ export function useSchedule(
 
   // 일정 삭제 - 확인 후 서버에서 삭제하고 대시보드로 이동
   const handleDeleteSchedule = async () => {
-    if (!window.confirm("일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.")) return;
+    if (
+      !window.confirm(
+        "일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.",
+      )
+    )
+      return;
     try {
       const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
         method: "DELETE",

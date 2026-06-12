@@ -41,7 +41,11 @@ declare global {
         InfoWindow: new (options: object) => NaverInfoWindow;
         Polyline: new (options: object) => NaverPolyline;
         Event: {
-          addListener: (target: object, event: string, handler: () => void) => void;
+          addListener: (
+            target: object,
+            event: string,
+            handler: () => void,
+          ) => void;
         };
         MapTypeId: { NORMAL: string };
       };
@@ -56,9 +60,21 @@ interface UseNaverMapProps {
 }
 
 // 일차별 색상 (1일차=teal, 2일차=amber, ...)
-const DAY_COLORS = ["#0d9488", "#f59e0b", "#6366f1", "#ec4899", "#10b981", "#8b5cf6", "#ef4444"];
+const DAY_COLORS = [
+  "#0d9488",
+  "#f59e0b",
+  "#6366f1",
+  "#ec4899",
+  "#10b981",
+  "#8b5cf6",
+  "#ef4444",
+];
 
-export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) {
+export function useNaverMap({
+  places,
+  centerLat,
+  centerLng,
+}: UseNaverMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<NaverMap | null>(null);
   const markersRef = useRef<NaverMarker[]>([]);
@@ -141,7 +157,9 @@ export function useNaverMap({ places, centerLat, centerLng }: UseNaverMapProps) 
     });
 
     // 같은 일차 장소들을 선으로 연결 (이동 경로 표시)
-    const uniqueDays = Array.from(new Set(sortedPlaces.map((p) => p.day_number)));
+    const uniqueDays = Array.from(
+      new Set(sortedPlaces.map((p) => p.day_number)),
+    );
     uniqueDays.forEach((day) => {
       const dayPlaces = sortedPlaces.filter((p) => p.day_number === day);
       if (dayPlaces.length < 2) return;

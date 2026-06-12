@@ -1,6 +1,8 @@
 // server.js - Tralog 백엔드 서버 (Express + MySQL)
 // 인증, 일정, 장소/가계부/일행, 이미지 갤러리 API 제공
 // 네이버 지역 검색 API 프록시도 여기서 처리
+//
+// ※ 이 파일 전체 AI 도움
 
 require("dotenv").config();
 
@@ -38,7 +40,7 @@ const db = mysql.createPool({
   keepAliveInitialDelay: 10000,
 });
 
-// 풀은 첫 쿼리 때 실제 커넥션을 만들므로, 시작 시 한 번 연결을 확인한다
+// 풀은 첫 쿼리 때 실제 커넥션을 만들므로, 시작 시 한 번 연결을 확인
 db.getConnection((err, conn) => {
   if (err) {
     console.error("❌ MySQL 연결 실패:", err);
@@ -57,8 +59,7 @@ const runAutoComplete = () => {
   });
 };
 
-// 예전엔 목록 조회 때마다 위 UPDATE를 실행해 매 요청에 DB 왕복이 한 번씩 더 붙었다.
-// 완료 전환은 자정 경계에서만 일어나므로, 서버 시작 시 1회 + 1시간마다 갱신으로 충분하다.
+// 완료 전환은 자정 경계에서만 일어나므로, 서버 시작 시 1회 + 1시간마다 갱신
 runAutoComplete();
 setInterval(runAutoComplete, 60 * 60 * 1000);
 
@@ -160,7 +161,7 @@ app.post("/api/login", (req, res) => {
  * ========================================== */
 
 // 지난 일정 자동 완료는 이제 주기 실행(runAutoComplete)이 담당하므로,
-// 조회 경로에서는 DB를 건드리지 않고 곧장 콜백만 실행한다. (호환을 위해 이름 유지)
+// 조회 경로에서는 DB를 건드리지 않고 곧장 콜백만 실행 (호환을 위해 이름 유지)
 const autoCompleteSchedules = (callback) => callback();
 
 // 완료된 일정 리스트 (해당 지역의 대표 사진 및 업로드된 사진 개수 포함)
@@ -234,8 +235,6 @@ app.get("/api/schedules/:scheduleId", async (req, res) => {
   `;
 
   try {
-    // 예전엔 콜백 중첩으로 4개 쿼리를 순차 실행해 DB 왕복이 4번 일어났음.
-    // 서로 의존이 없으므로 병렬로 실행해 왕복 1회분 시간으로 단축한다.
     const [[sMeta], [sPlaces], [sExpenses], [sCompanions]] = await Promise.all([
       db.promise().query(scheduleQuery, [scheduleId]),
       db.promise().query(placesQuery, [scheduleId]),
@@ -360,7 +359,6 @@ app.get("/api/places/search", (req, res) => {
 
   const options = {
     hostname: "openapi.naver.com",
-    // display=15로 설정해 검색 결과를 넉넉하게 받음
     path: `/v1/search/local.json?query=${encodeURIComponent(query)}&display=15`,
     method: "GET",
     headers: {
@@ -450,8 +448,8 @@ app.put("/api/places/:id", (req, res) => {
 app.delete("/api/places/:id", async (req, res) => {
   const placeId = req.params.id;
   try {
-    // 카드에서 추가한 비용은 가계부에 detail=장소명, day_number=장소 일차로 저장된다.
-    // 장소를 지울 땐 해당 장소에 묶인 비용도 함께 지운다.
+    // 카드에서 추가한 비용은 가계부에 detail=장소명, day_number=장소 일차로 저장
+    // 장소를 지울 땐 해당 장소에 묶인 비용도 함께 제거
     const [rows] = await db
       .promise()
       .query(
@@ -543,18 +541,14 @@ app.delete("/api/companions/:scheduleId/:userId", (req, res) => {
 /** ==========================================
  * 4. 이미지 갤러리 및 대표사진(Cover) API
  * ========================================== */
-// 지도 채색용 경량 응답: 지역별 "대표사진"만 반환한다.
-// (예전엔 모든 지역의 모든 사진을 base64로 전부 실어 보내 응답이 수 MB까지 커지고
-//  지도 로딩이 매우 느렸음. 지도는 지역당 대표사진 1장만 쓰므로 그것만 보낸다.
-//  지역별 전체 사진은 PhotoGrid가 /api/map/region 으로 필요할 때만 따로 로드한다.)
+// 지도 채색용 경량 응답: 지역별 "대표사진"만 반환
 app.get("/api/map/records/:userId", (req, res) => {
-  // 지난 일정을 먼저 'completed'로 갱신해야 완료 여부 판정이 정확함
   autoCompleteSchedules(() => {
     const userId = req.params.userId;
 
     // 대표사진은 유저별 저장 (일행과 공유 X).
-    // 갤러리에 아직 존재하는 사진만 유효한 대표사진으로 인정 (삭제된 사진 방지).
-    // 사진 공개 범위는 본인 일정 + 일행으로 참여한 일정까지 (기존과 동일).
+    // 갤러리에 아직 존재하는 사진만 유효한 대표사진으로 인정
+    // 사진 공개 범위는 본인 일정 + 일행으로 참여한 일정까지
     const coverQuery = `
       SELECT umc.region, umc.image_data
       FROM user_map_covers umc
@@ -630,7 +624,9 @@ app.get("/api/map/region/:userId/:region", (req, res) => {
         if (coverErr) return res.status(500).json({ error: coverErr.message });
 
         const coverImage =
-          covers[0] && images.includes(covers[0].image_data) ? covers[0].image_data : "";
+          covers[0] && images.includes(covers[0].image_data)
+            ? covers[0].image_data
+            : "";
         res.status(200).json({ region, images, coverImage });
       },
     );
@@ -652,8 +648,6 @@ app.post("/api/map/upload", (req, res) => {
     });
   };
 
-  // 마이맵 개인 업로드(direct-)는 업로드한 유저 소유의 더미 일정으로 저장해야
-  // 일행에게 공유되지 않는다. (소유자가 잘못되면 그 유저의 일행에게 누수됨)
   const createDummySchedule = (ownerId) => {
     const dummyQuery =
       "INSERT INTO schedules (id, user_id, title, region, start_date, end_date, status) VALUES (?, ?, ?, ?, CURDATE(), CURDATE(), 'completed')";
@@ -699,7 +693,7 @@ app.post("/api/map/cover", (req, res) => {
   if (!user_id) return res.status(400).json({ error: "user_id가 필요합니다." });
   db.query(
     `INSERT INTO user_map_covers (user_id, region, image_data) VALUES (?, ?, ?)
-     ON DUPLICATE KEY UPDATE image_data = VALUES(image_data)`,
+    ON DUPLICATE KEY UPDATE image_data = VALUES(image_data)`,
     [user_id, region, image_data],
     (err) => {
       if (err) return res.status(500).json({ error: err.message });

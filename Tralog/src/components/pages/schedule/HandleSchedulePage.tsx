@@ -20,6 +20,7 @@ export default function HandleSchedulePage({
   onNavigate,
   scheduleId: scheduleIdProp,
 }: HandleSchedulePageProps) {
+  // 로그인 유저 세션 (localStorage 초기값)
   const [currentUser] = useState(() => {
     const sessionData = localStorage.getItem("tralog_current_user");
     return sessionData ? JSON.parse(sessionData) : null;
@@ -27,10 +28,13 @@ export default function HandleSchedulePage({
 
   // props ID가 없으면 localStorage에서 가져옴
   const [scheduleId] = useState(
-    () => scheduleIdProp || localStorage.getItem("tralog_active_schedule_id") || "s-1",
+    () =>
+      scheduleIdProp ||
+      localStorage.getItem("tralog_active_schedule_id") ||
+      "s-1",
   );
 
-  const [activeTab, setActiveTab] = useState<string>("timeline");
+  const [activeTab, setActiveTab] = useState<string>("timeline"); // 현재 활성 탭 (타임라인/가계부/일행)
 
   const {
     scheduleMeta,

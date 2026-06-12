@@ -10,7 +10,11 @@ interface RegisterFormProps {
   onToggleLogin: () => void;
 }
 
-export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: RegisterFormProps) {
+export default function RegisterForm({
+  onRegisterSuccess,
+  onToggleLogin,
+}: RegisterFormProps) {
+  // 회원가입 입력 폼 값
   const [formData, setFormData] = useState({
     id: "",
     password: "",
@@ -20,6 +24,7 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     email: "",
   });
 
+  // 필드별 유효성 에러 메시지
   const [errors, setErrors] = useState({
     id: "",
     password: "",
@@ -29,66 +34,88 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     email: "",
   });
 
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false); // 가입 요청 진행 중 여부
 
   // 회원가입 제출 - 필수/형식 검증 후 서버에 등록 요청
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // 항목별 유효성 검사 (빈 칸, 형식, 길이 제한 / DB 컬럼 길이와 맞춤)
-    const newErrors = { id: "", password: "", confirmPassword: "", name: "", birth: "", email: "" };
+    const newErrors = {
+      id: "",
+      password: "",
+      confirmPassword: "",
+      name: "",
+      birth: "",
+      email: "",
+    };
     let isValid = true;
 
     // 아이디: 영문/숫자/언더스코어 4~20자
     if (!formData.id.trim()) {
-      newErrors.id = "필수 입력 항목입니다."; isValid = false;
+      newErrors.id = "필수 입력 항목입니다.";
+      isValid = false;
     } else if (!/^[a-zA-Z0-9_]{4,20}$/.test(formData.id)) {
-      newErrors.id = "영문/숫자/_ 조합 4~20자로 입력해 주세요."; isValid = false;
+      newErrors.id = "영문/숫자/_ 조합 4~20자로 입력해 주세요.";
+      isValid = false;
     }
 
     // 비밀번호: 8~20자, 영문과 숫자를 모두 포함
     if (!formData.password) {
-      newErrors.password = "필수 입력 항목입니다."; isValid = false;
+      newErrors.password = "필수 입력 항목입니다.";
+      isValid = false;
     } else if (formData.password.length < 8 || formData.password.length > 20) {
-      newErrors.password = "비밀번호는 8~20자로 입력해 주세요."; isValid = false;
+      newErrors.password = "비밀번호는 8~20자로 입력해 주세요.";
+      isValid = false;
     } else if (!/^(?=.*[A-Za-z])(?=.*\d).+$/.test(formData.password)) {
-      newErrors.password = "영문과 숫자를 모두 포함해 주세요."; isValid = false;
+      newErrors.password = "영문과 숫자를 모두 포함해 주세요.";
+      isValid = false;
     }
 
     // 비밀번호 확인: 일치 여부
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = "필수 입력 항목입니다."; isValid = false;
+      newErrors.confirmPassword = "필수 입력 항목입니다.";
+      isValid = false;
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "비밀번호가 일치하지 않습니다."; isValid = false;
+      newErrors.confirmPassword = "비밀번호가 일치하지 않습니다.";
+      isValid = false;
     }
 
     // 이름: 한글/영문 2~20자 (공백 제외)
     if (!formData.name.trim()) {
-      newErrors.name = "필수 입력 항목입니다."; isValid = false;
+      newErrors.name = "필수 입력 항목입니다.";
+      isValid = false;
     } else if (!/^[가-힣a-zA-Z]{2,20}$/.test(formData.name.trim())) {
-      newErrors.name = "이름은 한글 또는 영문 2~20자로 입력해 주세요."; isValid = false;
+      newErrors.name = "이름은 한글 또는 영문 2~20자로 입력해 주세요.";
+      isValid = false;
     }
 
     // 생년월일: 6자리 숫자 + 실제 존재하는 월/일
     if (!formData.birth.trim()) {
-      newErrors.birth = "필수 입력 항목입니다."; isValid = false;
+      newErrors.birth = "필수 입력 항목입니다.";
+      isValid = false;
     } else if (!/^\d{6}$/.test(formData.birth)) {
-      newErrors.birth = "생년월일 6자리를 입력해 주세요. (ex. 990101)"; isValid = false;
+      newErrors.birth = "생년월일 6자리를 입력해 주세요. (ex. 990101)";
+      isValid = false;
     } else {
       const month = Number(formData.birth.slice(2, 4));
       const day = Number(formData.birth.slice(4, 6));
       if (month < 1 || month > 12 || day < 1 || day > 31) {
-        newErrors.birth = "올바른 생년월일을 입력해 주세요. (ex. 990101)"; isValid = false;
+        newErrors.birth = "올바른 생년월일을 입력해 주세요. (ex. 990101)";
+        isValid = false;
       }
     }
 
     // 이메일: 형식 + 100자 이하
     if (!formData.email.trim()) {
-      newErrors.email = "필수 입력 항목입니다."; isValid = false;
+      newErrors.email = "필수 입력 항목입니다.";
+      isValid = false;
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "올바른 이메일 형식이 아닙니다."; isValid = false;
+      newErrors.email = "올바른 이메일 형식이 아닙니다.";
+      isValid = false;
     } else if (formData.email.length > 100) {
-      newErrors.email = "이메일은 100자 이하로 입력해 주세요."; isValid = false;
+      newErrors.email = "이메일은 100자 이하로 입력해 주세요.";
+      isValid = false;
     }
 
     setErrors(newErrors);
@@ -115,7 +142,10 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
         alert("회원가입이 완료되었습니다!");
         onRegisterSuccess();
       } else {
-        setErrors((prev) => ({ ...prev, id: data.message || "오류가 발생했습니다." }));
+        setErrors((prev) => ({
+          ...prev,
+          id: data.message || "오류가 발생했습니다.",
+        }));
       }
     } catch (error) {
       console.error("서버 통신 오류:", error);
@@ -132,12 +162,19 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
     }`;
 
   return (
-    <form onSubmit={handleRegisterSubmit} className="flex flex-col gap-4 w-full h-auto overflow-hidden text-dark">
+    <form
+      onSubmit={handleRegisterSubmit}
+      className="flex flex-col gap-4 w-full h-auto overflow-hidden text-dark"
+    >
       {/* 아이디 */}
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
           <span className="text-sm font-bold text-slate-900">아이디</span>
-          {errors.id && <span className="text-xs text-red-500 font-medium">{errors.id}</span>}
+          {errors.id && (
+            <span className="text-xs text-red-500 font-medium">
+              {errors.id}
+            </span>
+          )}
         </label>
         <input
           type="text"
@@ -154,7 +191,11 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
           <span className="text-sm font-bold text-slate-900">비밀번호</span>
-          {errors.password && <span className="text-xs text-red-500 font-medium">{errors.password}</span>}
+          {errors.password && (
+            <span className="text-xs text-red-500 font-medium">
+              {errors.password}
+            </span>
+          )}
         </label>
         <input
           type="password"
@@ -162,7 +203,9 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
           autoComplete="new-password"
           maxLength={20}
           value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           className={inputClass("password")}
         />
       </div>
@@ -170,8 +213,14 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
       {/* 비밀번호 확인 */}
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
-          <span className="text-sm font-bold text-slate-900">비밀번호 확인</span>
-          {errors.confirmPassword && <span className="text-xs text-red-500 font-medium">{errors.confirmPassword}</span>}
+          <span className="text-sm font-bold text-slate-900">
+            비밀번호 확인
+          </span>
+          {errors.confirmPassword && (
+            <span className="text-xs text-red-500 font-medium">
+              {errors.confirmPassword}
+            </span>
+          )}
         </label>
         <input
           type="password"
@@ -179,7 +228,9 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
           autoComplete="new-password"
           maxLength={20}
           value={formData.confirmPassword}
-          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, confirmPassword: e.target.value })
+          }
           className={inputClass("confirmPassword")}
         />
       </div>
@@ -188,7 +239,11 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
           <span className="text-sm font-bold text-slate-900">이름</span>
-          {errors.name && <span className="text-xs text-red-500 font-medium">{errors.name}</span>}
+          {errors.name && (
+            <span className="text-xs text-red-500 font-medium">
+              {errors.name}
+            </span>
+          )}
         </label>
         <input
           type="text"
@@ -205,7 +260,11 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
           <span className="text-sm font-bold text-slate-900">생년월일</span>
-          {errors.birth && <span className="text-xs text-red-500 font-medium">{errors.birth}</span>}
+          {errors.birth && (
+            <span className="text-xs text-red-500 font-medium">
+              {errors.birth}
+            </span>
+          )}
         </label>
         <input
           type="text"
@@ -224,7 +283,11 @@ export default function RegisterForm({ onRegisterSuccess, onToggleLogin }: Regis
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
           <span className="text-sm font-bold text-slate-900">이메일</span>
-          {errors.email && <span className="text-xs text-red-500 font-medium">{errors.email}</span>}
+          {errors.email && (
+            <span className="text-xs text-red-500 font-medium">
+              {errors.email}
+            </span>
+          )}
         </label>
         <input
           type="email"

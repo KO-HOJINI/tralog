@@ -18,7 +18,6 @@ interface TravelSchedule {
   bgImage?: string;
 }
 
-// DB 원본 형식 (bgImage 포함)
 interface DBSchedule {
   id: string;
   title: string;
@@ -37,10 +36,10 @@ export default function ScheduleList({
   userId,
   onNavigate,
 }: ScheduleListProps) {
-  const [schedules, setSchedules] = useState<TravelSchedule[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isCreating, setIsCreating] = useState(false);
-  const [showModal, setShowModal] = useState(false);
+  const [schedules, setSchedules] = useState<TravelSchedule[]>([]); // 내 여행 일정 목록
+  const [isLoading, setIsLoading] = useState(true); // 로딩 여부
+  const [isCreating, setIsCreating] = useState(false); // 일정 생성 요청 진행 중 여부
+  const [showModal, setShowModal] = useState(false); // 새 일정 모달 표시 여부
 
   // 모달 확인 - 새 일정 생성 후 편집 페이지로 이동
   const handleCreateConfirm = async (region: string, title: string) => {
@@ -78,7 +77,7 @@ export default function ScheduleList({
     }
   };
 
-  // 로컬 날짜를 YYYY-MM-DD 문자열로 변환 (시차 오류 방지)
+  // 로컬 날짜를 YYYY-MM-DD 문자열로 변환
   const getLocalDateString = (date: Date = new Date()): string => {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -99,7 +98,7 @@ export default function ScheduleList({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // ISO 포맷(T...) 수신 시 시차 오류 방지용 로컬 문자열 변환
+        // ISO 포맷 수신 시 시차 오류 방지용 로컬 문자열 변환
         const formatLocalDateString = (rawDate: string | undefined) => {
           if (!rawDate) return "";
           if (rawDate.includes("T")) {
@@ -211,7 +210,9 @@ export default function ScheduleList({
                 <span className="text-number-accent font-light p-3 bg-white rounded-full shadow-card group-hover:scale-110 transition-transform flex items-center justify-center w-12 h-12 border border-slate-100">
                   +
                 </span>
-                <span className="text-body-main">새로운 여행 일정 추가하기</span>
+                <span className="text-body-main">
+                  새로운 여행 일정 추가하기
+                </span>
               </button>
             </div>
           </div>

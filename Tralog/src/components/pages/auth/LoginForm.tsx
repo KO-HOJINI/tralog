@@ -10,12 +10,15 @@ interface LoginFormProps {
   onToggleRegister: () => void;
 }
 
-export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFormProps) {
-  const [id, setId] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [idError, setIdError] = useState<string>("");
-  const [passwordError, setPasswordError] = useState<string>("");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export default function LoginForm({
+  onLoginSuccess,
+  onToggleRegister,
+}: LoginFormProps) {
+  const [id, setId] = useState<string>(""); // 아이디 입력값
+  const [password, setPassword] = useState<string>(""); // 비밀번호 입력값
+  const [idError, setIdError] = useState<string>(""); // 아이디 입력 에러 메시지
+  const [passwordError, setPasswordError] = useState<string>(""); // 비밀번호 입력 에러 메시지
+  const [isLoading, setIsLoading] = useState<boolean>(false); // 로그인 요청 진행 중 여부
 
   // 로그인 제출 - 입력값 검증 후 서버 인증 요청
   const handleLoginSubmit = async (e: React.FormEvent) => {
@@ -71,7 +74,10 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
   };
 
   return (
-    <form onSubmit={handleLoginSubmit} className="flex flex-col gap-6 animate-fadeIn">
+    <form
+      onSubmit={handleLoginSubmit}
+      className="flex flex-col gap-6 animate-fadeIn"
+    >
       {/* 아이디 입력 */}
       <div className="form-control w-full">
         <label className="label py-1 flex justify-between items-center select-none">
@@ -97,7 +103,9 @@ export default function LoginForm({ onLoginSuccess, onToggleRegister }: LoginFor
         <label className="label py-1 flex justify-between items-center select-none">
           <span className="text-sm font-bold text-slate-900">비밀번호</span>
           {passwordError && (
-            <span className="text-xs text-red-500 font-medium">{passwordError}</span>
+            <span className="text-xs text-red-500 font-medium">
+              {passwordError}
+            </span>
           )}
         </label>
         <input

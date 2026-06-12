@@ -6,10 +6,23 @@ import { useState } from "react";
 
 // 지역 선택 드롭다운 옵션 (광역시/도 17개)
 const REGION_OPTIONS = [
-  "서울특별시", "부산광역시", "대구광역시", "인천광역시",
-  "광주광역시", "대전광역시", "울산광역시", "세종특별자치시",
-  "경기도", "강원특별자치도", "충청북도", "충청남도",
-  "전라북도", "전라남도", "경상북도", "경상남도", "제주특별자치도",
+  "서울특별시",
+  "부산광역시",
+  "대구광역시",
+  "인천광역시",
+  "광주광역시",
+  "대전광역시",
+  "울산광역시",
+  "세종특별자치시",
+  "경기도",
+  "강원특별자치도",
+  "충청북도",
+  "충청남도",
+  "전라북도",
+  "전라남도",
+  "경상북도",
+  "경상남도",
+  "제주특별자치도",
 ];
 
 interface NewScheduleModalProps {
@@ -25,8 +38,8 @@ export default function NewScheduleModal({
   onClose,
   onConfirm,
 }: NewScheduleModalProps) {
-  const [region, setRegion] = useState("");
-  const [title, setTitle] = useState("");
+  const [region, setRegion] = useState(""); // 여행 지역 선택값 (필수)
+  const [title, setTitle] = useState(""); // 일정 이름 입력값 (비우면 "새 일정")
 
   if (!isOpen) return null;
 
@@ -54,7 +67,12 @@ export default function NewScheduleModal({
       <div className="box-white relative z-10 max-w-sm w-full p-6 flex flex-col gap-5">
         <div className="flex justify-between items-center">
           <h2 className="m-0">새 일정 만들기</h2>
-          <button onClick={handleClose} className="btn btn-sm btn-ghost btn-circle text-slate-400">✕</button>
+          <button
+            onClick={handleClose}
+            className="btn btn-sm btn-ghost btn-circle text-slate-400"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -68,15 +86,15 @@ export default function NewScheduleModal({
           >
             <option value="">-- 여행할 지역을 선택하세요 --</option>
             {REGION_OPTIONS.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r} value={r}>
+                {r}
+              </option>
             ))}
           </select>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-xs font-bold text-dark">
-            일정 이름
-          </label>
+          <label className="text-xs font-bold text-dark">일정 이름</label>
           <input
             type="text"
             placeholder="새 일정"
@@ -89,7 +107,11 @@ export default function NewScheduleModal({
         </div>
 
         <div className="flex gap-3 mt-1">
-          <button onClick={handleClose} disabled={isCreating} className="btn-dark flex-1 h-11">
+          <button
+            onClick={handleClose}
+            disabled={isCreating}
+            className="btn-dark flex-1 h-11"
+          >
             취소
           </button>
           <button

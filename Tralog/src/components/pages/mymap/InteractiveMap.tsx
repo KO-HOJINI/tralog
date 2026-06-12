@@ -27,7 +27,10 @@ interface ProvinceProperties {
   name_eng: string;
 }
 
-const geoData = koreaGeoJson as unknown as FeatureCollection<Geometry, ProvinceProperties>;
+const geoData = koreaGeoJson as unknown as FeatureCollection<
+  Geometry,
+  ProvinceProperties
+>;
 
 export default function InteractiveMap({
   selectedRegion,
@@ -51,7 +54,7 @@ export default function InteractiveMap({
     .scale(8500)
     .translate([width - 25, height - 50]);
 
-  // 울릉도/독도(경북 소속) 투영기 - 실제 좌표가 동쪽으로 너무 멀어 화면 밖으로 벗어남
+  // 울릉도/독도 투영기 - 실제 좌표가 동쪽으로 너무 멀어 화면 밖으로 벗어남
   // 본토와 동일 scale, translate만 왼쪽으로 당겨 동해안 가까이 배치
   const ulleungProjection = geoMercator()
     .center([128, 37])
@@ -62,24 +65,42 @@ export default function InteractiveMap({
   const getRegionInfo = (feature: Feature<Geometry, ProvinceProperties>) => {
     const code = feature.properties?.code;
     switch (code) {
-      case "11": return { key: "서울특별시",     display: "서울" };
-      case "21": return { key: "부산광역시",     display: "부산" };
-      case "22": return { key: "대구광역시",     display: "대구" };
-      case "23": return { key: "인천광역시",     display: "인천" };
-      case "24": return { key: "광주광역시",     display: "광주" };
-      case "25": return { key: "대전광역시",     display: "대전" };
-      case "26": return { key: "울산광역시",     display: "울산" };
-      case "29": return { key: "세종특별자치시", display: "세종" };
-      case "31": return { key: "경기도",         display: "경기" };
-      case "32": return { key: "강원특별자치도", display: "강원" };
-      case "33": return { key: "충청북도",       display: "충북" };
-      case "34": return { key: "충청남도",       display: "충남" };
-      case "35": return { key: "전북특별자치도", display: "전북" };
-      case "36": return { key: "전라남도",       display: "전남" };
-      case "37": return { key: "경상북도",       display: "경북" };
-      case "38": return { key: "경상남도",       display: "경남" };
-      case "39": return { key: "제주특별자치도", display: "제주" };
-      default:   return { key: "",              display: "" };
+      case "11":
+        return { key: "서울특별시", display: "서울" };
+      case "21":
+        return { key: "부산광역시", display: "부산" };
+      case "22":
+        return { key: "대구광역시", display: "대구" };
+      case "23":
+        return { key: "인천광역시", display: "인천" };
+      case "24":
+        return { key: "광주광역시", display: "광주" };
+      case "25":
+        return { key: "대전광역시", display: "대전" };
+      case "26":
+        return { key: "울산광역시", display: "울산" };
+      case "29":
+        return { key: "세종특별자치시", display: "세종" };
+      case "31":
+        return { key: "경기도", display: "경기" };
+      case "32":
+        return { key: "강원특별자치도", display: "강원" };
+      case "33":
+        return { key: "충청북도", display: "충북" };
+      case "34":
+        return { key: "충청남도", display: "충남" };
+      case "35":
+        return { key: "전북특별자치도", display: "전북" };
+      case "36":
+        return { key: "전라남도", display: "전남" };
+      case "37":
+        return { key: "경상북도", display: "경북" };
+      case "38":
+        return { key: "경상남도", display: "경남" };
+      case "39":
+        return { key: "제주특별자치도", display: "제주" };
+      default:
+        return { key: "", display: "" };
     }
   };
 
@@ -108,7 +129,10 @@ export default function InteractiveMap({
             >
               <image
                 href={record.coverImage}
-                x="0" y="0" width="1" height="1"
+                x="0"
+                y="0"
+                width="1"
+                height="1"
                 preserveAspectRatio="xMidYMid slice"
               />
             </pattern>
@@ -117,80 +141,84 @@ export default function InteractiveMap({
       </defs>
 
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {geoData.features.map((feature: Feature<Geometry, ProvinceProperties>, index) => {
-          const { key: regionKey, display: regionDisplayName } = getRegionInfo(feature);
-          if (!regionKey) return null;
+        {geoData.features.map(
+          (feature: Feature<Geometry, ProvinceProperties>, index) => {
+            const { key: regionKey, display: regionDisplayName } =
+              getRegionInfo(feature);
+            if (!regionKey) return null;
 
-          const record = mapRecords.find((r) => r.region === regionKey);
-          // 완료된 일정이 있는 지역만 대표사진으로 색칠 (진행 중 일정은 제외)
-          const hasCover = record && record.coverImage && record.hasCompletedSchedule;
-          const isSelected = !readOnly && selectedRegion === regionKey;
+            const record = mapRecords.find((r) => r.region === regionKey);
+            // 완료된 일정이 있는 지역만 대표사진으로 색칠 (진행 중 일정은 제외)
+            const hasCover =
+              record && record.coverImage && record.hasCompletedSchedule;
+            const isSelected = !readOnly && selectedRegion === regionKey;
 
-          // 제주도는 별도 투영기, 나머지는 본토 투영기 사용
-          const isJeju = feature.properties?.code === "39";
-          const activeProjection = isJeju ? jejuProjection : mainProjection;
-          const pathGenerator = geoPath().projection(activeProjection);
+            // 제주도는 별도 투영기, 나머지는 본토 투영기 사용
+            const isJeju = feature.properties?.code === "39";
+            const activeProjection = isJeju ? jejuProjection : mainProjection;
+            const pathGenerator = geoPath().projection(activeProjection);
 
-          // 경상북도는 본토 + 울릉도/독도로 이루어진 MultiPolygon
-          // 본토는 기본 투영기, 멀리 떨어진 섬은 동해안 가까이 당긴 투영기로 따로 그림
-          const isGyeongbuk = feature.properties?.code === "37";
-          let mainFeature: Feature<Geometry, ProvinceProperties> = feature;
-          let islandPath = "";
-          if (isGyeongbuk && feature.geometry.type === "MultiPolygon") {
-            const polys = feature.geometry.coordinates;
-            // 면적이 가장 큰 폴리곤을 본토로 간주, 나머지(섬)는 분리
-            let mainIdx = 0;
-            polys.forEach((poly, i) => {
-              if (poly[0].length > polys[mainIdx][0].length) mainIdx = i;
-            });
-            mainFeature = {
-              ...feature,
-              geometry: { type: "MultiPolygon", coordinates: [polys[mainIdx]] },
-            };
-            const islandFeature: Feature<Geometry, ProvinceProperties> = {
-              type: "Feature",
-              properties: feature.properties,
-              geometry: {
-                type: "MultiPolygon",
-                coordinates: polys.filter((_, i) => i !== mainIdx),
-              },
-            };
-            islandPath = geoPath().projection(ulleungProjection)(islandFeature) || "";
-          }
+            // 경상북도는 본토 + 울릉도/독도로 이루어진 MultiPolygon
+            // 본토는 기본 투영기, 멀리 떨어진 섬은 동해안 가까이 당긴 투영기로 따로 그림
+            const isGyeongbuk = feature.properties?.code === "37";
+            let mainFeature: Feature<Geometry, ProvinceProperties> = feature;
+            let islandPath = "";
+            if (isGyeongbuk && feature.geometry.type === "MultiPolygon") {
+              const polys = feature.geometry.coordinates;
+              // 면적이 가장 큰 폴리곤을 본토로 간주, 나머지(섬)는 분리
+              let mainIdx = 0;
+              polys.forEach((poly, i) => {
+                if (poly[0].length > polys[mainIdx][0].length) mainIdx = i;
+              });
+              mainFeature = {
+                ...feature,
+                geometry: {
+                  type: "MultiPolygon",
+                  coordinates: [polys[mainIdx]],
+                },
+              };
+              const islandFeature: Feature<Geometry, ProvinceProperties> = {
+                type: "Feature",
+                properties: feature.properties,
+                geometry: {
+                  type: "MultiPolygon",
+                  coordinates: polys.filter((_, i) => i !== mainIdx),
+                },
+              };
+              islandPath =
+                geoPath().projection(ulleungProjection)(islandFeature) || "";
+            }
 
-          const dPath = pathGenerator(mainFeature) || "";
-          const centroid = pathGenerator.centroid(mainFeature);
-          let [labelX, labelY] = centroid || [0, 0];
+            const dPath = pathGenerator(mainFeature) || "";
+            const centroid = pathGenerator.centroid(mainFeature);
+            let [labelX, labelY] = centroid || [0, 0];
 
-          // 일부 지역은 라벨 위치가 겹쳐 수동 조정
-          if (regionKey === "경기도")       { labelX += 16; labelY += 40; }
-          if (regionKey === "인천광역시")   { labelX += 20; labelY += 15; }
-          if (regionKey === "충청남도")     { labelX -= 12; }
-          if (regionKey === "서울특별시")   { labelY += 2; }
-          if (regionKey === "제주특별자치도") { labelY += 5; }
+            // 일부 지역은 라벨 위치가 겹쳐 수동 조정
+            if (regionKey === "경기도") {
+              labelX += 16;
+              labelY += 40;
+            }
+            if (regionKey === "인천광역시") {
+              labelX += 20;
+              labelY += 15;
+            }
+            if (regionKey === "충청남도") {
+              labelX -= 12;
+            }
+            if (regionKey === "서울특별시") {
+              labelY += 2;
+            }
+            if (regionKey === "제주특별자치도") {
+              labelY += 5;
+            }
 
-          return (
-            <g key={index}>
-              <path
-                d={dPath}
-                onClick={() => !readOnly && onSelectRegion(isSelected ? null : regionKey)}
-                className={`${!readOnly ? "cursor-pointer transition-all duration-200 hover:fill-teal-500/5" : ""}`}
-                fill={
-                  hasCover
-                    ? `url(#pattern-${regionKey})`
-                    : isSelected
-                      ? "rgba(13, 148, 136, 0.15)"
-                      : "#ffffff"
-                }
-                stroke={isSelected ? "#0d9488" : "#e2e8f0"}
-                strokeWidth={isSelected ? "2" : "0.7"}
-              />
-
-              {/* 울릉도/독도: 본토와 같은 지역(경북)으로 취급, 클릭/스타일 동일 적용 */}
-              {islandPath && (
+            return (
+              <g key={index}>
                 <path
-                  d={islandPath}
-                  onClick={() => !readOnly && onSelectRegion(isSelected ? null : regionKey)}
+                  d={dPath}
+                  onClick={() =>
+                    !readOnly && onSelectRegion(isSelected ? null : regionKey)
+                  }
                   className={`${!readOnly ? "cursor-pointer transition-all duration-200 hover:fill-teal-500/5" : ""}`}
                   fill={
                     hasCover
@@ -202,37 +230,57 @@ export default function InteractiveMap({
                   stroke={isSelected ? "#0d9488" : "#e2e8f0"}
                   strokeWidth={isSelected ? "2" : "0.7"}
                 />
-              )}
 
-              {labelX && labelY && (
-                <text
-                  x={labelX}
-                  y={labelY}
-                  className={`pointer-events-none transition-all duration-200 ${
-                    readOnly
-                      ? "text-[10px] font-medium fill-gray/80"
-                      : isSelected
-                        ? "text-[12px] font-bold fill-primary"
-                        : "text-body-caption font-bold fill-gray/60"
-                  } ${hasCover ? "fill-pure-white font-bold drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.9)]" : ""}`}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                >
-                  {regionDisplayName}
-                </text>
-              )}
-            </g>
-          );
-        })}
+                {/* 울릉도/독도: 경북으로 취급, 클릭/스타일 동일 적용 */}
+                {islandPath && (
+                  <path
+                    d={islandPath}
+                    onClick={() =>
+                      !readOnly && onSelectRegion(isSelected ? null : regionKey)
+                    }
+                    className={`${!readOnly ? "cursor-pointer transition-all duration-200 hover:fill-teal-500/5" : ""}`}
+                    fill={
+                      hasCover
+                        ? `url(#pattern-${regionKey})`
+                        : isSelected
+                          ? "rgba(13, 148, 136, 0.15)"
+                          : "#ffffff"
+                    }
+                    stroke={isSelected ? "#0d9488" : "#e2e8f0"}
+                    strokeWidth={isSelected ? "2" : "0.7"}
+                  />
+                )}
+
+                {labelX && labelY && (
+                  <text
+                    x={labelX}
+                    y={labelY}
+                    className={`pointer-events-none transition-all duration-200 ${
+                      readOnly
+                        ? "text-[10px] font-medium fill-gray/80"
+                        : isSelected
+                          ? "text-[12px] font-bold fill-primary"
+                          : "text-body-caption font-bold fill-gray/60"
+                    } ${hasCover ? "fill-pure-white font-bold drop-shadow-[0_1.5px_2px_rgba(0,0,0,0.9)]" : ""}`}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                  >
+                    {regionDisplayName}
+                  </text>
+                )}
+              </g>
+            );
+          },
+        )}
       </g>
 
-      {/* 독도는 GeoJSON에 폴리곤이 없어 울릉도 옆에 작은 마커로 직접 표시
-          경북 소속이라 경북의 대표사진/선택 상태/클릭을 그대로 따름
-          (실제론 울릉도 동남쪽으로 더 멀지만, 화면 밖으로 안 나가게 가깝게 배치) */}
+      {/* 독도는 GeoJSON에 없어 울릉도 옆에 작은 마커로 직접 표시
+          경북 소속이라 경북의 대표사진/선택 상태/클릭을 그대로 따름 */}
       {(() => {
         const dokdoRegionKey = "경상북도";
         const record = mapRecords.find((r) => r.region === dokdoRegionKey);
-        const hasCover = record && record.coverImage && record.hasCompletedSchedule;
+        const hasCover =
+          record && record.coverImage && record.hasCompletedSchedule;
         const isSelected = !readOnly && selectedRegion === dokdoRegionKey;
 
         const ulleungPt = ulleungProjection([130.85, 37.5]) || [0, 0];
@@ -243,7 +291,9 @@ export default function InteractiveMap({
             cx={dokdoX}
             cy={dokdoY}
             r={2.4}
-            onClick={() => !readOnly && onSelectRegion(isSelected ? null : dokdoRegionKey)}
+            onClick={() =>
+              !readOnly && onSelectRegion(isSelected ? null : dokdoRegionKey)
+            }
             className={`${!readOnly ? "cursor-pointer transition-all duration-200 hover:fill-teal-500/5" : ""}`}
             fill={
               hasCover

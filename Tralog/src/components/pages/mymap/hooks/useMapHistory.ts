@@ -28,11 +28,11 @@ export function useMapHistory(
   onNavigate: (page: string, scheduleId?: string) => void,
   onSelectRegion: (region: string) => void,
 ) {
-  const [historyList, setHistoryList] = useState<ScheduleRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAddingSection, setIsAddingSection] = useState(false);
-  const [selectedNewRegion, setSelectedNewRegion] = useState("");
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [historyList, setHistoryList] = useState<ScheduleRow[]>([]); // 지역 방문 기록 목록
+  const [isLoading, setIsLoading] = useState(true); // 로딩 여부
+  const [isAddingSection, setIsAddingSection] = useState(false); // 새 지역 추가 폼 표시 여부
+  const [selectedNewRegion, setSelectedNewRegion] = useState(""); // 추가할 지역 선택값
+  const [deletingId, setDeletingId] = useState<string | null>(null); // 삭제 처리 중인 기록 ID
 
   useEffect(() => {
     // isMounted로 언마운트 후 setState 호출 방지 (※ AI 도움)
@@ -52,8 +52,12 @@ export function useMapHistory(
           fetch(`${API_BASE_URL}/api/schedules/history/${user.id}?images=0`),
           fetch(`${API_BASE_URL}/api/schedules/active/${user.id}?images=0`),
         ]);
-        const historyData: ScheduleRow[] = historyRes.ok ? await historyRes.json() : [];
-        const activeData: ScheduleRow[] = activeRes.ok ? await activeRes.json() : [];
+        const historyData: ScheduleRow[] = historyRes.ok
+          ? await historyRes.json()
+          : [];
+        const activeData: ScheduleRow[] = activeRes.ok
+          ? await activeRes.json()
+          : [];
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -66,9 +70,13 @@ export function useMapHistory(
 
         // 중복 제거 후 종료일 기준 내림차순 정렬
         const historyIds = new Set(historyData.map((h) => h.id));
-        const mergedActive = activeWithPhotosOrPast.filter((item) => !historyIds.has(item.id));
+        const mergedActive = activeWithPhotosOrPast.filter(
+          (item) => !historyIds.has(item.id),
+        );
         const combined = [...historyData, ...mergedActive].sort(
-          (a, b) => parseLocalDate(b.end_date).getTime() - parseLocalDate(a.end_date).getTime(),
+          (a, b) =>
+            parseLocalDate(b.end_date).getTime() -
+            parseLocalDate(a.end_date).getTime(),
         );
 
         if (isMounted) setHistoryList(combined);
@@ -79,8 +87,13 @@ export function useMapHistory(
       }
     };
 
-    const delayFetch = setTimeout(() => { void loadHistory(); }, 0);
-    return () => { isMounted = false; clearTimeout(delayFetch); };
+    const delayFetch = setTimeout(() => {
+      void loadHistory();
+    }, 0);
+    return () => {
+      isMounted = false;
+      clearTimeout(delayFetch);
+    };
   }, []);
 
   // 일정 보기 - 해당 일정의 편집 페이지로 이동
@@ -91,15 +104,24 @@ export function useMapHistory(
 
   // 일정 삭제 - 확인 후 서버에서 삭제하고 목록에서 제거
   const handleDeleteSchedule = async (scheduleId: string, title: string) => {
-    if (!window.confirm(`"${title}" 일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.`)) return;
+    if (
+      !window.confirm(
+        `"${title}" 일정을 삭제하시겠습니까?\n\n관련 장소, 지출, 사진 기록도 모두 삭제됩니다.`,
+      )
+    )
+      return;
 
     setDeletingId(scheduleId);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/schedules/${scheduleId}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         setHistoryList((prev) => prev.filter((h) => h.id !== scheduleId));
       } else {
-        const err = await res.json().catch(() => ({})) as { message?: string };
+        const err = (await res.json().catch(() => ({}))) as {
+          message?: string;
+        };
         alert(`삭제 실패: ${err.message ?? "서버 오류"}`);
       }
     } catch (e) {
@@ -116,7 +138,10 @@ export function useMapHistory(
       alert("기록을 추가할 지역을 선택해 주세요.");
       return;
     }
-    localStorage.setItem("tralog_active_schedule_id", `direct-${selectedNewRegion}`);
+    localStorage.setItem(
+      "tralog_active_schedule_id",
+      `direct-${selectedNewRegion}`,
+    );
     onSelectRegion(selectedNewRegion);
   };
 

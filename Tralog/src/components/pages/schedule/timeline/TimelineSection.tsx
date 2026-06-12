@@ -63,16 +63,17 @@ export default function TimelineSection({
   onPlaceAdded,
   onPlaceDeleted,
 }: TimelineSectionProps) {
-  const [day, setDay] = useState<number>(1);
-  const [allItems, setAllItems] = useState<TimelineItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [day, setDay] = useState<number>(1); // 현재 보고 있는 Day 번호
+  const [allItems, setAllItems] = useState<TimelineItem[]>([]); // 전체 Day의 타임라인 항목
+  const [isLoading, setIsLoading] = useState(true); // 로딩 여부
 
   // 시작일/종료일로 총 여행 일수 계산
   let totalDays = 1;
   if (startDate && endDate) {
     const start = new Date(startDate);
     const end = new Date(endDate);
-    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const diff =
+      Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
     totalDays = Math.max(diff, 1);
   }
 
@@ -99,16 +100,18 @@ export default function TimelineSection({
           }),
         );
 
-        const mapped: TimelineItem[] = (data.places || []).map((p: ApiPlaceData) => ({
-          id: p.id,
-          time: p.visit_time,
-          place: p.place_name,
-          day_number: p.day_number,
-          memo: p.memo,
-          expenses: apiExpenses.filter((e) => e.detail === p.place_name),
-          lat: p.lat ? Number(p.lat) : undefined,
-          lng: p.lng ? Number(p.lng) : undefined,
-        }));
+        const mapped: TimelineItem[] = (data.places || []).map(
+          (p: ApiPlaceData) => ({
+            id: p.id,
+            time: p.visit_time,
+            place: p.place_name,
+            day_number: p.day_number,
+            memo: p.memo,
+            expenses: apiExpenses.filter((e) => e.detail === p.place_name),
+            lat: p.lat ? Number(p.lat) : undefined,
+            lng: p.lng ? Number(p.lng) : undefined,
+          }),
+        );
 
         if (isMounted) setAllItems(mapped);
       } catch (err) {
@@ -119,7 +122,9 @@ export default function TimelineSection({
     };
 
     void fetchPlaces();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [scheduleId]);
 
   // 장소 추가 성공 - 목록에 바로 반영하고 지도에도 전달
@@ -140,7 +145,9 @@ export default function TimelineSection({
   // 장소 삭제
   const handleDeleteItem = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         setAllItems((prev) => prev.filter((item) => item.id !== id));
         onPlaceDeleted?.(id); // 지도 마커도 함께 제거
@@ -159,7 +166,9 @@ export default function TimelineSection({
         body: JSON.stringify({ memo }),
       });
       if (res.ok) {
-        setAllItems((prev) => prev.map((item) => (item.id === id ? { ...item, memo } : item)));
+        setAllItems((prev) =>
+          prev.map((item) => (item.id === id ? { ...item, memo } : item)),
+        );
       }
     } catch (err) {
       console.error("메모 수정 실패:", err);
@@ -167,9 +176,15 @@ export default function TimelineSection({
   };
 
   // 비용 추가 - 가계부에 저장하고 해당 장소 카드에도 반영
-  const handleAddExpense = async (placeId: string, detail: string, amount: number, category: string) => {
-    // 비용은 해당 장소가 속한 일차로 가계부에 분류한다.
-    const dayNumber = allItems.find((item) => item.id === placeId)?.day_number ?? null;
+  const handleAddExpense = async (
+    placeId: string,
+    detail: string,
+    amount: number,
+    category: string,
+  ) => {
+    // 비용은 해당 장소가 속한 일차로 가계부에 분류
+    const dayNumber =
+      allItems.find((item) => item.id === placeId)?.day_number ?? null;
     try {
       await fetch(`${API_BASE_URL}/api/expenses`, {
         method: "POST",
@@ -187,9 +202,15 @@ export default function TimelineSection({
       setAllItems((prev) =>
         prev.map((item) =>
           item.id === placeId
-            ? { ...item, expenses: [...(item.expenses || []), { detail, amount, category }] }
-            : item
-        )
+            ? {
+                ...item,
+                expenses: [
+                  ...(item.expenses || []),
+                  { detail, amount, category },
+                ],
+              }
+            : item,
+        ),
       );
     } catch (err) {
       console.error("가계부 추가 실패:", err);
@@ -272,7 +293,9 @@ export default function TimelineSection({
                           onClick={() => handleOpenDirections(item, nextItem)}
                           className="btn-secondary flex items-center gap-2 px-2.5 py-1.5"
                         >
-                          <span className="text-body-caption text-white font-bold">길찾기</span>
+                          <span className="text-body-caption text-white font-bold">
+                            길찾기
+                          </span>
                         </button>
                       </div>
                     )}

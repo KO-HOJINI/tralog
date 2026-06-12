@@ -20,7 +20,12 @@ interface PlaceItemCardProps {
   expenses?: LocalExpense[];
   onDelete: (id: string) => void;
   onUpdateMemo: (id: string, memo: string) => void;
-  onAddExpense: (placeId: string, detail: string, amount: number, category: string) => void;
+  onAddExpense: (
+    placeId: string,
+    detail: string,
+    amount: number,
+    category: string,
+  ) => void;
   onUpdateTime?: (id: string, newTime: string) => void;
 }
 
@@ -44,16 +49,16 @@ export default function PlaceItemCard({
   const [showCostInput, setShowCostInput] = useState(false);
   const [showTimeInput, setShowTimeInput] = useState(false);
 
-  const [memoInput, setMemoInput] = useState(memo || "");
-  const [costAmount, setCostAmount] = useState("");
-  const [costCategory, setCostCategory] = useState<string>("식비");
-  const [timeInput, setTimeInput] = useState(time);
+  const [memoInput, setMemoInput] = useState(memo || ""); // 메모 입력값
+  const [costAmount, setCostAmount] = useState(""); // 비용 금액 입력값
+  const [costCategory, setCostCategory] = useState<string>("식비"); // 비용 분류 선택값
+  const [timeInput, setTimeInput] = useState(time); // 시간 수정 입력값
 
   // 비용은 로컬 상태로 관리 - 저장 버튼 없이 즉시 카드에 반영
   const [localExpenses, setLocalExpenses] = useState<LocalExpense[]>(
-    initialExpenses.map((e) => ({ ...e, category: e.category || "기타" }))
+    initialExpenses.map((e) => ({ ...e, category: e.category || "기타" })),
   );
-  const [displayTime, setDisplayTime] = useState(time);
+  const [displayTime, setDisplayTime] = useState(time); // 카드에 표시되는 방문 시간
 
   // 메모 저장
   const handleSaveMemo = () => {
@@ -69,9 +74,13 @@ export default function PlaceItemCard({
   // 비용 저장 - 금액 검증 후 카드/서버에 추가
   const handleSaveExpense = () => {
     const amount = parseInt(costAmount);
-    if (isNaN(amount) || amount <= 0) return alert("올바른 금액을 입력해 주세요.");
+    if (isNaN(amount) || amount <= 0)
+      return alert("올바른 금액을 입력해 주세요.");
 
-    setLocalExpenses((prev) => [...prev, { detail: place, amount, category: costCategory }]);
+    setLocalExpenses((prev) => [
+      ...prev,
+      { detail: place, amount, category: costCategory },
+    ]);
     onAddExpense(id, place, amount, costCategory);
     setShowCostInput(false);
     setCostAmount("");
@@ -131,11 +140,18 @@ export default function PlaceItemCard({
 
               {/* 비용 목록 */}
               {localExpenses.map((exp, idx) => (
-                <div key={idx} className="flex justify-between items-center px-1 py-0.5 group/exp">
+                <div
+                  key={idx}
+                  className="flex justify-between items-center px-1 py-0.5 group/exp"
+                >
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
-                    <span className="badge badge-xs bg-slate-100 text-slate-400 border-0">{exp.category}</span>
+                    <span className="badge badge-xs bg-slate-100 text-slate-400 border-0">
+                      {exp.category}
+                    </span>
                     <span>💵</span>
-                    <span className="text-body-caption text-xs">{exp.amount.toLocaleString()}원</span>
+                    <span className="text-body-caption text-xs">
+                      {exp.amount.toLocaleString()}원
+                    </span>
                   </div>
                   {isEditing && (
                     <button
@@ -157,19 +173,31 @@ export default function PlaceItemCard({
               <div className="flex justify-between items-center">
                 <div className="flex gap-3">
                   <button
-                    onClick={() => { setShowMemoInput(!showMemoInput); setShowCostInput(false); setShowTimeInput(false); }}
+                    onClick={() => {
+                      setShowMemoInput(!showMemoInput);
+                      setShowCostInput(false);
+                      setShowTimeInput(false);
+                    }}
                     className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors font-bold"
                   >
                     📝 메모
                   </button>
                   <button
-                    onClick={() => { setShowCostInput(!showCostInput); setShowMemoInput(false); setShowTimeInput(false); }}
+                    onClick={() => {
+                      setShowCostInput(!showCostInput);
+                      setShowMemoInput(false);
+                      setShowTimeInput(false);
+                    }}
                     className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors font-bold"
                   >
                     💵 비용
                   </button>
                   <button
-                    onClick={() => { setShowTimeInput(!showTimeInput); setShowMemoInput(false); setShowCostInput(false); }}
+                    onClick={() => {
+                      setShowTimeInput(!showTimeInput);
+                      setShowMemoInput(false);
+                      setShowCostInput(false);
+                    }}
                     className="flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-800 transition-colors font-bold"
                   >
                     🕒 시간
@@ -198,7 +226,10 @@ export default function PlaceItemCard({
               autoFocus
               className="flex-1 h-9 px-3 text-xs input-custom rounded-full focus:outline-none"
             />
-            <button onClick={handleSaveMemo} className="btn-dark h-9 px-4 text-xs shrink-0 rounded-full">
+            <button
+              onClick={handleSaveMemo}
+              className="btn-dark h-9 px-4 text-xs shrink-0 rounded-full"
+            >
               저장
             </button>
           </div>
@@ -213,7 +244,9 @@ export default function PlaceItemCard({
               className="w-20 h-9 px-2 text-xs font-bold input-custom focus:outline-none rounded-full shrink-0"
             >
               {EXPENSE_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
               ))}
             </select>
             <input
@@ -226,7 +259,10 @@ export default function PlaceItemCard({
               autoFocus
               className="flex-1 h-9 px-3 text-xs font-mono input-custom rounded-full focus:outline-none"
             />
-            <button onClick={handleSaveExpense} className="btn-primary h-9 px-4 text-xs shrink-0 rounded-full">
+            <button
+              onClick={handleSaveExpense}
+              className="btn-primary h-9 px-4 text-xs shrink-0 rounded-full"
+            >
               등록
             </button>
           </div>
@@ -241,7 +277,10 @@ export default function PlaceItemCard({
               onChange={(e) => setTimeInput(e.target.value)}
               className="flex-1 h-9 px-3 text-xs font-mono input-custom rounded-full focus:outline-none"
             />
-            <button onClick={handleSaveTime} className="btn-dark h-9 px-4 text-xs shrink-0 rounded-full">
+            <button
+              onClick={handleSaveTime}
+              className="btn-dark h-9 px-4 text-xs shrink-0 rounded-full"
+            >
               저장
             </button>
           </div>

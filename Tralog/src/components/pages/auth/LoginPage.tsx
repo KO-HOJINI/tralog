@@ -14,8 +14,8 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onNavigate }: LoginPageProps) {
-  const [isRegister, setIsRegister] = useState<boolean>(false);
-  const [contentHeight, setContentHeight] = useState<number | string>("auto");
+  const [isRegister, setIsRegister] = useState<boolean>(false); // 로그인/회원가입 폼 전환 여부
+  const [contentHeight, setContentHeight] = useState<number | string>("auto"); // 폼 전환 애니메이션용 높이
   const contentRef = useRef<HTMLDivElement>(null);
 
   // 폼이 바뀔 때마다 높이를 측정해 카드 높이 애니메이션에 전달 (※ AI 도움)
@@ -45,7 +45,6 @@ export default function LoginPage({ onNavigate }: LoginPageProps) {
         className="box-white w-full max-w-md overflow-hidden"
       >
         <div ref={contentRef} className="p-10 h-auto overflow-hidden">
-
           {/* 로고 */}
           <div className="text-center mb-8">
             <h1 className="text-logo text-slate-900 select-none tracking-tight">

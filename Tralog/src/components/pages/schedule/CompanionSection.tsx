@@ -20,13 +20,11 @@ export default function CompanionSection({
   schedulePeriod,
   canEdit = false,
 }: CompanionSectionProps) {
-  const [searchId, setSearchId] = useState("");
-  const [selectedRole, setSelectedRole] = useState<"read" | "edit">("read");
+  const [searchId, setSearchId] = useState(""); // 일행 검색 입력 ID
+  const [selectedRole, setSelectedRole] = useState<"read" | "edit">("read"); // 부여할 권한 (읽기/편집)
 
-  const { companions, isLoading, message, addCompanion, removeCompanion } = useCompanion(
-    scheduleId,
-    userId
-  );
+  const { companions, isLoading, message, addCompanion, removeCompanion } =
+    useCompanion(scheduleId, userId);
 
   // 일행 추가 - 성공하면 검색 입력칸 비우기
   const handleAddCompanion = async (e: React.FormEvent) => {
@@ -112,8 +110,12 @@ export default function CompanionSection({
               >
                 <div className="flex items-center gap-2 select-none">
                   <span className="text-sm">👤</span>
-                  <span className="text-xs font-bold text-dark">{comp.name}</span>
-                  <span className="text-[10px] text-gray font-mono">({comp.id})</span>
+                  <span className="text-xs font-bold text-dark">
+                    {comp.name}
+                  </span>
+                  <span className="text-[10px] text-gray font-mono">
+                    ({comp.id})
+                  </span>
                 </div>
 
                 <div className="flex items-center gap-2.5">

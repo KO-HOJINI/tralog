@@ -16,9 +16,9 @@ const getUserId = (): string | null => {
 
 export function usePhotoActions(regionName: string, onRefresh: () => void) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음");
-  const [isUploading, setIsUploading] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음"); // 선택한 파일명 표시용
+  const [isUploading, setIsUploading] = useState(false); // 업로드 진행 중 여부
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null); // 갤러리에서 선택된 사진 인덱스
 
   // 선택한 지역의 사진은 지도 로딩과 분리해 필요할 때만 따로 불러온다.
   // (지도는 대표사진만 받으므로 전체 사진은 이 훅에서 지역별로 지연 로드)
@@ -87,12 +87,17 @@ export function usePhotoActions(regionName: string, onRefresh: () => void) {
           setSelectedIndex(null);
           refreshAll();
         } else {
-          const errorData = await response.json().catch(() => ({})) as { error?: string; message?: string };
-          const errorMsg = errorData.error ?? errorData.message ?? "알 수 없는 에러";
+          const errorData = (await response.json().catch(() => ({}))) as {
+            error?: string;
+            message?: string;
+          };
+          const errorMsg =
+            errorData.error ?? errorData.message ?? "알 수 없는 에러";
           alert(`업로드 실패 (${response.status}): ${errorMsg}`);
         }
       } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : "알 수 없는 오류";
+        const message =
+          error instanceof Error ? error.message : "알 수 없는 오류";
         console.error("업로드 에러:", error);
         alert(`서버 연결 실패: ${message}`);
       } finally {

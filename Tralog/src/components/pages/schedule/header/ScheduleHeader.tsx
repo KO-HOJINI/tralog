@@ -37,7 +37,7 @@ export default function ScheduleHeader({
   onChangeRegion,
   onDeleteSchedule,
 }: ScheduleHeaderProps) {
-  const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [showPhotoModal, setShowPhotoModal] = useState(false); // 사진 업로드 모달 표시 여부
 
   // 탭 변경 - 타임라인 외 탭으로 가면 편집 모드 해제
   const handleTabChange = (tab: string) => {
@@ -52,7 +52,7 @@ export default function ScheduleHeader({
     <>
       <div className="flex items-center justify-between box-white p-3 px-5 w-full select-none overflow-x-auto scrollbar-hide">
 
-        {/* 좌측: 일반 모드 -> 탭 3개 / 편집 모드 → 지역 변경 + 일정 삭제 */}
+        {/* 좌측: 일반 모드 -> 탭 3개 / 편집 모드 -> 지역 변경 + 일정 삭제 */}
         {isEditing ? (
           <div className="flex gap-3 items-center shrink-0">
             <select

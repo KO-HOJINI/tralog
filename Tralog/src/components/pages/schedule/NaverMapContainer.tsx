@@ -20,7 +20,11 @@ interface NaverMapContainerProps {
   centerLng: number;
 }
 
-export default function NaverMapContainer({ places, centerLat, centerLng }: NaverMapContainerProps) {
+export default function NaverMapContainer({
+  places,
+  centerLat,
+  centerLng,
+}: NaverMapContainerProps) {
   // useNaverMap 훅의 mapRef를 div에 연결
   const { mapRef } = useNaverMap({ places, centerLat, centerLng });
 

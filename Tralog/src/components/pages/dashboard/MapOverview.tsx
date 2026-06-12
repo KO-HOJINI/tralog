@@ -22,8 +22,8 @@ interface HistorySchedule {
 const TOTAL_REGIONS = 17;
 
 export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
-  const [mapRecords, setMapRecords] = useState<MapRecord[]>([]);
-  const [visitedCount, setVisitedCount] = useState<number>(0);
+  const [mapRecords, setMapRecords] = useState<MapRecord[]>([]); // 지역별 지도 기록 목록
+  const [visitedCount, setVisitedCount] = useState<number>(0); // 방문한 지역 수
 
   useEffect(() => {
     if (!userId) return;
@@ -50,7 +50,10 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
   return (
     <div className="flex flex-col gap-5 w-full h-full pl-1">
       {/* 지도 카드 - 클릭 시 나만의 지도 페이지로 이동 */}
-      <div onClick={() => onNavigate("mymap")} className="card-map-theme flex-1 h-0">
+      <div
+        onClick={() => onNavigate("mymap")}
+        className="card-map-theme flex-1 h-0"
+      >
         <div className="w-full h-full flex flex-col items-center justify-center relative p-4">
           <div className="w-full h-full max-w-60 sm:max-w-70 lg:max-w-85 xl:max-w-100 2xl:max-w-115 max-h-[90%] flex items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-[1.01]">
             <InteractiveMap
@@ -82,7 +85,7 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           </div>
 
           <div className="flex flex-col gap-1.5 w-full mt-1">
-            {/* 달성률 게이지 - 금색 카드에 어울리는 앰버 톤 채움 */}
+            {/* 달성률 게이지 */}
             <div className="w-full h-2.5 rounded-full bg-white/45 overflow-hidden shadow-inner">
               <div
                 className="h-full rounded-full transition-all duration-700 ease-out"
@@ -103,11 +106,17 @@ export default function MapOverview({ userId, onNavigate }: MapOverviewProps) {
           <div className="flex gap-1.5 items-center justify-center text-xs">
             {remainingCount > 0 ? (
               <>
-                <span className="text-body-caption font-bold text-secondary">🔥{remainingCount}개 지역</span>
-                <span className="text-body-caption font-bold text-white">만 더 가면 완성!</span>
+                <span className="text-body-caption font-bold text-secondary">
+                  🔥{remainingCount}개 지역
+                </span>
+                <span className="text-body-caption font-bold text-white">
+                  만 더 가면 완성!
+                </span>
               </>
             ) : (
-              <span className="text-body-caption text-white">🎉 대한민국 정복 완료!</span>
+              <span className="text-body-caption text-white">
+                🎉 대한민국 정복 완료!
+              </span>
             )}
           </div>
         </div>

@@ -22,10 +22,10 @@ export default function ExpenseAddForm({
   canEdit = false,
   totalDays = 1,
 }: ExpenseAddFormProps) {
-  const [detail, setDetail] = useState("");
-  const [amount, setAmount] = useState("");
-  const [category, setCategory] = useState<string>("식비");
-  const [day, setDay] = useState<string>("1"); // "" = 미지정
+  const [detail, setDetail] = useState(""); // 지출 내역 입력값
+  const [amount, setAmount] = useState(""); // 지출 금액 입력값
+  const [category, setCategory] = useState<string>("식비"); // 지출 분류 선택값
+  const [day, setDay] = useState<string>("1"); // 지출이 속한 Day ("" = 미지정)
 
   // 제출 - 내역/금액 검증 후 부모에 추가 요청
   const handleSubmit = async (e: React.FormEvent) => {

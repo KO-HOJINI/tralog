@@ -37,8 +37,11 @@ export default function PlaceSearchBox({
   region,
   onSuccess,
 }: PlaceSearchBoxProps) {
+  // 입력 폼 값 (시간/장소 텍스트)
   const [newTime, setNewTime] = useState("");
   const [newPlace, setNewPlace] = useState("");
+
+  // 검색 드롭다운 상태 - 결과 목록, 표시 여부, 사용자가 고른 항목
   const [searchResults, setSearchResults] = useState<SearchResultItem[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
@@ -132,6 +135,7 @@ export default function PlaceSearchBox({
       onSubmit={handleAddItem}
       className="flex gap-2 shrink-0 bg-slate-50 p-3 rounded-4xl border border-slate-200 relative mt-2"
     >
+      {/* 방문 시간 입력 (HH:MM) */}
       <input
         type="text"
         placeholder="09:00"
@@ -141,6 +145,7 @@ export default function PlaceSearchBox({
         className="w-16 h-10 px-2 text-center text-xs font-bold input-custom focus:outline-none"
       />
 
+      {/* 장소 검색 입력 + 결과 드롭다운 */}
       <div className="flex-1 relative">
         <input
           type="text"
@@ -153,6 +158,7 @@ export default function PlaceSearchBox({
           }}
           className="w-full h-10 px-3 text-xs input-custom focus:outline-none"
         />
+        {/* 검색 결과 목록 - 클릭 시 해당 장소를 선택값으로 채움 */}
         {showSearchResults && searchResults.length > 0 && (
           <div className="absolute bottom-full mb-2 left-0 right-0 box-white border border-slate-200 shadow-card z-50 max-h-60 overflow-y-auto overscroll-contain scrollbar">
             {searchResults.map((result, idx) => (
@@ -180,6 +186,7 @@ export default function PlaceSearchBox({
         )}
       </div>
 
+      {/* 타임라인에 장소 등록 */}
       <button type="submit" className="btn-primary h-10 px-4 text-xs shrink-0">
         등록
       </button>

@@ -18,5 +18,9 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser,
     },
+    rules: {
+      // 서버에서 데이터를 받아와 동기화하는 패칭 effect를 과하게 잡아서 비활성화
+      'react-hooks/set-state-in-effect': 'off',
+    },
   },
 ])

@@ -1,23 +1,15 @@
-/* ===================================================
- * App.css - 전역 타이포그래피 & 컴포넌트 스타일
- *
- * 구글 폰트 2개 사용:
- * - Noto Sans KR: 본문/제목 한국어용
- * - Urbanist: 로고/숫자 강조용 (영문 전용)
- * =================================================== */
+/* App.css - 전역 타이포그래피 & 컴포넌트 스타일
+ * 구글 폰트 2개 사용: Noto Sans KR(본문/제목), Urbanist(로고/숫자, 영문 전용) */
 
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Urbanist:wght@700;800&display=swap");
 
-
-/* ===================================================
- * 전역 기본 스타일 (base layer)
- * =================================================== */
+/* 전역 기본 스타일 (base layer) */
 
 @layer base {
   body {
     font-family: "Noto Sans KR", sans-serif;
     background-color: #f8fafc; /* --color-background */
-    color: #0f172a;             /* --color-dark */
+    color: #0f172a; /* --color-dark */
   }
 
   /* 페이지 대제목 */
@@ -51,10 +43,7 @@
   }
 }
 
-
-/* ===================================================
- * 텍스트 컴포넌트 스타일 (component layer)
- * =================================================== */
+/* 텍스트 컴포넌트 스타일 (component layer) */
 
 @layer components {
   /* 일반 본문 텍스트 */

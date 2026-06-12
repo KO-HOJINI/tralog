@@ -1,14 +1,15 @@
-/* index.css - Tralog 전역 스타일
- * Tailwind CSS v4 + DaisyUI v5를 사용합니다.
+/* ===================================================
+ * index.css - Tralog 전역 스타일
+ * Tailwind CSS v4 + DaisyUI v5를 사용
  *
  * ※ AI 도움을 받아 구현한 부분
  * Tailwind v4의 @utility, @theme, @layer 문법과
- * DaisyUI 플러그인 테마 설정 방법을 AI 도움으로 작성했습니다.
- */
+ * DaisyUI 플러그인 테마 설정 방법을 AI 도움으로 작성
+ * =================================================== */
 
 @import "tailwindcss";
 
-/* DaisyUI 플러그인 */
+/* DaisyUI 플러그인 / 테마 */
 @plugin "daisyui" {
   themes: light --default;
 }
@@ -32,17 +33,17 @@
   --color-error-content: #ffffff;
 }
 
-/* 프로젝트 디자인 토큰 */
+/* 디자인 토큰 - :root는 일반 CSS 변수, @theme는 Tailwind 유틸 생성용 */
 :root {
-  --color-primary:    #0d9488;
-  --color-secondary:  #f59e0b;
+  --color-primary: #0d9488;
+  --color-secondary: #f59e0b;
   --color-background: #f8fafc;
-  --color-dark:       #0f172a;
-  --color-gray:       #475569;
+  --color-dark: #0f172a;
+  --color-gray: #475569;
   --color-pure-white: #ffffff;
 
-  --radius-box:   32px;
-  --radius-btn:   24px;
+  --radius-box: 32px;
+  --radius-btn: 24px;
   --radius-input: 24px;
 
   --shadow-custom: 0 4px 14px rgba(15, 23, 42, 0.06);
@@ -50,15 +51,15 @@
 
 /* Tailwind */
 @theme {
-  --color-primary:    #0d9488;
-  --color-secondary:  #f59e0b;
+  --color-primary: #0d9488;
+  --color-secondary: #f59e0b;
   --color-background: #f8fafc;
-  --color-dark:       #0f172a;
-  --color-gray:       #475569;
+  --color-dark: #0f172a;
+  --color-gray: #475569;
   --color-pure-white: #ffffff;
 }
 
-/* ===== 버튼 공통 베이스 (색상 제외한 공통 속성을 한 곳에서 관리) ===== */
+/* 버튼 공통 베이스 (색상 제외한 공통 속성을 한 곳에서 관리) */
 @layer components {
   .btn-primary,
   .btn-secondary,
@@ -81,51 +82,63 @@
   }
 }
 
-/* ===== 버튼 색상 변형 ===== */
+/* 버튼 색상 변형 */
 
 @utility btn-primary {
   border: none;
   background-color: var(--color-primary);
   color: var(--color-pure-white);
-  &:hover { background-color: #0f766e; }
+  &:hover {
+    background-color: #0f766e;
+  }
 }
 
 @utility btn-secondary {
   border: none;
   background-color: var(--color-secondary);
   color: var(--color-pure-white);
-  &:hover { background-color: #d97706; }
+  &:hover {
+    background-color: #d97706;
+  }
 }
 
 @utility btn-dark {
   border: none;
   background-color: var(--color-dark);
   color: var(--color-pure-white);
-  &:hover { background-color: #1e293b; }
+  &:hover {
+    background-color: #1e293b;
+  }
 }
 
 @utility btn-danger {
   background-color: #fef2f2;
   color: #ef4444;
   border: 1px solid #fecaca;
-  &:hover { background-color: #fee2e2; }
+  &:hover {
+    background-color: #fee2e2;
+  }
 }
 
 @utility btn-ghost {
   border: none;
   background-color: var(--color-gray);
   color: var(--color-pure-white);
-  &:hover { background-color: #334155; }
+  &:hover {
+    background-color: #334155;
+  }
 }
 
 @utility btn-white {
   background-color: var(--color-pure-white);
   color: var(--color-slate-500);
   border: 1px solid var(--color-slate-200);
-  &:hover { background-color: var(--color-slate-50); }
+  &:hover {
+    background-color: var(--color-slate-50);
+  }
 }
 
-/* ===== 그림자 ===== */
+/* 그림자 */
 
 @utility shadow-card {
   box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
@@ -135,7 +148,7 @@
   box-shadow: var(--shadow-custom);
 }
 
-/* ===== 박스(카드) ===== */
+/* 박스(카드) */
 
 @utility box-white {
   border-radius: var(--radius-box);
@@ -164,7 +177,7 @@
     0 3px 8px -1px rgba(15, 23, 42, 0.02);
 }
 
-/* ===== 인풋 ===== */
+/* 인풋 */
 
 @utility input-custom {
   background-color: var(--color-pure-white);
@@ -179,10 +192,12 @@
   }
 }
 
-/* ===== 스크롤바 ===== */
+/* 스크롤바 */
 
 @utility scrollbar {
-  &::-webkit-scrollbar { width: 14px; }
+  &::-webkit-scrollbar {
+    width: 14px;
+  }
   &::-webkit-scrollbar-track {
     background: #ffffff;
     border: 1px solid #0f172a;
@@ -195,7 +210,7 @@
   }
 }
 
-/* ===== 레이아웃 ===== */
+/* 레이아웃 */
 
 /* flex 세로 full 레이아웃 - 여러 페이지에서 공통으로 사용합니다 */
 @utility flex-col-full {
@@ -206,7 +221,7 @@
   overflow: hidden;
 }
 
-/* ===== 기타 ===== */
+/* 기타 */
 
 /* 사진 위에 텍스트를 올릴 때 그림자로 가독성을 높입니다 */
 @utility text-shadow-glow {
@@ -216,10 +231,12 @@
 }
 
 @media (max-height: 720px) {
-  .hide-on-short-screen { display: none !important; }
+  .hide-on-short-screen {
+    display: none !important;
+  }
 }
 
-/* ===== 지도 관련 카드 테마 (MapOverview 전용) ===== */
+/* 지도 관련 카드 테마 (MapOverview 전용) */
 
 @utility card-map-theme {
   background: linear-gradient(135deg, #e6f7f4 0%, #cbece7 100%);
@@ -240,7 +257,9 @@
     border-color: var(--color-primary);
     transform: scale(1.002);
   }
-  & .box-white { transition: all 0.2s ease; }
+  & .box-white {
+    transition: all 0.2s ease;
+  }
   &:hover .box-white {
     background-color: var(--color-gray);
     color: var(--color-pure-white);

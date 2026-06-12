@@ -62,7 +62,6 @@ export default function ScheduleCard({
           backgroundPosition: "center",
         }}
       >
-
         {/* D-Day 뱃지 */}
         <div className="absolute top-4 right-4 box-white rounded-full px-3.5 py-1 shadow-card z-20">
           <p className="text-number-accent tracking-tight text-dark font-black text-xs">

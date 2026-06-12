@@ -35,8 +35,8 @@ export default function AccountBookSection({
   startDate,
   endDate,
 }: AccountBookSectionProps) {
-  const [expenses, setExpenses] = useState<AccountItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [expenses, setExpenses] = useState<AccountItem[]>([]); // 지출 내역 목록
+  const [isLoading, setIsLoading] = useState(true); // 로딩 여부
   // 여행 인원 = 일행 수 + 본인 1명 (일정 응답의 companions로 계산)
   const [companionCount, setCompanionCount] = useState(1);
 
@@ -139,7 +139,8 @@ export default function AccountBookSection({
 
   // 지출 삭제
   const handleDeleteExpense = async (id: string) => {
-    if (!canEdit) return; // 읽기 전용 일행 방어
+     // 읽기 전용 일행 방어
+    if (!canEdit) return;
     try {
       const res = await fetch(`${API_BASE_URL}/api/expenses/${id}`, { method: "DELETE" });
       if (res.ok) setExpenses((prev) => prev.filter((item) => item.id !== id));

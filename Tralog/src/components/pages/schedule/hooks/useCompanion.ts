@@ -14,9 +14,9 @@ export interface Companion {
 }
 
 export function useCompanion(scheduleId: string, currentUserId: string) {
-  const [companions, setCompanions] = useState<Companion[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [message, setMessage] = useState("");
+  const [companions, setCompanions] = useState<Companion[]>([]); // 일행 목록
+  const [isLoading, setIsLoading] = useState(true); // 로딩 여부
+  const [message, setMessage] = useState(""); // 안내/에러 메시지
 
   // 일행 목록 로드 - scheduleId 바뀔 때만 함수 재생성 (※ AI 도움)
   const fetchCompanions = useCallback(
@@ -42,9 +42,13 @@ export function useCompanion(scheduleId: string, currentUserId: string) {
 
   useEffect(() => {
     let isMounted = true;
-    const loadData = () => { void fetchCompanions(isMounted); };
+    const loadData = () => {
+      void fetchCompanions(isMounted);
+    };
     loadData();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [fetchCompanions]);
 
   // 일행 추가 - 중복/본인 여부 확인 후 서버에 저장
@@ -65,12 +69,19 @@ export function useCompanion(scheduleId: string, currentUserId: string) {
       const res = await fetch(`${API_BASE_URL}/api/companions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ schedule_id: scheduleId, target_id: targetId, role }),
+        body: JSON.stringify({
+          schedule_id: scheduleId,
+          target_id: targetId,
+          role,
+        }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setCompanions((prev) => [...prev, { id: data.id, name: data.name, role: data.role }]);
+        setCompanions((prev) => [
+          ...prev,
+          { id: data.id, name: data.name, role: data.role },
+        ]);
         setMessage("✅ 일행이 추가되었습니다.");
         return true;
       } else {
@@ -87,9 +98,12 @@ export function useCompanion(scheduleId: string, currentUserId: string) {
   // 일행 제거
   const removeCompanion = async (targetId: string) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/companions/${scheduleId}/${targetId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/companions/${scheduleId}/${targetId}`,
+        {
+          method: "DELETE",
+        },
+      );
       if (res.ok) {
         setCompanions((prev) => prev.filter((c) => c.id !== targetId));
       }

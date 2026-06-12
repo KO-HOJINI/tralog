@@ -20,8 +20,8 @@ export default function PhotoUploadModal({
   scheduleId,
   scheduleRegion,
 }: PhotoUploadModalProps) {
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음");
+  const [isUploading, setIsUploading] = useState(false); // 업로드 진행 중 여부
+  const [uploadedFileName, setUploadedFileName] = useState("선택된 파일 없음"); // 선택한 파일명 표시용
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 모달 닫힘 상태면 렌더링 안 함
@@ -39,8 +39,7 @@ export default function PhotoUploadModal({
     reader.onloadend = async () => {
       const base64String = reader.result as string;
 
-      // 편집 중인 바로 그 일정에 사진을 연결한다. (별도 'direct-' 더미 일정을 만들지 않음)
-      // → 마이맵 히스토리에서 "직접 기록"이 아니라 해당 일정의 사진으로 표시된다.
+      // 편집 중인 일정에 사진을 연결
       const session = localStorage.getItem("tralog_current_user");
       const userId = session ? (JSON.parse(session) as { id: string }).id : null;
 
