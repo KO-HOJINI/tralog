@@ -175,6 +175,26 @@ export default function TimelineSection({
     }
   };
 
+  // 방문 시간 수정
+  const handleUpdateTime = async (id: string, newTime: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/places/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visit_time: newTime }),
+      });
+      if (res.ok) {
+        setAllItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, time: newTime } : item,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("시간 수정 실패:", err);
+    }
+  };
+
   // 비용 추가 - 가계부에 저장하고 해당 장소 카드에도 반영
   const handleAddExpense = async (
     placeId: string,
@@ -286,6 +306,7 @@ export default function TimelineSection({
                       expenses={item.expenses || []}
                       onDelete={handleDeleteItem}
                       onUpdateMemo={handleUpdateMemo}
+                      onUpdateTime={handleUpdateTime}
                       onAddExpense={handleAddExpense}
                     />
 

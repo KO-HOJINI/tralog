@@ -58,7 +58,6 @@ export default function PlaceItemCard({
   const [localExpenses, setLocalExpenses] = useState<LocalExpense[]>(
     initialExpenses.map((e) => ({ ...e, category: e.category || "기타" })),
   );
-  const [displayTime, setDisplayTime] = useState(time); // 카드에 표시되는 방문 시간
 
   // 메모 저장
   const handleSaveMemo = () => {
@@ -91,11 +90,10 @@ export default function PlaceItemCard({
     setLocalExpenses((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  // 방문 시간 저장
+  // 방문 시간 저장 - 부모 상태를 갱신해 카드 표시/정렬에 함께 반영
   const handleSaveTime = () => {
     if (!timeInput.trim()) return;
-    setDisplayTime(timeInput);
-    if (onUpdateTime) onUpdateTime(id, timeInput);
+    onUpdateTime?.(id, timeInput);
     setShowTimeInput(false);
   };
 
@@ -113,7 +111,7 @@ export default function PlaceItemCard({
         <div className="box-white p-4 flex flex-col w-full">
           <div className="flex items-center gap-1.5 text-slate-500 mb-1">
             <span className="text-[11px]">🕒</span>
-            <span className="text-xs text-number-accent">{displayTime}</span>
+            <span className="text-xs text-number-accent">{time}</span>
           </div>
           <h3>{place}</h3>
 
