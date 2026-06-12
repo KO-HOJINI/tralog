@@ -68,6 +68,8 @@ export default function RegisterForm({
       newErrors.password = "비밀번호는 8~20자로 입력해 주세요.";
       isValid = false;
     } else if (!/^(?=.*[A-Za-z])(?=.*\d).+$/.test(formData.password)) {
+      // ※ AI 도움 - 전방탐색(lookahead) (?=.*[A-Za-z])(?=.*\d)으로
+      //   "영문과 숫자를 각각 최소 1개씩 포함" 조건을 한 정규식으로 검사
       newErrors.password = "영문과 숫자를 모두 포함해 주세요.";
       isValid = false;
     }

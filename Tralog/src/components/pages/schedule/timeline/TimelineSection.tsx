@@ -93,19 +93,24 @@ export default function TimelineSection({
         if (!res.ok) throw new Error("일정 로드 실패");
         const data = await res.json();
 
-        // 카드에서 추가한 비용은 가계부에 detail=장소명으로 저장
-        // 재진입 시 장소명으로 매칭해 카드 비용 태그를 복원
-        const apiExpenses: TimelineExpense[] = (data.expenses || []).map(
+        // 카드에서 추가한 비용은 가계부에 detail=장소명, day_number=장소의 일차로 저장된다.
+        // 재진입 시 "장소명 + 일차"로 매칭해 카드 비용 태그를 복원한다.
+        // (place_id가 없어 이름으로 매칭하므로, 일차까지 비교해 다른 날 동명 장소의 오매칭을 줄임)
+        const apiExpenses: (TimelineExpense & { day_number?: number })[] = (
+          data.expenses || []
+        ).map(
           (e: {
             id: string;
             detail: string;
             amount: number;
             category: string;
+            day_number?: number;
           }) => ({
             id: e.id,
             detail: e.detail,
             amount: e.amount,
             category: e.category || "기타",
+            day_number: e.day_number ?? undefined,
           }),
         );
 
@@ -116,7 +121,12 @@ export default function TimelineSection({
             place: p.place_name,
             day_number: p.day_number,
             memo: p.memo,
-            expenses: apiExpenses.filter((e) => e.detail === p.place_name),
+            // 이름이 같고, 일차가 같거나(또는 일차 미지정인 옛 데이터) 인 비용만 이 장소에 표시
+            expenses: apiExpenses.filter(
+              (e) =>
+                e.detail === p.place_name &&
+                (e.day_number == null || e.day_number === p.day_number),
+            ),
             lat: p.lat ? Number(p.lat) : undefined,
             lng: p.lng ? Number(p.lng) : undefined,
           }),
