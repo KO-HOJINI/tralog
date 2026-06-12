@@ -160,6 +160,8 @@ export default function InteractiveMap({
 
             // 경상북도는 본토 + 울릉도/독도로 이루어진 MultiPolygon
             // 본토는 기본 투영기, 멀리 떨어진 섬은 동해안 가까이 당긴 투영기로 따로 그림
+            // ※ AI 도움 - MultiPolygon의 각 폴리곤 좌표 개수를 비교해 가장 큰 것을 본토로,
+            //   나머지를 섬으로 분리하는 GeoJSON 가공 로직은 AI 도움으로 작성
             const isGyeongbuk = feature.properties?.code === "37";
             let mainFeature: Feature<Geometry, ProvinceProperties> = feature;
             let islandPath = "";

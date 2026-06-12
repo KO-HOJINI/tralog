@@ -218,6 +218,9 @@ export default function TimelineSection({
   };
 
   // 두 장소 사이 네이버 지도 길찾기 URL을 만들어 새 탭으로 열기
+  // ※ AI 도움 - 네이버 지도 길찾기 딥링크의 파라미터 포맷("경도,위도,장소명,," 형태)과
+  //   경로 URL 구조(/p/directions/.../transit)는 공식 문서가 없어 AI 도움으로 작성.
+  //   좌표가 비정상(국내 경도 범위 120~135 밖)이면 "-,-,장소명"으로 대체.
   const handleOpenDirections = (start: TimelineItem, end: TimelineItem) => {
     const getRoutingParam = (item: TimelineItem) => {
       const name = encodeURIComponent(item.place);
