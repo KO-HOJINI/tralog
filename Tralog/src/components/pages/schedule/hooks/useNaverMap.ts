@@ -208,6 +208,16 @@ export function useNaverMap({
     document.head.appendChild(script);
   }, [centerLat, centerLng, renderMarkersAndLines]);
 
+  // 지역(중심 좌표)이 바뀌면 이미 생성된 지도를 새 중심으로 이동
+  // (init은 지도 인스턴스가 있으면 early return 하므로 여기서 별도로 setCenter)
+  useEffect(() => {
+    if (mapInstanceRef.current && window.naver?.maps) {
+      mapInstanceRef.current.setCenter(
+        new window.naver.maps.LatLng(centerLat, centerLng),
+      );
+    }
+  }, [centerLat, centerLng]);
+
   // 장소 목록 바뀌면 마커 다시 그리기
   useEffect(() => {
     if (mapInstanceRef.current && window.naver?.maps) {
