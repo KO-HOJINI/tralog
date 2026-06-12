@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "../../../../config/api";
+import { parseLocalDate } from "../../../../utils/date";
 
 export interface ScheduleRow {
   id: string;
@@ -16,13 +17,6 @@ export interface ScheduleRow {
   status?: string;
   photo_count?: number;
 }
-
-// "T"가 포함된 ISO 날짜 문자열을 로컬 Date 객체로 변환
-export const parseLocalDate = (raw: string): Date => {
-  const dateStr = raw.split("T")[0];
-  const [y, m, d] = dateStr.split("-").map(Number);
-  return new Date(y, m - 1, d);
-};
 
 export function useMapHistory(
   onNavigate: (page: string, scheduleId?: string) => void,

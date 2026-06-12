@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import ScheduleCard from "./ScheduleCard";
 import NewScheduleModal from "./NewScheduleModal";
 import { API_BASE_URL } from "../../../config/api";
+import { formatLocalDateString, getLocalDateString } from "../../../utils/date";
 
 interface TravelSchedule {
   id: string;
@@ -77,14 +78,6 @@ export default function ScheduleList({
     }
   };
 
-  // 로컬 날짜를 YYYY-MM-DD 문자열로 변환
-  const getLocalDateString = (date: Date = new Date()): string => {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  };
-
   // 일정 목록 로드 + D-Day 계산 + 종료된 일정 숨김
   useEffect(() => {
     if (!userId) return;
@@ -97,19 +90,6 @@ export default function ScheduleList({
       .then((data: DBSchedule[]) => {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
-        // ISO 포맷 수신 시 시차 오류 방지용 로컬 문자열 변환
-        const formatLocalDateString = (rawDate: string | undefined) => {
-          if (!rawDate) return "";
-          if (rawDate.includes("T")) {
-            const dateObj = new Date(rawDate);
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-            const d = String(dateObj.getDate()).padStart(2, "0");
-            return `${y}-${m}-${d}`;
-          }
-          return rawDate.slice(0, 10);
-        };
 
         // 종료된 일정 필터링 (endDate가 오늘보다 과거면 제외)
         const activeSchedules = data.filter((item) => {

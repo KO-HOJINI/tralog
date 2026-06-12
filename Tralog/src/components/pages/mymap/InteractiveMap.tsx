@@ -11,6 +11,7 @@
 import { geoMercator, geoPath } from "d3-geo";
 import type { FeatureCollection, Feature, Geometry } from "geojson";
 import type { MapRecord } from "./MyMapPage";
+import { getRegionByCode } from "../../../config/regions";
 
 import koreaGeoJson from "../../content/korea-provinces.json";
 
@@ -61,49 +62,6 @@ export default function InteractiveMap({
     .scale(7500)
     .translate([width / 2 - 148, height / 2 - 12]);
 
-  // GeoJSON code 값을 한국어 지역명으로 변환
-  const getRegionInfo = (feature: Feature<Geometry, ProvinceProperties>) => {
-    const code = feature.properties?.code;
-    switch (code) {
-      case "11":
-        return { key: "서울특별시", display: "서울" };
-      case "21":
-        return { key: "부산광역시", display: "부산" };
-      case "22":
-        return { key: "대구광역시", display: "대구" };
-      case "23":
-        return { key: "인천광역시", display: "인천" };
-      case "24":
-        return { key: "광주광역시", display: "광주" };
-      case "25":
-        return { key: "대전광역시", display: "대전" };
-      case "26":
-        return { key: "울산광역시", display: "울산" };
-      case "29":
-        return { key: "세종특별자치시", display: "세종" };
-      case "31":
-        return { key: "경기도", display: "경기" };
-      case "32":
-        return { key: "강원특별자치도", display: "강원" };
-      case "33":
-        return { key: "충청북도", display: "충북" };
-      case "34":
-        return { key: "충청남도", display: "충남" };
-      case "35":
-        return { key: "전북특별자치도", display: "전북" };
-      case "36":
-        return { key: "전라남도", display: "전남" };
-      case "37":
-        return { key: "경상북도", display: "경북" };
-      case "38":
-        return { key: "경상남도", display: "경남" };
-      case "39":
-        return { key: "제주특별자치도", display: "제주" };
-      default:
-        return { key: "", display: "" };
-    }
-  };
-
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
@@ -143,9 +101,10 @@ export default function InteractiveMap({
       <g fill="none" strokeLinecap="round" strokeLinejoin="round">
         {geoData.features.map(
           (feature: Feature<Geometry, ProvinceProperties>, index) => {
-            const { key: regionKey, display: regionDisplayName } =
-              getRegionInfo(feature);
-            if (!regionKey) return null;
+            const regionData = getRegionByCode(feature.properties?.code);
+            if (!regionData) return null;
+            const regionKey = regionData.name;
+            const regionDisplayName = regionData.display;
 
             const record = mapRecords.find((r) => r.region === regionKey);
             // 완료된 일정이 있는 지역만 대표사진으로 색칠 (진행 중 일정은 제외)

@@ -10,6 +10,7 @@ import AccountBookSection from "./account/AccountBookSection";
 import CompanionSection from "./CompanionSection";
 import NaverMapContainer from "./NaverMapContainer";
 import { useSchedule } from "./hooks/useSchedule";
+import { getRegionCenter } from "../../../config/regions";
 
 interface HandleSchedulePageProps {
   onNavigate: (page: string) => void;
@@ -179,31 +180,4 @@ export default function HandleSchedulePage({
       </main>
     </div>
   );
-}
-
-// 지역명 -> 지도 중심 좌표 반환
-function getRegionCenter(region: string): { lat: number; lng: number } {
-  const centers: Record<string, { lat: number; lng: number }> = {
-    서울특별시: { lat: 37.5665, lng: 126.978 },
-    부산광역시: { lat: 35.1796, lng: 129.0756 },
-    대구광역시: { lat: 35.8714, lng: 128.6014 },
-    인천광역시: { lat: 37.4563, lng: 126.7052 },
-    광주광역시: { lat: 35.1595, lng: 126.8526 },
-    대전광역시: { lat: 36.3504, lng: 127.3845 },
-    울산광역시: { lat: 35.5384, lng: 129.3114 },
-    세종특별자치시: { lat: 36.4801, lng: 127.289 },
-    경기도: { lat: 37.2752, lng: 127.0095 },
-    강원도: { lat: 37.751853, lng: 128.876057 },
-    강원특별자치도: { lat: 37.751853, lng: 128.876057 },
-    충청북도: { lat: 36.6357, lng: 127.4917 },
-    충청남도: { lat: 36.4599, lng: 127.126 },
-    전라북도: { lat: 35.8242, lng: 127.148 },
-    전북특별자치도: { lat: 35.8242, lng: 127.148 },
-    전라남도: { lat: 34.7604, lng: 127.6622 },
-    경상북도: { lat: 35.856171, lng: 129.224748 },
-    경상남도: { lat: 34.8544, lng: 128.4331 },
-    제주도: { lat: 33.4996, lng: 126.5312 },
-    제주특별자치도: { lat: 33.4996, lng: 126.5312 },
-  };
-  return centers[region] ?? { lat: 37.5665, lng: 126.978 };
 }

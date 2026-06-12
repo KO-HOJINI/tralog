@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { API_BASE_URL } from "../../../../config/api";
+import { formatLocalDateString } from "../../../../utils/date";
 import { type PlaceMarker } from "../NaverMapContainer";
 
 interface ScheduleMeta {
@@ -65,19 +66,6 @@ export function useSchedule(
         if (!res.ok) return;
         const data = await res.json();
         const meta = data.meta;
-
-        // 서버 날짜가 ISO 형식("T" 포함)이면 로컬 날짜 문자열로 변환
-        const formatLocalDateString = (rawDate: string | undefined) => {
-          if (!rawDate) return "";
-          if (rawDate.includes("T")) {
-            const dateObj = new Date(rawDate);
-            const y = dateObj.getFullYear();
-            const m = String(dateObj.getMonth() + 1).padStart(2, "0");
-            const d = String(dateObj.getDate()).padStart(2, "0");
-            return `${y}-${m}-${d}`;
-          }
-          return rawDate.slice(0, 10);
-        };
 
         const start = formatLocalDateString(meta.start_date);
         const end = formatLocalDateString(meta.end_date);
