@@ -5,7 +5,7 @@
 // ※ AI 도움 - 검색 결과 장소명에 섞인 <b> 같은 HTML 태그를
 //   정규식으로 제거: replace(/<[^>]*>?/gm, "")
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { API_BASE_URL } from "../../../../config/api";
 import type { TimelineItem } from "./TimelineSection";
 
@@ -47,6 +47,34 @@ export default function PlaceSearchBox({
   const [selectedResult, setSelectedResult] = useState<SearchResultItem | null>(
     null,
   );
+
+  // 입력이 멈춘 뒤에만 검색하도록 디바운스 타이머 보관
+  const searchTimerRef = useRef<number | null>(null);
+
+  // 언마운트 시 대기 중인 검색 타이머 정리
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
+
+  // 입력 변경 - 300ms 디바운스 후 검색 (매 키 입력마다 API 호출하지 않도록)
+  const handlePlaceInputChange = (value: string) => {
+    setNewPlace(value);
+    setSelectedResult(null);
+
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+
+    if (!value.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+
+    searchTimerRef.current = window.setTimeout(() => {
+      void handleSearchPlace(value);
+    }, 300);
+  };
 
   // 장소 검색 - 지역명을 앞에 붙여 정확도 높임, 결과의 HTML 태그 제거
   const handleSearchPlace = async (query: string) => {
@@ -151,11 +179,7 @@ export default function PlaceSearchBox({
           type="text"
           placeholder="장소를 검색해보세요"
           value={newPlace}
-          onChange={(e) => {
-            setNewPlace(e.target.value);
-            setSelectedResult(null);
-            handleSearchPlace(e.target.value);
-          }}
+          onChange={(e) => handlePlaceInputChange(e.target.value)}
           className="w-full h-10 px-3 text-xs input-custom focus:outline-none"
         />
         {/* 검색 결과 목록 - 클릭 시 해당 장소를 선택값으로 채움 */}
