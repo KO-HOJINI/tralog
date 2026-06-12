@@ -52,6 +52,7 @@ export default function HandleSchedulePage({
     handleDeleteSchedule,
     handlePlaceAdded,
     handlePlaceDeleted,
+    handlePlaceUpdated,
   } = useSchedule(scheduleId, currentUser, onNavigate);
 
   if (!currentUser) return null;
@@ -153,6 +154,7 @@ export default function HandleSchedulePage({
                 region={scheduleMeta.region}
                 onPlaceAdded={handlePlaceAdded}
                 onPlaceDeleted={handlePlaceDeleted}
+                onPlaceUpdated={handlePlaceUpdated}
               />
             )}
             {activeTab === "account" && (

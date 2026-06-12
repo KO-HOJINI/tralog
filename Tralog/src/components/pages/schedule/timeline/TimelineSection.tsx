@@ -52,6 +52,7 @@ interface TimelineSectionProps {
   region?: string;
   onPlaceAdded?: (place: PlaceMarkerEvent) => void;
   onPlaceDeleted?: (placeId: string) => void;
+  onPlaceUpdated?: (placeId: string, visitTime: string) => void;
 }
 
 export default function TimelineSection({
@@ -62,6 +63,7 @@ export default function TimelineSection({
   region,
   onPlaceAdded,
   onPlaceDeleted,
+  onPlaceUpdated,
 }: TimelineSectionProps) {
   const [day, setDay] = useState<number>(1); // 현재 보고 있는 Day 번호
   const [allItems, setAllItems] = useState<TimelineItem[]>([]); // 전체 Day의 타임라인 항목
@@ -189,6 +191,7 @@ export default function TimelineSection({
             item.id === id ? { ...item, time: newTime } : item,
           ),
         );
+        onPlaceUpdated?.(id, newTime); // 지도 마커 순서/번호도 함께 갱신
       }
     } catch (err) {
       console.error("시간 수정 실패:", err);

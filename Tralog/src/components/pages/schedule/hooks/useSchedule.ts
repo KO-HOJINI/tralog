@@ -231,9 +231,16 @@ export function useSchedule(
     setMapPlaces((prev) => [...prev, place]);
   }, []);
 
-  // 장소 삭제 시 지도 마커도 함께 제거 (안 하면 삭제된 마커가 남아 번호가 꼬임)
+  // 장소 삭제 시 지도 마커도 함께 제거
   const handlePlaceDeleted = useCallback((placeId: string) => {
     setMapPlaces((prev) => prev.filter((p) => p.id !== placeId));
+  }, []);
+
+  // 방문 시간 변경 시 지도 마커 갱신
+  const handlePlaceUpdated = useCallback((placeId: string, visitTime: string) => {
+    setMapPlaces((prev) =>
+      prev.map((p) => (p.id === placeId ? { ...p, visit_time: visitTime } : p)),
+    );
   }, []);
 
   return {
@@ -252,5 +259,6 @@ export function useSchedule(
     handleDeleteSchedule,
     handlePlaceAdded,
     handlePlaceDeleted,
+    handlePlaceUpdated,
   };
 }
