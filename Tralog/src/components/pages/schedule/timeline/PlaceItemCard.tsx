@@ -5,6 +5,7 @@
 import { useState } from "react";
 
 interface LocalExpense {
+  id: string;
   detail: string;
   amount: number;
   category: string;
@@ -26,6 +27,7 @@ interface PlaceItemCardProps {
     amount: number,
     category: string,
   ) => void;
+  onDeleteExpense?: (placeId: string, expenseId: string) => void;
   onUpdateTime?: (id: string, newTime: string) => void;
 }
 
@@ -38,10 +40,11 @@ export default function PlaceItemCard({
   index,
   isEditing,
   memo,
-  expenses: initialExpenses = [],
+  expenses = [],
   onDelete,
   onUpdateMemo,
   onAddExpense,
+  onDeleteExpense,
   onUpdateTime,
 }: PlaceItemCardProps) {
   // 각 입력 폼의 표시 여부를 개별 관리
@@ -54,11 +57,6 @@ export default function PlaceItemCard({
   const [costCategory, setCostCategory] = useState<string>("식비"); // 비용 분류 선택값
   const [timeInput, setTimeInput] = useState(time); // 시간 수정 입력값
 
-  // 비용은 로컬 상태로 관리 - 저장 버튼 없이 즉시 카드에 반영
-  const [localExpenses, setLocalExpenses] = useState<LocalExpense[]>(
-    initialExpenses.map((e) => ({ ...e, category: e.category || "기타" })),
-  );
-
   // 메모 저장
   const handleSaveMemo = () => {
     onUpdateMemo(id, memoInput);
@@ -70,24 +68,20 @@ export default function PlaceItemCard({
     onUpdateMemo(id, "");
   };
 
-  // 비용 저장 - 금액 검증 후 카드/서버에 추가
+  // 비용 저장 - 금액 검증 후 부모(서버/가계부)에 추가 요청
   const handleSaveExpense = () => {
     const amount = parseInt(costAmount);
     if (isNaN(amount) || amount <= 0)
       return alert("올바른 금액을 입력해 주세요.");
 
-    setLocalExpenses((prev) => [
-      ...prev,
-      { detail: place, amount, category: costCategory },
-    ]);
     onAddExpense(id, place, amount, costCategory);
     setShowCostInput(false);
     setCostAmount("");
   };
 
-  // 비용 삭제 (로컬 목록에서 제거)
-  const handleDeleteExpense = (idx: number) => {
-    setLocalExpenses((prev) => prev.filter((_, i) => i !== idx));
+  // 비용 삭제 - 부모를 통해 서버/가계부에서도 제거
+  const handleDeleteExpense = (expenseId: string) => {
+    onDeleteExpense?.(id, expenseId);
   };
 
   // 방문 시간 저장 - 부모 상태를 갱신해 카드 표시/정렬에 함께 반영
@@ -116,7 +110,7 @@ export default function PlaceItemCard({
           <h3>{place}</h3>
 
           {/* 메모와 비용 태그 */}
-          {(memo || localExpenses.length > 0) && (
+          {(memo || expenses.length > 0) && (
             <div className="flex flex-col gap-1.5 mt-2.5">
               {/* 메모 */}
               {memo && !showMemoInput && (
@@ -137,9 +131,9 @@ export default function PlaceItemCard({
               )}
 
               {/* 비용 목록 */}
-              {localExpenses.map((exp, idx) => (
+              {expenses.map((exp) => (
                 <div
-                  key={idx}
+                  key={exp.id}
                   className="flex justify-between items-center px-1 py-0.5 group/exp"
                 >
                   <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700">
@@ -153,7 +147,7 @@ export default function PlaceItemCard({
                   </div>
                   {isEditing && (
                     <button
-                      onClick={() => handleDeleteExpense(idx)}
+                      onClick={() => handleDeleteExpense(exp.id)}
                       className="shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 text-[11px] font-bold transition-colors"
                     >
                       ✕

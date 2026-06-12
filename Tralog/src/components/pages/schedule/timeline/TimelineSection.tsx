@@ -8,6 +8,7 @@ import PlaceSearchBox from "./PlaceSearchBox";
 import { API_BASE_URL } from "../../../../config/api";
 
 export interface TimelineExpense {
+  id: string;
   detail: string;
   amount: number;
   category: string;
@@ -92,10 +93,16 @@ export default function TimelineSection({
         if (!res.ok) throw new Error("일정 로드 실패");
         const data = await res.json();
 
-        // 카드에서 추가한 비용은 가계부에 detail=장소명으로 저장된다.
-        // 재진입 시 장소명으로 매칭해 카드 비용 태그를 복원한다.
+        // 카드에서 추가한 비용은 가계부에 detail=장소명으로 저장
+        // 재진입 시 장소명으로 매칭해 카드 비용 태그를 복원
         const apiExpenses: TimelineExpense[] = (data.expenses || []).map(
-          (e: { detail: string; amount: number; category: string }) => ({
+          (e: {
+            id: string;
+            detail: string;
+            amount: number;
+            category: string;
+          }) => ({
+            id: e.id,
             detail: e.detail,
             amount: e.amount,
             category: e.category || "기타",
@@ -208,12 +215,13 @@ export default function TimelineSection({
     // 비용은 해당 장소가 속한 일차로 가계부에 분류
     const dayNumber =
       allItems.find((item) => item.id === placeId)?.day_number ?? null;
+    const expenseId = `acc-${Date.now()}`;
     try {
       await fetch(`${API_BASE_URL}/api/expenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: `acc-${Date.now()}`,
+          id: expenseId,
           schedule_id: scheduleId,
           category,
           detail,
@@ -229,7 +237,7 @@ export default function TimelineSection({
                 ...item,
                 expenses: [
                   ...(item.expenses || []),
-                  { detail, amount, category },
+                  { id: expenseId, detail, amount, category },
                 ],
               }
             : item,
@@ -237,6 +245,31 @@ export default function TimelineSection({
       );
     } catch (err) {
       console.error("가계부 추가 실패:", err);
+    }
+  };
+
+  // 비용 삭제 - 카드에서 지운 비용을 가계부에서도 제거
+  const handleDeleteExpense = async (placeId: string, expenseId: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/expenses/${expenseId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setAllItems((prev) =>
+          prev.map((item) =>
+            item.id === placeId
+              ? {
+                  ...item,
+                  expenses: (item.expenses || []).filter(
+                    (e) => e.id !== expenseId,
+                  ),
+                }
+              : item,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("비용 삭제 실패:", err);
     }
   };
 
@@ -311,6 +344,7 @@ export default function TimelineSection({
                       onUpdateMemo={handleUpdateMemo}
                       onUpdateTime={handleUpdateTime}
                       onAddExpense={handleAddExpense}
+                      onDeleteExpense={handleDeleteExpense}
                     />
 
                     {/* 다음 장소가 있으면 길찾기 버튼 노출 */}
